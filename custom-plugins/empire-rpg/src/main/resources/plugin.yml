@@ -1,0 +1,45 @@
+name: EmpireRPG
+version: 0.1.0
+main: com.poro.empire.EmpireRPGPlugin
+api-version: '1.21'
+author: Hyeondo
+description: Core RPG plugin for Poro Server
+softdepend:
+  - LuckPerms
+  - PlaceholderAPI
+commands:
+  empire:
+    description: Main command for EmpireRPG
+    usage: /empire <class|skill|info|setclass|hud|reputation>
+    permission: empire.use
+permissions:
+  empire.admin:
+    description: Admin permission for EmpireRPG
+    default: op
+    children:
+      empire.admin.setclass: true
+      empire.admin.reputation: true
+  empire.admin.setclass:
+    description: Permission to force-set another player's class
+    default: op
+  empire.admin.reputation:
+    description: Permission to modify another player's reputation
+    default: op
+  empire.use:
+    description: Base permission for EmpireRPG command
+    default: true
+  empire.class:
+    description: Permission to select class in EmpireRPG
+    default: true
+  empire.skill:
+    description: Permission to use class skills in EmpireRPG
+    default: true
+  empire.info:
+    description: Permission to view Empire debug info
+    default: true
+  empire.hud:
+    description: Permission to show Empire HUD test message
+    default: true
+  empire.reputation:
+    description: Permission to view own reputation
+    default: true
