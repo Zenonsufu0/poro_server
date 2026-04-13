@@ -1,0 +1,3 @@
+recipe_id,recipe_name,recipe_type,life_type,required_level,result_item_id,result_amount,exp_gain,materials
+refine_herb_basic,Refined Herb,refining,refining,1,mat_refined_herb,1,12,res_herb_imperial:3
+potion_heal_normal,Basic Healing Potion,alchemy_heal,alchemy,1,con_basic_healing_potion,1,16,res_herb_imperial:2|mat_refined_herb:1

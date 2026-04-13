@@ -1,0 +1,7 @@
+quest_id,reward_order,reward_type,reward_target_id,reward_amount,is_first_clear_only,notes
+q_spawn_intro_01,1,gold,gold,300,false,main intro gold
+q_life_intro_01,1,item,mat_refined_herb,1,false,life adaptation material
+q_life_intro_01,2,life_exp,herb_gathering,120,false,life progression reward
+q_estate_unlock_01,1,unlock,estate_access,1,true,estate unlock key
+q_estate_unlock_01,2,item,bp_resonance_extractor,1,true,estate blueprint
+q_daily_capital_01,1,gold,gold,700,false,daily reward

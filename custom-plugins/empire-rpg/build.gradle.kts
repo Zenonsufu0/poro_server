@@ -21,13 +21,24 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.10-R0.1-SNAPSHOT")
+    testCompileOnly("io.papermc.paper:paper-api:1.21.10-R0.1-SNAPSHOT")
+    testRuntimeOnly("io.papermc.paper:paper-api:1.21.10-R0.1-SNAPSHOT")
 
     // 나중에 연동할 때 사용
     compileOnly("me.clip:placeholderapi:2.11.6")
     compileOnly("net.luckperms:api:5.4")
+
+    testImplementation(platform("org.junit:junit-bom:5.10.2"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 
 tasks.withType<JavaCompile>().configureEach {
     options.encoding = "UTF-8"
     options.release.set(21)
+}
+
+tasks.test {
+    useJUnitPlatform()
 }

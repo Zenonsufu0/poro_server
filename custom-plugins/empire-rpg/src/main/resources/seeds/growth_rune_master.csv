@@ -1,0 +1,9 @@
+rune_id,rune_name,rune_grade,effect_type,value_type,value_amount,slot_filter,notes
+rune_resonance_minor,공명의 소룬,rare,resonance_effect_up,PERCENT,4,weapon,mage leaning
+rune_pressure_minor,압박의 소룬,rare,pressure_efficiency,PERCENT,4,weapon,warrior leaning
+rune_precision_minor,정밀의 소룬,rare,precision_tag_damage_increase,PERCENT,3,any,universal
+rune_survival_minor,생존의 소룬,rare,max_hp_percent,PERCENT,3,armor,defense leaning
+rune_core_major,핵심의 대룬,unique,core_tag_damage_increase,PERCENT,6,weapon,core style
+rune_resonance_major,공명의 대룬,unique,resonance_effect_up,PERCENT,7,weapon,mage high tier
+rune_pressure_major,압박의 대룬,unique,pressure_efficiency,PERCENT,7,weapon,warrior high tier
+rune_snow_major,설혼의 대룬,unique,damage_vs_control,PERCENT,6,any,control style

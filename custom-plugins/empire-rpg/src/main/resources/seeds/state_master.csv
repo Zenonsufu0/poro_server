@@ -1,0 +1,18 @@
+state_code,state_group,display_name,is_stackable,max_stack,duration_default,notes
+bleed,DEBUFF_STATUS,Bleed,true,5,8,status
+poison,DEBUFF_STATUS,Poison,true,5,8,status
+burn,DEBUFF_STATUS,Burn,true,5,8,status
+frost_erosion,DEBUFF_STATUS,Frost Erosion,true,5,10,status
+slow,DEBUFF_CONTROL,Slow,false,1,3,control
+bind,DEBUFF_CONTROL,Bind,false,1,2,control
+stagger,DEBUFF_CONTROL,Stagger,false,1,1.5,control
+freeze,DEBUFF_CONTROL,Freeze,false,1,1.5,control
+target_mark,DEBUFF_MARK,Target Mark,true,3,10,mark
+crack,DEBUFF_MARK,Crack,true,5,12,mark
+exposed_weakness,DEBUFF_MARK,Exposed Weakness,true,3,10,mark
+stigma,DEBUFF_MARK,Stigma,true,3,10,mark
+shadow_mark,DEBUFF_MARK,Shadow Mark,true,5,10,mark
+recovery_boost,BUFF,Recovery Boost,true,3,8,buff
+damage_reduction,BUFF,Damage Reduction,true,5,8,buff
+movement_boost,BUFF,Movement Boost,true,3,8,buff
+shield_active,BUFF,Shield Active,false,1,8,buff

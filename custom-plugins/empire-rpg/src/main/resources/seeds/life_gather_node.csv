@@ -1,0 +1,2 @@
+gather_id,gather_name,life_type,source_type,base_item_id,base_min,base_max,rare_item_id,rare_chance_min,rare_chance_max,exp_gain,rare_exp_bonus_min,rare_exp_bonus_max,theme_type
+field_herb_capital,Capital Herb Patch,herb_gathering,field,res_herb_imperial,2,4,res_essence_imperial,3,8,12,5,10,capital

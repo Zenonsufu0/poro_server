@@ -1,0 +1,3 @@
+boss_id,boss_name,boss_tier,theme_type,is_party_content,is_extreme
+ragnes,Ragnes,final,south,true,false
+carmen,Carmen,extreme,arkanon,true,true

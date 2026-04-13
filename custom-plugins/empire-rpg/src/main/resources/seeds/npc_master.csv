@@ -1,0 +1,5 @@
+npc_id,region_code,town_id,npc_name,npc_role_type,interaction_profile_id,is_main_story_npc,notes
+npc_capital_leonid,capital,capital_main,Leonid,imperial_envoy,dialogue_capital_leonid,true,Main story giver
+npc_capital_estate_mgr,capital,capital_main,Estate Manager,estate_unlock_npc,estate_unlock_profile,false,Estate unlock helper
+npc_south_marcos,south,south_c_01,Marcos,magma_watcher,dialogue_south_marcos,false,Regional support npc
+npc_south_gatekeeper,south,south_c_01,South Gatekeeper,boss_entry_npc,boss_entry_south,false,Boss entry navigator

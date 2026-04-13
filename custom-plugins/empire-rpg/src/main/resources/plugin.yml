@@ -7,6 +7,8 @@ description: Core RPG plugin for Poro Server
 softdepend:
   - LuckPerms
   - PlaceholderAPI
+  - Citizens
+  - BetonQuest
 commands:
   empire:
     description: Main command for EmpireRPG

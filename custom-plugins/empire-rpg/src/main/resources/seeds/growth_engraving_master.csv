@@ -1,0 +1,16 @@
+engraving_id,engraving_name,engraving_type,class_filter,max_level,effect_type,value_type,value_per_level,notes
+warrior_gs_crack_01,파쇄의 권위,class,warrior,1,crack_efficiency,PERCENT,12,warrior class engraving
+assassin_shadow_mark_01,암영 집행,class,assassin,1,mark_target_damage_increase,PERCENT,12,assassin class engraving
+mage_resonance_break_01,공명 붕괴,class,mage,1,resonance_effect_up,PERCENT,12,mage class engraving
+common_recovery_01,회복 강화,common,all,5,recovery_efficiency,PERCENT,2,common engraving
+common_combat_01,전투 집중,common,all,5,general_damage_increase,PERCENT,1.5,common engraving
+common_weakpoint_01,약점 추적,common,all,5,damage_vs_exposed_weakness,PERCENT,2,common engraving
+common_survival_01,생존 본능,common,all,5,max_hp_percent,PERCENT,2,common engraving
+common_status_01,상태 확산,common,all,5,status_apply_rate,PERCENT,2,common engraving
+common_precision_01,정밀 숙련,common,all,5,precision_tag_damage_increase,PERCENT,1.5,common engraving
+common_core_01,핵심 증폭,common,all,5,core_tag_damage_increase,PERCENT,1.5,common engraving
+common_mobility_01,기동 전술,common,all,5,mobility_tag_damage_increase,PERCENT,1.5,common engraving
+common_guard_01,보호 강화,common,all,5,shield_efficiency,PERCENT,2,common engraving
+common_combo_01,연계 숙련,common,all,5,combo_tag_damage_increase,PERCENT,1.5,common engraving
+common_resource_01,자원 효율,common,all,5,resource_gain_percent,PERCENT,2,common engraving
+common_turning_01,역전의 의지,common,all,5,low_hp_playstyle_bonus,PERCENT,2,common engraving

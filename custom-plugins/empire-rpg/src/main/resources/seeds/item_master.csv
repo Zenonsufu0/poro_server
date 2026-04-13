@@ -1,0 +1,15 @@
+item_id,item_name,tier,slot_type,region_theme,boss_source,set_id,base_stat_type,base_stat_value,is_tradeable,tags
+t2_gs_ragnes,Crimson Greatsword,T2,weapon,south,ragnes,crimson_brand,attack,245,false,core|boss_drop
+t2_armor_ragnes_head,Crimson Helm,T2,armor,south,ragnes,imperial_glory,defense,112,false,boss_drop
+t2_armor_ragnes_chest,Crimson Cuirass,T2,armor,south,ragnes,imperial_glory,defense,128,false,boss_drop
+t2_ring_carmen,Resonance Ring,T2,accessory,arkanon,carmen,imperial_glory,attack,72,false,boss_drop
+t1_boots_basic,Training Boots,T1,armor,capital,,starter_set,defense,40,true,starter
+res_herb_imperial,Imperial Herb,LIFE,material,capital,,,,0,true,starter
+res_essence_imperial,Imperial Essence,LIFE,material,capital,,,,0,true,starter
+mat_refined_herb,Refined Herb,LIFE,material,capital,,,,0,true,starter
+con_basic_healing_potion,Basic Healing Potion,LIFE,consumable,capital,,,,0,true,starter
+res_ore_resonance,Resonance Ore,LIFE,material,arkanon,,,,0,true,starter
+res_shard_resonance,Resonance Shard,LIFE,material,arkanon,,,,0,true,starter
+mat_ore_ingot,Ore Ingot,LIFE,material,capital,,,,0,true,starter
+mat_resonance_powder,Resonance Powder,LIFE,material,arkanon,,,,0,true,starter
+bp_resonance_extractor,Resonance Extractor Blueprint,LIFE,material,capital,,,,0,true,starter

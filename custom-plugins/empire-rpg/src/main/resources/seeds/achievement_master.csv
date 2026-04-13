@@ -1,0 +1,7 @@
+achievement_id,category,achievement_name,condition_type,condition_target_id,condition_amount,reward_type,reward_target_id,reward_amount,is_hidden,is_repeatable,notes
+ach_clear_ragnes,boss,Flamebreaker,BOSS_CLEAR,ragnes,1,TITLE,title_ragnes_clear,1,false,false,First ragnes clear
+ach_no_death_ragnes,boss,Untouched by Flames,NO_DEATH_CLEAR,ragnes,1,BADGE,badge_untouched_flame,1,false,false,No death ragnes clear
+ach_first_craft,life,First Craft,FIRST_CRAFT,any,1,BADGE,badge_first_craft,1,false,false,First craft success
+ach_estate_unlock,estate,Home Base,ESTATE_UNLOCK,estate_access,1,TITLE,title_estate_pioneer,1,false,false,Estate unlocked
+ach_region_capital_discover,explore,Capital Scout,REGION_DISCOVER,capital,1,BADGE,badge_capital_scout,1,false,false,Discover capital
+ach_extreme_carmen,special,Extreme Vanguard,EXTREME_CLEAR,carmen,1,RECORD,hall_of_fame_extreme,1,true,false,Extreme clear symbolic record

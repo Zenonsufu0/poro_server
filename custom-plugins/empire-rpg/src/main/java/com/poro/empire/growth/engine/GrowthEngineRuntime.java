@@ -1,0 +1,18 @@
+package com.poro.empire.growth.engine;
+
+public record GrowthEngineRuntime(
+        EquipmentService equipmentService,
+        EnhancementService enhancementService,
+        PotentialService potentialService,
+        SetBonusService setBonusService,
+        RuneService runeService,
+        EngravingService engravingService,
+        PlayerGrowthSnapshotBuilder snapshotBuilder,
+        EnhancementRuleRegistry enhancementRuleRegistry,
+        PotentialOptionRegistry potentialOptionRegistry,
+        SetBonusRegistry setBonusRegistry,
+        RuneRegistry runeRegistry,
+        EngravingRegistry engravingRegistry,
+        InMemoryEnhancementLogHook enhancementLogHook
+) {
+}

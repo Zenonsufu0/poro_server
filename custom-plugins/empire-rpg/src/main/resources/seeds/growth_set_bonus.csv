@@ -1,0 +1,16 @@
+set_id,set_name,piece_count,effect_order,effect_type,value_type,value_amount,notes
+imperial_glory,황성의 위광,3,1,general_damage_increase,PERCENT,6,base set bonus
+imperial_glory,황성의 위광,4,1,core_tag_damage_increase,PERCENT,8,mid set bonus
+imperial_glory,황성의 위광,7,1,playstyle_completion_core_after_core_skill,FLAG,1,playstyle completion
+wind_chase,청풍의 추적,3,1,move_speed_percent,PERCENT,4,base set bonus
+wind_chase,청풍의 추적,4,1,mobility_tag_damage_increase,PERCENT,8,mid set bonus
+wind_chase,청풍의 추적,7,1,playstyle_completion_after_dash_combo,FLAG,1,playstyle completion
+wild_frontier,황야의 개척,3,1,max_hp_percent,PERCENT,6,base set bonus
+wild_frontier,황야의 개척,4,1,recovery_efficiency,PERCENT,8,mid set bonus
+wild_frontier,황야의 개척,7,1,playstyle_completion_low_hp_damage_reduction,FLAG,1,playstyle completion
+crimson_brand,홍염의 낙인,3,1,status_apply_rate,PERCENT,8,base set bonus
+crimson_brand,홍염의 낙인,4,1,damage_vs_status,PERCENT,8,mid set bonus
+crimson_brand,홍염의 낙인,7,1,playstyle_completion_mark_status_conditional_damage,FLAG,1,playstyle completion
+snow_silence,설원의 침묵,3,1,damage_vs_control,PERCENT,6,base set bonus
+snow_silence,설원의 침묵,4,1,precision_tag_damage_increase,PERCENT,8,mid set bonus
+snow_silence,설원의 침묵,7,1,playstyle_completion_control_after_precision,FLAG,1,playstyle completion

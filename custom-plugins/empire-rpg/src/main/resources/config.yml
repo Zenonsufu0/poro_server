@@ -1,2 +1,6 @@
 debug: true
 server-name: "Poro Server"
+common:
+  sqlite-path: "storage/poro.sqlite"
+  seed-path: "seeds"
+  timezone: "UTC"

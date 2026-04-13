@@ -1,0 +1,4 @@
+parent_quest_id,branch_quest_id,branch_group,notes
+q_spawn_intro_02,q_life_intro_01,capital_hub,life adaptation branch
+q_spawn_intro_02,q_estate_unlock_01,capital_hub,estate branch
+q_spawn_intro_02,q_daily_capital_01,capital_hub,daily branch

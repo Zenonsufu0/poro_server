@@ -1,0 +1,5 @@
+skill_id,class_id,weapon_id,skill_name,role_type,tag_1,tag_2,base_coefficient,cooldown_seconds,resource_type,resource_gain,resource_cost,secondary_effect_type,secondary_effect_value,state_code
+gs_break_slash,warrior,greatsword,Break Slash,builder,core,precision,120,6,crack,1,0,NONE,0,crack
+katana_draw_plus,warrior,katana,Draw Plus,spender,precision,core,240,12,sword_intent,0,3,BONUS_VS_MARK,12,exposed_weakness
+dagger_heart_cut,assassin,dagger,Heart Cut,finisher,precision,combo,325,18,shadow_mark,1,1,BONUS_VS_MARK,20,shadow_mark
+wand_dimension_break,mage,wand,Dimension Break,finisher,core,aoe,330,18,resonance,0,4,BONUS_VS_STATUS,15,burn
