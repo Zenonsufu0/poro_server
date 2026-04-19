@@ -1473,6 +1473,18 @@ WorldGuard 도입 / 폴리곤 / Multi-World / Y축 제한 / 경계 근처 연출
   - 1막 **완료 + 2막 재방문 선택** → 2막 정규, 1막 재방문 보상 없음.
   **플래그 재정의**: `quest.act2_main.m16_theme_choice`(플레이어 선택) · `m16_default_dispatch`(1막 본래 파견지) · `m16_is_cross_theme`(choice ≠ default) · `m16_retro_active_triggered` · `quest.theme.<테마>.m9_completed` · `quest.theme.<테마>.act2_retroactive_queue`(JSON 배열 — **v0.2 JSON 필요 가능성**) · `quest.theme.<테마>.act2_substitute_quest_id`. **후속 설계 필요 3건**: (i) 소급 클리어 재활성화 시 보상 중복 차단 규칙(1막 보상 이미 수령 여부 체크), (ii) 대체 퀘스트 구체 씬 카드 **테마×세력 = 8종** 신규 작성(content-designer 후속), (iii) 2막 주 서사 진행 중 1막 소급 퀘스트 발생 시 **메인 인터럽트 여부** 결정. **플래그 저장소 영향**: `act2_retroactive_queue`가 복합 구조 필요 시 Q3 C안의 v0.2 JSON 허용 타이밍 앞당겨질 가능성(기존 계획 = 플래그 저장소 v0.1 머지 + 2주 내 착수).
 
+- **플러그인 분할 아키텍처 검토 v1 도착 (2026-04-19 implementation-reviewer)**: 파일 `13_external_plugins_and_custom_ui/poro_plugin_split_feasibility_review_v1.md` (229행, 16.5KB). 사용자 지시 "RPG/생활/보스 테마별 분할 검토, 전체 부담 시 RPG/생활 2분할 먼저"에 대한 타당성 자문.
+  - **실측 JAR 추정 = 2~4 MB** (`plugin.yml libraries:` 방식 → fat jar 아님). **"용량 과다"는 현재 임계치 아님** — 분할 진짜 명분은 **재활용성 + 오류 격리 + 생활 단독 배포**로 재분류. 실측은 착수 직전 `./gradlew :empire-rpg:build` 1회로 확정.
+  - **권장 옵션 = B (2분할)**: `empire-common` + `empire-rpg` + `empire-life`. **핵심 실측 근거** — `life` 패키지가 `combat`·`boss`에 **컴파일 의존 없음** 확인(분할 전제 조건이 이미 코드에 내재). `operations`만 4개 도메인 응집점이라 full bundle 서버 전용.
+  - **옵션 C(보스 분리) 반려** — 현재 수요 불명확. **옵션 D(세부 분할) 반려** — ROI 대비 과함.
+  - **단계별 로드맵 5~7 man-day 총**:
+    - 1단계(0.5~1 md) = Gradle multi-module 전환(`settings.gradle.kts` + 서브모듈 `empire-rpg` 하나만, **단일 JAR 배포 그대로**, 코드 이동 없음)
+    - 2단계(1.5~2 md) = `empire-common` 서브모듈 분리 (shade 유지)
+    - 3단계(1~1.5 md) = `empire-common` 독립 Paper 플러그인 승격 or 라이브러리 유지 — 사용자 결정 대기
+    - 4단계(1.5~2 md) = `empire-life` 서브모듈 분리
+    - 5단계(0.5 md) = 생활 서버 단독 배포 스모크 테스트
+  - **판정 원칙 충돌 해소**: "EmpireRPG 단독 판정"은 **BetonQuest 등 외부 판정 엔진 배제**를 뜻하며 JAR 수 규정 아님. 마스터 플래닝 line 13·179·1135 문구를 **"EmpireRPG 플러그인 체계 단독"**으로 미세 수정하면 분할과 정합. **원칙 자체 변경 불필요**(CLAUDE.md "기존 구조 유지" 원칙과 정합).
+  - **남은 오픈 4건**: 문구 확장 승인 / 착수 시점(플래그 저장소 PR4~PR8 머지 전 vs 후) / `empire-common`을 플러그인 승격 vs 라이브러리 유지 / 생활 서버 개설 시급성.
 - **초기 가격 v2 시간당 가치 역산 드래프트 도착 (2026-04-19 economy-reviewer)**: 파일 `10_seed_and_config_tables/poro_initial_price_seed_review_v2_hourly_value.md` (307행, 20.7KB). v1 시장 앵커 4원칙 **전면 폐기**, 시간당 가치 역산으로 **완전 교체**.
   - **핵심 수식**: `npc_seed_price(x) = GPH / MPH_x × k_category` (GPH = 시간당 골드 산출 기대값, MPH_x = 재화 시간당 공급 기대값, k = 0.7~1.0 카테고리 계수)
   - **1막 중반 GPH 기준선 = 1,800G/h** 고정 → 단일 튜닝 레버(45일차 재조정 시 이 하나만 바꾸면 전체 가격표 재계산)
