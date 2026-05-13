@@ -1,0 +1,13 @@
+{
+  "asset_id": "holy_wing_greatsword",
+  "category": "greatsword",
+  "workflow": "external_reference_anchored_template_module",
+  "base_template": "../../_templates/base_greatsword_01/source/base_greatsword_01.bbmodel",
+  "modules": {
+    "wing": "../../_modules/wings/angel_wing_medium_01/source/angel_wing_medium_01.bbmodel",
+    "guard": "../../_modules/guards/guard_gem_celestial_01/source/guard_gem_celestial_01.bbmodel",
+    "pommel": "../../_modules/pommels/pommel_gem_round_01/source/pommel_gem_round_01.bbmodel"
+  },
+  "palette": "celestial",
+  "status": "planning"
+}

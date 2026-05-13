@@ -1,0 +1,30 @@
+asset_id: hammer_adventurer_poro_01
+display_name: 모험가의 손도끼
+category: weapon
+weapon_class: hammer
+asset_type: cosmetic_weapon
+source_type: external_asset
+pipeline_type: existing_json_png_import
+target_season: season1
+needs_blockbench_edit: false
+needs_texture_edit: false
+needs_ingame_test: true
+rarity: starter
+acquisition:
+  - starter_quest
+  - initial_weapon
+resourcepack:
+  material: MACE
+  custom_model_data: 100202
+  namespace: poro
+  model_path: poro:item/weapons/hammer_adventurer_poro_01
+  texture_path: poro:item/weapons/hammer_adventurer_poro_01
+notes:
+  - 9 elements 도끼형 전사 무기 — starter 등급 경량 구조
+  - 원본: adventurer_tools_v8 (Adventurer set / akaleaf / adventurer_axe)
+  - 텍스처 키 "1" + "particle", poro: namespace 변경 완료
+  - mcmodels 키 제거 완료
+  - mace.json에 100201 보존 + 100202 추가
+  - MACE 1차 테스트 후 어색하면 NETHERITE_AXE fallback 검토
+  - display_name은 임시 — 확정 전 변경 가능
+  - sword_adventurer_poro_01과 함께 Adventurer starter 세트 후보

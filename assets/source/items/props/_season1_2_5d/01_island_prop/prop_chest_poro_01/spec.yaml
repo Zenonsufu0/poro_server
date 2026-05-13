@@ -1,0 +1,24 @@
+asset_id: prop_chest_poro_01
+display_name: 낡은 보관 상자
+category: island_prop
+prop_class: chest
+asset_type: cosmetic_prop
+source_type: external_asset
+pipeline_type: existing_json_png_import
+target_season: season1
+needs_blockbench_edit: false
+needs_texture_edit: false
+needs_ingame_test: true
+resourcepack:
+  material: PAPER
+  custom_model_data: 200102
+  namespace: poro
+  model_path: poro:item/props/prop_chest_poro_01
+  texture_path: poro:item/props/prop_chest_poro_01
+notes:
+  - 단일 정적 모델 (상태 변형 없음)
+  - 원본: Chests_Pack-p7uqtu (normal_chest)
+  - mcmodels 키 없음 (제거 불필요)
+  - 텍스처 키 "0" + "particle", namespace chests_pack: → poro: 변경
+  - ground scale [0.5, 0.5, 0.5] + translation [0, 0.25, 0] → 바닥 소품 표시 적합
+  - 동일 팩의 medium_chest / premium_chest는 보상 상자 등급 후보로 보류

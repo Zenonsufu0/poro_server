@@ -1,0 +1,40 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:custom_model_data",
+    "cases": [
+      {
+        "when": "100301",
+        "model": {
+          "type": "minecraft:model",
+          "model": "poro:item/weapons/spear_carnivoret_poro_01"
+        }
+      },
+      {
+        "when": "100302",
+        "model": {
+          "type": "minecraft:model",
+          "model": "poro:item/weapons/spear_adventurer_poro_01"
+        }
+      },
+      {
+        "when": "100303",
+        "model": {
+          "type": "minecraft:model",
+          "model": "poro:item/weapons/spear_tempest_poro_01"
+        }
+      },
+      {
+        "when": "100304",
+        "model": {
+          "type": "minecraft:model",
+          "model": "poro:item/weapons/spear_tempest_poro_02"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/trident"
+    }
+  }
+}

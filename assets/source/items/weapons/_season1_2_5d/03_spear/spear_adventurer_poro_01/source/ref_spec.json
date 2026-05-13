@@ -1,0 +1,117 @@
+{
+  "asset_id": "spear_adventurer_poro_01",
+  "ref_image": "original/spear_adventurer_poro_01_ref.png",
+  "style": "minecraft_2.5d",
+  "target_elements": 11,
+  "texture_size": [64, 64],
+
+  "silhouette_priority": [
+    "spearhead taper (wide at base, 1px tip)",
+    "left/right lug hooks at blade base",
+    "thin straight shaft (2px wide)",
+    "grip wrap distinct from shaft",
+    "small butt cap at bottom"
+  ],
+
+  "parts": [
+    {
+      "name": "spearhead_tip",
+      "role": "극세 최상단 포인트",
+      "from": [7.5, 30, 7.5],
+      "to":   [8.5, 32, 8.5],
+      "color": "#C8C8C8"
+    },
+    {
+      "name": "spearhead_upper",
+      "role": "창날 상단 (좁음)",
+      "from": [7, 26, 7],
+      "to":   [9, 30, 9],
+      "color": "#C0C0C0"
+    },
+    {
+      "name": "spearhead_lower",
+      "role": "창날 하단 (넓음, 테이퍼 넓어짐)",
+      "from": [6, 23, 7],
+      "to":   [10, 26, 9],
+      "color": "#B0B0B0"
+    },
+    {
+      "name": "lug_left",
+      "role": "좌측 갈고리 날개",
+      "from": [4, 21, 7.5],
+      "to":   [6, 23, 8.5],
+      "color": "#787878"
+    },
+    {
+      "name": "lug_right",
+      "role": "우측 갈고리 날개",
+      "from": [10, 21, 7.5],
+      "to":   [12, 23, 8.5],
+      "color": "#787878"
+    },
+    {
+      "name": "shaft_collar",
+      "role": "날-자루 결합 금속 밴드",
+      "from": [6.5, 20, 7],
+      "to":   [9.5, 22, 9],
+      "color": "#989898"
+    },
+    {
+      "name": "shaft_upper",
+      "role": "상단 목제 자루",
+      "from": [7, 8, 7.5],
+      "to":   [9, 20, 8.5],
+      "color": "#8B5E3C"
+    },
+    {
+      "name": "grip_wrap_front",
+      "role": "감긴 그립 앞면",
+      "from": [6.5, 2, 7],
+      "to":   [9.5, 8, 8],
+      "color": "#4A3020"
+    },
+    {
+      "name": "grip_wrap_back",
+      "role": "감긴 그립 뒷면",
+      "from": [6.5, 2, 8],
+      "to":   [9.5, 8, 9],
+      "color": "#3A2010"
+    },
+    {
+      "name": "shaft_lower",
+      "role": "하단 목제 자루",
+      "from": [7, -1, 7.5],
+      "to":   [9, 2, 8.5],
+      "color": "#8B5E3C"
+    },
+    {
+      "name": "butt_cap",
+      "role": "하단 소형 금속 캡",
+      "from": [7, -3, 7.5],
+      "to":   [9, -1, 8.5],
+      "color": "#989898"
+    }
+  ],
+
+  "display_reference": "spear_carnivoret_poro_01",
+  "display_notes": "Carnivoret 창 display 기준으로 시작, 인게임 테스트 후 scale 조정",
+
+  "texture_palette": {
+    "spearhead_bright":  "#C8C8C8",
+    "spearhead_mid":     "#B0B0B0",
+    "spearhead_dark":    "#888888",
+    "metal_collar":      "#989898",
+    "wood_light":        "#8B5E3C",
+    "wood_dark":         "#6B3D1E",
+    "grip_light":        "#4A3020",
+    "grip_dark":         "#2A1A10"
+  },
+
+  "blockout_quality_gate": [
+    "spearhead taper readable from silhouette",
+    "lugs visible as side wings",
+    "shaft is thin (2px) and straight",
+    "grip wrap is wider and darker than shaft",
+    "butt cap is much smaller than spearhead"
+  ]
+}

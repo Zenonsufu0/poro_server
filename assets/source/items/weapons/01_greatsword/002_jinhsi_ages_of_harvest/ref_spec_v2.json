@@ -1,0 +1,366 @@
+{
+  "asset_id": "gs_002_harvest_blade",
+  "version": "ref_spec_v2",
+  "category": "greatsword",
+  "source_family": "wuthering_waves_jinhsi",
+  "theme": "crystal_sacred_longsword",
+
+  "reinterpretation_note": "v1 ref_spec 폐기. 태평성대는 넓은 판대검이 아니라 길고 얇은 유선형 성역 대검으로 재해석. 날은 얇고 길게, 가드는 아래로 스위핑하는 하방 크레센트 암 구조로.",
+
+  "reference_files": {
+    "primary": "assets/source/items/weapons/_reference_library/wuthering_waves/03_selected_by_weapon_type/01_greatsword/selected/wuthering_waves_jinhsi_ages_of_harvest_broadblade_01.png"
+  },
+
+  "dimensions_bb": {
+    "target_length_y": 48,
+    "blade_length_y": 32,
+    "guard_to_pommel_y": 16,
+    "max_blade_width_x": 5,
+    "max_guard_width_x": 9,
+    "blade_depth_z": 2,
+    "guard_depth_z": 2,
+    "decorative_accent_depth_z": 3
+  },
+
+  "silhouette_intent": {
+    "description": "정면에서 봤을 때: 긴 직사각형이 아닌, 아래에서 위로 가면서 좌측이 살짝 볼록해졌다 다시 테이퍼되는 유선형 날. 가드는 아래로 뻗는 크레센트 암 구조로 수평 막대가 아님.",
+    "blade_profile": "단면형 날 (single-bevel). 우측=검등(spine), 좌측=검날(edge). 좌측이 약간 더 넓음.",
+    "blade_curve": "하단 1/3 구간에서 좌측이 가장 넓음. 중간 이후 양측 모두 수렴하며 팁으로 갈수록 얇아짐.",
+    "tip_shape": "상단은 좌상방 크레센트 훅으로 마무리. 직각 절단 금지.",
+    "guard_shape": "guard_hub 하부에서 두 개의 암이 좌하/우하 방향으로 스위핑. 암 끝이 살짝 안쪽으로 굽는 초승달 형태."
+  },
+
+  "y_layout": {
+    "pommel":        [0,  3],
+    "handle":        [3, 10],
+    "handle_socket": [10, 13],
+    "guard_hub":     [13, 17],
+    "lower_arc_zone":[9,  14],
+    "blade_body":    [17, 46],
+    "blade_tip":     [46, 48]
+  },
+
+  "parts": [
+
+    {
+      "name": "blade_seg_01",
+      "group": "blade_group",
+      "role": "검신 1구간 — 가드 접합부",
+      "y_range": [17, 20],
+      "x_range": [-1.5, 1.5],
+      "depth_z": 2,
+      "notes": "guard_hub 상단과 면 접합. 아직 최소 폭."
+    },
+    {
+      "name": "blade_seg_02",
+      "group": "blade_group",
+      "role": "검신 2구간 — 좌측 시작 확장",
+      "y_range": [20, 23],
+      "x_range": [-2, 1.5],
+      "depth_z": 2
+    },
+    {
+      "name": "blade_seg_03",
+      "group": "blade_group",
+      "role": "검신 3구간",
+      "y_range": [23, 26],
+      "x_range": [-2.5, 1.5],
+      "depth_z": 2
+    },
+    {
+      "name": "blade_seg_04",
+      "group": "blade_group",
+      "role": "검신 4구간 — 최광 구간 시작",
+      "y_range": [26, 29],
+      "x_range": [-3, 1.5],
+      "depth_z": 2
+    },
+    {
+      "name": "blade_seg_05",
+      "group": "blade_group",
+      "role": "검신 5구간 — 최광 (left peak)",
+      "y_range": [29, 32],
+      "x_range": [-3.5, 1.5],
+      "depth_z": 2,
+      "notes": "좌측 볼록 피크. 이 구간이 가장 넓음."
+    },
+    {
+      "name": "blade_seg_06",
+      "group": "blade_group",
+      "role": "검신 6구간 — 수렴 시작",
+      "y_range": [32, 35],
+      "x_range": [-3, 1],
+      "depth_z": 2
+    },
+    {
+      "name": "blade_seg_07",
+      "group": "blade_group",
+      "role": "검신 7구간",
+      "y_range": [35, 38],
+      "x_range": [-2.5, 0.5],
+      "depth_z": 2
+    },
+    {
+      "name": "blade_seg_08",
+      "group": "blade_group",
+      "role": "검신 8구간",
+      "y_range": [38, 41],
+      "x_range": [-2, 0],
+      "depth_z": 1.5
+    },
+    {
+      "name": "blade_seg_09",
+      "group": "blade_group",
+      "role": "검신 9구간 — 강한 테이퍼",
+      "y_range": [41, 44],
+      "x_range": [-1.5, 0],
+      "depth_z": 1
+    },
+    {
+      "name": "blade_seg_10",
+      "group": "blade_group",
+      "role": "검신 10구간 — 팁 전 구간",
+      "y_range": [44, 46],
+      "x_range": [-1, 0],
+      "depth_z": 1
+    },
+    {
+      "name": "blade_edge_l",
+      "group": "blade_group",
+      "role": "검날 좌측 엣지 스트립 (cutting edge)",
+      "x_offset_from_left_face": -0.5,
+      "depth_z": 0.5,
+      "y_range": [17, 44],
+      "notes": "각 blade_seg 좌면에 면접합. 얇은 날 엣지 강조선. 깊이는 0.5u만."
+    },
+    {
+      "name": "blade_edge_r",
+      "group": "blade_group",
+      "role": "검등 우측 엣지 스트립 (spine edge)",
+      "x_offset_from_right_face": 0.5,
+      "depth_z": 0.5,
+      "y_range": [17, 40],
+      "notes": "검등 엣지. 상단 절반에서 사라져 테이퍼를 강조."
+    },
+    {
+      "name": "blade_bevel_front",
+      "group": "blade_group",
+      "role": "전면 베벨 스트립 (입체감용)",
+      "depth_range_z": [-2.5, -2],
+      "y_range": [17, 44],
+      "width_x": 1,
+      "notes": "blade_seg 전면에 0.5u 두께 베벨. Z=-2.5 ~ -2 위치."
+    },
+
+    {
+      "name": "blade_tip_main",
+      "group": "blade_tip_group",
+      "role": "날 끝 주 테이퍼",
+      "y_range": [46, 48],
+      "x_range": [-1, 0],
+      "depth_z": 1,
+      "notes": "마지막 2u. X 폭 1u 유지."
+    },
+    {
+      "name": "blade_tip_hook_1",
+      "group": "blade_tip_group",
+      "role": "상단 크레센트 훅 1단",
+      "y_range": [45, 47],
+      "x_range": [-2, -1],
+      "depth_z": 0.5,
+      "notes": "blade_tip_main 좌면에 면접합. 좌상방 돌출 첫 단계."
+    },
+    {
+      "name": "blade_tip_hook_2",
+      "group": "blade_tip_group",
+      "role": "상단 크레센트 훅 2단 (끝점)",
+      "y_range": [46, 48],
+      "x_range": [-3, -2],
+      "depth_z": 0.5,
+      "notes": "훅의 외곽 끝점. 더 좌측으로 돌출."
+    },
+
+    {
+      "name": "guard_hub",
+      "group": "guard_core_group",
+      "role": "가드 중심 허브",
+      "size_uvw": [2, 4, 2],
+      "y_range": [13, 17],
+      "x_range": [-1, 1],
+      "notes": "blade_seg_01 하단과 면접합. handle_socket 상단과 면접합."
+    },
+    {
+      "name": "guard_hub_front_plate",
+      "group": "guard_core_group",
+      "role": "가드 전면 장식판",
+      "size_uvw": [3, 4, 0.5],
+      "y_range": [13, 17],
+      "x_range": [-1.5, 1.5],
+      "depth_z_offset": -2.5,
+      "notes": "guard_hub 전면에 0.5u 돌출하는 장식판. 약간 더 넓어서 가드 실루엣 강조."
+    },
+    {
+      "name": "gem_center",
+      "group": "guard_core_group",
+      "role": "포인트 젬",
+      "size_uvw": [1, 1, 1],
+      "anchor": "guard_hub_front_center",
+      "notes": "가드 전면 정중앙. 1개만."
+    },
+
+    {
+      "name": "lower_arc_l_base",
+      "group": "guard_arc_group",
+      "role": "좌측 하방 크레센트 암 — 상단 (가드 접합부)",
+      "y_range": [11, 14],
+      "x_range": [-3, -1],
+      "depth_z": 1,
+      "notes": "guard_hub 좌면 하부에서 출발. 좌하방으로 이동 시작."
+    },
+    {
+      "name": "lower_arc_l_mid",
+      "group": "guard_arc_group",
+      "role": "좌측 하방 크레센트 암 — 중단",
+      "y_range": [9, 12],
+      "x_range": [-4, -2],
+      "depth_z": 1,
+      "notes": "한 칸 더 좌하방으로 이동."
+    },
+    {
+      "name": "lower_arc_l_tip",
+      "group": "guard_arc_group",
+      "role": "좌측 하방 크레센트 암 — 끝점",
+      "y_range": [9, 11],
+      "x_range": [-5, -3],
+      "depth_z": 0.5,
+      "notes": "암의 끝. 얇아지면서 마무리."
+    },
+    {
+      "name": "lower_arc_l_inner",
+      "group": "guard_arc_group",
+      "role": "좌측 암 내측 채움 (창문 방지)",
+      "y_range": [10, 13],
+      "x_range": [-2, -1],
+      "depth_z": 0.5,
+      "notes": "암과 guard_hub 사이 내측 공간 채움."
+    },
+    {
+      "name": "lower_arc_r_base",
+      "group": "guard_arc_group",
+      "role": "우측 하방 크레센트 암 — 상단",
+      "y_range": [11, 14],
+      "x_range": [1, 3],
+      "depth_z": 1,
+      "notes": "우측 암. 좌측보다 짧고 작게."
+    },
+    {
+      "name": "lower_arc_r_tip",
+      "group": "guard_arc_group",
+      "role": "우측 하방 크레센트 암 — 끝점",
+      "y_range": [10, 12],
+      "x_range": [2, 4],
+      "depth_z": 0.5,
+      "notes": "우측 암 끝. 좌측보다 한 단계 짧음."
+    },
+    {
+      "name": "lower_arc_depth_l",
+      "group": "guard_arc_group",
+      "role": "좌측 암 뒷면 깊이 액센트",
+      "y_range": [9, 13],
+      "x_range": [-4, -1],
+      "depth_z_range": [0.5, 1.5],
+      "notes": "45도 뷰에서 암에 두께감 부여."
+    },
+
+    {
+      "name": "handle_socket",
+      "group": "handle_group",
+      "role": "가드-손잡이 연결 소켓",
+      "size_uvw": [1.5, 3, 1.5],
+      "y_range": [10, 13],
+      "notes": "guard_hub 하단과 면접합. handle 상단과 면접합."
+    },
+    {
+      "name": "handle",
+      "group": "handle_group",
+      "role": "손잡이",
+      "size_uvw": [1, 7, 1],
+      "y_range": [3, 10],
+      "notes": "1×1u 단면. 길이 7u. 얇고 짧게."
+    },
+    {
+      "name": "handle_wrap_1",
+      "group": "handle_group",
+      "role": "손잡이 그립 밴드 1",
+      "size_uvw": [1.5, 1, 1.5],
+      "y_range": [5, 6]
+    },
+    {
+      "name": "handle_wrap_2",
+      "group": "handle_group",
+      "role": "손잡이 그립 밴드 2",
+      "size_uvw": [1.5, 1, 1.5],
+      "y_range": [7, 8]
+    },
+
+    {
+      "name": "pommel_main",
+      "group": "pommel_group",
+      "role": "폼멜 본체",
+      "size_uvw": [2, 2, 2],
+      "y_range": [1, 3]
+    },
+    {
+      "name": "pommel_tab_l",
+      "group": "pommel_group",
+      "role": "폼멜 좌측 탭",
+      "size_uvw": [0.5, 1.5, 1],
+      "anchor": "pommel_main_left"
+    },
+    {
+      "name": "pommel_tab_r",
+      "group": "pommel_group",
+      "role": "폼멜 우측 탭",
+      "size_uvw": [0.5, 1.5, 1],
+      "anchor": "pommel_main_right"
+    },
+    {
+      "name": "pommel_base",
+      "group": "pommel_group",
+      "role": "폼멜 하단 베이스",
+      "size_uvw": [2.5, 1, 2.5],
+      "y_range": [0, 1]
+    }
+  ],
+
+  "palette": {
+    "primary":   "#A8C8E8",
+    "secondary": "#DCF0FF",
+    "accent":    "#C0E8FF",
+    "shadow":    "#1E3A5A",
+    "glow":      "#DCF0FF",
+    "mid":       "#5080A8",
+    "handle":    "#384858"
+  },
+
+  "simplification_rules": [
+    "모든 곡선 → 블록 계단으로 근사",
+    "검신은 긴 직사각형 금지 — 최소 10세그먼트로 분할하여 테이퍼 표현",
+    "가드 암은 수평 막대 금지 — 반드시 Y축 방향 계단이 포함되어야 함",
+    "부유 블록 금지 — 모든 파트 면접합 필수",
+    "블록아웃 단계에서 텍스처/UV 작업 금지",
+    "guard_arc 창문형 공간 금지 — 내측 채움 파트로 막을 것",
+    "총 Y 길이 48u 초과 금지"
+  ],
+
+  "validation_flags": [
+    "blade_seg_05(최광) 좌측이 blade_seg_01(최협) 대비 2u 이상 더 넓은가",
+    "blade_tip에 직각 절단이 없고 훅 형태가 있는가",
+    "lower_arc_l가 guard_hub 하부에서 좌하방으로 스위핑하는가 (수평 막대 아님)",
+    "lower_arc_l 끝점이 guard_hub 좌우 폭 밖으로 나가는가",
+    "창문형 빈 공간이 가드 암에 없는가",
+    "blade_edge_l/r가 blade_seg에 면접합되어 있는가",
+    "손잡이 단면이 1.5u 이하인가",
+    "총 Y 길이가 48u 이하인가"
+  ]
+}

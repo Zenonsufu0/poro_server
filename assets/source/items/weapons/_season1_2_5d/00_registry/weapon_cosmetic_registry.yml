@@ -1,0 +1,142 @@
+# Poro Server Season 1 — 무기 치장 CMD 레지스트리
+# 단일 진실 원본. 모든 치장 CMD는 이 파일에서만 할당한다.
+# material: NETHERITE_SWORD (season 1 치장 무기 전용 베이스)
+# namespace: poro
+
+version: "1.0"
+season: season1
+material: NETHERITE_SWORD
+
+entries:
+  # ── sword (100101 ~ 100199) ──────────────────────────────
+  - asset_id: sword_vanquisher_poro_01
+    display_name: 정복자의 검
+    weapon_class: sword
+    custom_model_data: 100101
+    status: active
+    model_path: poro:item/weapons/sword_vanquisher_poro_01
+    texture_path: poro:item/weapons/sword_vanquisher_poro_01
+    source_type: external_asset_import
+    needs_ingame_test: true
+
+  - asset_id: sword_adventurer_poro_01
+    display_name: 모험가의 검
+    weapon_class: sword
+    material: NETHERITE_SWORD
+    rarity: starter
+    acquisition: starter_quest/initial_weapon
+    custom_model_data: 100102
+    status: active
+    model_path: poro:item/weapons/sword_adventurer_poro_01
+    texture_path: poro:item/weapons/sword_adventurer_poro_01
+    source_type: external_asset_import
+    source_pack: adventurer_tools_v8 (akaleaf / adventurer_tools)
+    needs_ingame_test: true
+    note: "스타터 검. 5 elements 경량 모델. Adventurer 시리즈 세트 첫 번째 등록."
+
+  # ── hammer (100201 ~ 100299) ─────────────────────────────
+  - asset_id: hammer_carnivoret_poro_01
+    display_name: 포식자의 망치
+    weapon_class: hammer
+    material: MACE
+    custom_model_data: 100201
+    status: active
+    model_path: poro:item/weapons/hammer_carnivoret_poro_01
+    texture_path: poro:item/weapons/hammer_carnivoret_poro_01
+    source_type: external_asset_import
+    needs_ingame_test: true
+
+  - asset_id: hammer_adventurer_poro_01
+    display_name: 모험가의 손도끼 (임시)
+    weapon_class: hammer
+    material: MACE
+    rarity: starter
+    acquisition: starter_quest/initial_weapon
+    custom_model_data: 100202
+    status: active
+    model_path: poro:item/weapons/hammer_adventurer_poro_01
+    texture_path: poro:item/weapons/hammer_adventurer_poro_01
+    source_type: external_asset_import
+    source_pack: adventurer_tools_v8 (akaleaf / adventurer_axe)
+    needs_ingame_test: true
+    note: "starter 전사 무기 후보. MACE 1차 테스트 — 어색하면 NETHERITE_AXE fallback 검토."
+
+  # ── spear (100301 ~ 100399) ──────────────────────────────
+  - asset_id: spear_carnivoret_poro_01
+    display_name: 포식자의 창
+    weapon_class: spear
+    material: TRIDENT
+    custom_model_data: 100301
+    status: active
+    model_path: poro:item/weapons/spear_carnivoret_poro_01
+    texture_path: poro:item/weapons/spear_carnivoret_poro_01
+    source_type: external_asset_import
+    needs_ingame_test: true
+    note: "1단계 정적 모델만 등록. TRIDENT 투척 모션 상태 모델은 2차 단계."
+
+  - asset_id: spear_adventurer_poro_01
+    display_name: 모험가의 창
+    weapon_class: spear
+    material: TRIDENT
+    rarity: starter
+    acquisition: starter_quest/initial_weapon
+    custom_model_data: 100302
+    status: export_ready
+    model_path: poro:item/weapons/spear_adventurer_poro_01
+    texture_path: poro:item/weapons/spear_adventurer_poro_01
+    source_type: blockbench_new_build
+    needs_ingame_test: true
+    note: "스타터 창. 15 elements 2.5D 모델. 4-step 창날 + L형 lug 가드. Adventurer 시리즈."
+
+  # ── crossbow (100401 ~ 100499) ───────────────────────────
+  - asset_id: crossbow_adventurer_poro_01
+    display_name: 모험가의 석궁
+    weapon_class: crossbow
+    material: CROSSBOW
+    custom_model_data: 100401
+    status: active
+    model_path: poro:item/weapons/crossbow_adventurer_poro_01
+    texture_path: poro:item/weapons/crossbow_adventurer_poro_01
+    source_type: external_asset_import
+    needs_ingame_test: true
+    note: "1단계 정적 모델만 등록. pulling/charged 상태 모델 연결은 2차 단계."
+
+  # ── scythe (100501 ~ 100599) ─────────────────────────────
+  - asset_id: scythe_carnivoret_poro_01
+    display_name: 포식자의 낫
+    weapon_class: scythe
+    material: NETHERITE_HOE
+    custom_model_data: 100501
+    status: active
+    model_path: poro:item/weapons/scythe_carnivoret_poro_01
+    texture_path: poro:item/weapons/scythe_carnivoret_poro_01
+    source_type: external_asset_import
+    needs_ingame_test: true
+    note: "1단계 정적 모델만 등록. NETHERITE_HOE 우클릭 상호작용은 2차 단계."
+
+  - asset_id: scythe_adventurer_poro_01
+    display_name: 모험가의 낫
+    weapon_class: scythe
+    material: NETHERITE_HOE
+    rarity: starter
+    acquisition: starter_quest/initial_weapon
+    custom_model_data: 100502
+    status: export_ready
+    model_path: poro:item/weapons/scythe_adventurer_poro_01
+    texture_path: poro:item/weapons/scythe_adventurer_poro_01
+    source_type: blockbench_new_build
+    needs_ingame_test: true
+    note: "스타터 낫. 10 elements 2.5D 모델. blade_plane_main alpha crescent. Adventurer 시리즈."
+
+  # ── staff (100601 ~ 100699) ──────────────────────────────
+  - asset_id: staff_carnivoret_poro_01
+    display_name: 포식자의 스태프
+    weapon_class: staff
+    material: BLAZE_ROD
+    custom_model_data: 100601
+    status: active
+    model_path: poro:item/weapons/staff_carnivoret_poro_01
+    texture_path: poro:item/weapons/staff_carnivoret_poro_01
+    source_type: external_asset_import
+    needs_ingame_test: true
+    note: "1단계 정적 모델만 등록. BLAZE_ROD 연료 소모 방지는 2차 단계."

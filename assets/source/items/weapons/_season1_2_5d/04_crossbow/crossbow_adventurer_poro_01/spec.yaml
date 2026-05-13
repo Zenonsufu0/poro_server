@@ -1,0 +1,21 @@
+asset_id: crossbow_adventurer_poro_01
+display_name: 모험가의 석궁
+category: crossbow
+weapon_class: crossbow
+asset_type: cosmetic_weapon
+source_type: external_asset
+pipeline_type: existing_json_png_import
+target_season: season1
+needs_blockbench_edit: false
+needs_texture_edit: false
+needs_ingame_test: true
+resourcepack:
+  material: CROSSBOW
+  custom_model_data: 100401
+  namespace: poro
+  model_path: poro:item/weapons/crossbow_adventurer_poro_01
+  texture_path: poro:item/weapons/crossbow_adventurer_poro_01
+notes:
+  - 정적 모델 테스트 우선 (1차 단계)
+  - pulling/charged 상태 모델 연결은 2차 단계에서 진행
+  - 원본: adventurer_tools_v8 (akaleaf 제작)

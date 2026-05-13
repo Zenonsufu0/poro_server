@@ -1,0 +1,17 @@
+{
+  "asset_id": "flame_guardian_sword",
+  "display_name": "홍염의 수호검",
+  "material": "DIAMOND_SWORD",
+  "weapon_type": "greatsword",
+  "source": "assets/source/items/weapons/01_greatsword/001_flame_guardian_sword_25d/source/poro_flame_guardian_sword_cutout_full.png",
+  "outputs": {
+    "cutout": "assets/source/items/weapons/_factory_output/flame_guardian_sword/01_source/flame_guardian_sword_cutout.png",
+    "texture_256": "assets/source/items/weapons/_factory_output/flame_guardian_sword/02_textures/flame_guardian_sword_256.png",
+    "texture_128": "assets/source/items/weapons/_factory_output/flame_guardian_sword/02_textures/flame_guardian_sword_128.png",
+    "preview": "assets/source/items/weapons/_factory_output/flame_guardian_sword/06_preview/flame_guardian_sword_preview.png",
+    "resourcepack_model": "assets/source/items/weapons/_factory_output/flame_guardian_sword/03_resourcepack/assets/minecraft/models/item/flame_guardian_sword.json",
+    "oraxen_yml": "assets/source/items/weapons/_factory_output/flame_guardian_sword/04_oraxen/flame_guardian_sword.yml",
+    "itemsadder_yml": "assets/source/items/weapons/_factory_output/flame_guardian_sword/05_itemsadder/flame_guardian_sword.yml"
+  },
+  "next_step": "Test as 2D handheld first. Promote to 2.5D only if the item reads well in inventory and hand view."
+}

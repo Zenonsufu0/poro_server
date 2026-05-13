@@ -1,0 +1,210 @@
+{
+  "asset_id": "scythe_adventurer_poro_01",
+  "phase": "Phase 1 complete — design_ready",
+  "ref_image_primary": "original/scythe_adventurer_poro_01_texture_ref.png",
+  "ref_image_secondary": "original/scythe_adventurer_poro_01_ref.png",
+  "style": "minecraft_2.5d",
+  "target_elements": 13,
+  "texture_size": [64, 64],
+
+  "silhouette_priority": [
+    "crescent blade curve — base wide at socket, steps through mid/upper, tapers to sharp tip (most critical)",
+    "socket bracket block — clearly separates blade from shaft, extends in X direction",
+    "thin straight shaft — 2px width throughout",
+    "grip wrap — slightly wider than shaft, distinctly dark leather color",
+    "metal collar between grip top and shaft upper",
+    "small metal butt cap at bottom"
+  ],
+
+  "parts": [
+    {
+      "name": "blade_base",
+      "group": "blade",
+      "role": "날 기저부 — 소켓 직결, 가장 넓은 구간",
+      "from": [10, 26, 7.5],
+      "to":   [16, 31, 8.5],
+      "color": "#B0BCC2",
+      "texture_zone": "A"
+    },
+    {
+      "name": "blade_mid",
+      "group": "blade",
+      "role": "날 중간 — 우상향 곡선, 넓이 감소",
+      "from": [14, 29, 7.5],
+      "to":   [19, 33, 8.5],
+      "color": "#B8C5CC",
+      "texture_zone": "A"
+    },
+    {
+      "name": "blade_upper",
+      "group": "blade",
+      "role": "날 상단 — 급격히 좁아짐",
+      "from": [16, 32, 7.5],
+      "to":   [20, 36, 8.5],
+      "color": "#C4D0D6",
+      "texture_zone": "A"
+    },
+    {
+      "name": "blade_tip",
+      "group": "blade",
+      "role": "날 끝 — 날카로운 포인트",
+      "from": [18, 35, 7.5],
+      "to":   [20, 38, 8.5],
+      "color": "#D4DDE2",
+      "texture_zone": "A"
+    },
+    {
+      "name": "socket_body",
+      "group": "socket",
+      "role": "메인 직사각형 철제 브래킷 — 날과 자루 연결",
+      "from": [7, 24, 7],
+      "to":   [13, 30, 9],
+      "color": "#484C54",
+      "texture_zone": "B"
+    },
+    {
+      "name": "socket_band_upper",
+      "group": "socket",
+      "role": "소켓 상단 보강 밴드",
+      "from": [6.5, 29, 6.5],
+      "to":   [12, 31, 9.5],
+      "color": "#606468",
+      "texture_zone": "B"
+    },
+    {
+      "name": "socket_band_lower",
+      "group": "socket",
+      "role": "소켓 하단/자루 연결 밴드",
+      "from": [6.5, 23, 6.5],
+      "to":   [10, 25, 9.5],
+      "color": "#606468",
+      "texture_zone": "B"
+    },
+    {
+      "name": "shaft_upper",
+      "group": "shaft",
+      "role": "소켓 아래 ~ 칼라 위 — 긴 목재 자루",
+      "from": [7, 15, 7.5],
+      "to":   [9, 24, 8.5],
+      "color": "#7A5030",
+      "texture_zone": "C"
+    },
+    {
+      "name": "shaft_lower",
+      "group": "shaft",
+      "role": "그립 아래 ~ 버트캡 위 — 짧은 목재",
+      "from": [7, 0, 7.5],
+      "to":   [9, 5, 8.5],
+      "color": "#7A5030",
+      "texture_zone": "C"
+    },
+    {
+      "name": "grip_front",
+      "group": "grip",
+      "role": "가죽 감기 앞면 — 대각선 랩 패턴",
+      "from": [6.5, 5, 7],
+      "to":   [9.5, 14, 8],
+      "color": "#341E0C",
+      "texture_zone": "D"
+    },
+    {
+      "name": "grip_back",
+      "group": "grip",
+      "role": "가죽 감기 뒷면",
+      "from": [6.5, 5, 8],
+      "to":   [9.5, 14, 9],
+      "color": "#2A1508",
+      "texture_zone": "D"
+    },
+    {
+      "name": "collar",
+      "group": "hardware",
+      "role": "그립 상단 금속 칼라 링",
+      "from": [6.5, 13.5, 6.5],
+      "to":   [9.5, 15.5, 9.5],
+      "color": "#787C84",
+      "texture_zone": "B"
+    },
+    {
+      "name": "butt_cap",
+      "group": "hardware",
+      "role": "자루 하단 금속 페룰",
+      "from": [6.5, -2, 7],
+      "to":   [9.5, 0, 9],
+      "color": "#787C84",
+      "texture_zone": "B"
+    }
+  ],
+
+  "coordinate_notes": [
+    "Y 범위: -2(버트캡 하단) ~ 38(날 끝). 총 40유닛",
+    "X 중심: 8. 자루 X=7-9, 날은 X=10-20(오른쪽으로 확장)",
+    "Z 깊이: 1-2유닛 (2.5D). 자루 Z=7.5-8.5, 소켓 Z=7-9, 그립 앞뒤 Z=7-9",
+    "날 커브 근사: stepped rectangles — base(X:10-16) → mid(X:14-19) → upper(X:16-20) → tip(X:18-20)",
+    "Phase 3에서 좌표 세부 조정 예정"
+  ],
+
+  "display_reference": "scythe_carnivoret_poro_01",
+  "display_notes": "Carnivoret 낫(100501) display 기준으로 시작, 인게임 테스트 후 scale 확정",
+  "display_placeholder": {
+    "thirdperson_righthand": {"translation": [0, 1.75, 1.75], "scale": [0.8, 0.8, 0.8]},
+    "firstperson_righthand": {"rotation": [6, 0, 0], "translation": [4, 4.75, 0], "scale": [0.45742, 0.45742, 0.45742]},
+    "gui": {"rotation": [90, 45, -90], "translation": [-2, -1.5, 0], "scale": [0.53375, 0.53375, 0.53375]},
+    "ground": {"rotation": [-45, 0, 0], "translation": [0, 6, 0], "scale": [0.6, 0.6, 0.6]},
+    "head": {"scale": [0, 0, 0]},
+    "fixed": {"rotation": [0, -90, 0], "translation": [0, 0.75, -1.75], "scale": [2, 2, 2]}
+  },
+
+  "texture_zones": {
+    "A_blade_steel": {
+      "u_range": [0, 15],
+      "base_hex": "#B8C5CC",
+      "parts": ["blade_base", "blade_mid", "blade_upper", "blade_tip"],
+      "detail": "tip쪽으로 밝아지는 그라데이션 (base:#B0BCC2 → tip:#D4DDE2), 내측 엣지는 #7A8890"
+    },
+    "B_dark_metal": {
+      "u_range": [16, 31],
+      "base_hex": "#484C54",
+      "parts": ["socket_body", "socket_band_upper", "socket_band_lower", "collar", "butt_cap"],
+      "detail": "다크 스틸 베이스, 상단 하이라이트 #7C8088, 하단 그림자 #38393E"
+    },
+    "C_wood_shaft": {
+      "u_range": [32, 47],
+      "base_hex": "#7A5030",
+      "parts": ["shaft_upper", "shaft_lower"],
+      "detail": "오크 브라운 베이스, 세로 나무결 2-3색 (light:#9C6E42, mid:#7A5030, dark:#5A3820)"
+    },
+    "D_leather_grip": {
+      "u_range": [48, 63],
+      "base_hex": "#341E0C",
+      "parts": ["grip_front", "grip_back"],
+      "detail": "대각선 랩 패턴 (↘ 방향), 감기 선 #1E0E06, 하이라이트 #4A2E18"
+    }
+  },
+
+  "texture_palette": {
+    "blade_bright":     "#D4DDE2",
+    "blade_mid":        "#B0BCC2",
+    "blade_dark_edge":  "#7A8890",
+    "socket_dark":      "#484C54",
+    "socket_mid":       "#606468",
+    "socket_highlight": "#7C8088",
+    "wood_light":       "#9C6E42",
+    "wood_mid":         "#7A5030",
+    "wood_dark":        "#5A3820",
+    "grip_light":       "#4A2E18",
+    "grip_mid":         "#341E0C",
+    "grip_dark":        "#1E0E06",
+    "metal_hardware":   "#787C84"
+  },
+
+  "blockout_quality_gate": [
+    "crescent blade readable from silhouette alone (base→mid→upper→tip stepping visible)",
+    "socket bracket clearly separable from shaft as a wider metal block",
+    "shaft is thin (~2px) and straight throughout",
+    "grip wrap section visibly wider and distinctly darker than shaft",
+    "collar visible as narrow metal ring between grip top and shaft upper",
+    "butt cap is small metal protrusion at bottom",
+    "not a plain rectangle — blade curve distinguishes silhouette from generic sword"
+  ]
+}

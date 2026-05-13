@@ -1,0 +1,23 @@
+asset_id: staff_carnivoret_poro_01
+display_name: 포식자의 스태프
+category: staff
+weapon_class: staff
+asset_type: cosmetic_weapon
+source_type: external_asset
+pipeline_type: existing_json_png_import
+target_season: season1
+needs_blockbench_edit: false
+needs_texture_edit: false
+needs_ingame_test: true
+resourcepack:
+  material: BLAZE_ROD
+  custom_model_data: 100601
+  namespace: poro
+  model_path: poro:item/weapons/staff_carnivoret_poro_01
+  texture_path: poro:item/weapons/staff_carnivoret_poro_01
+notes:
+  - 단일 정적 모델 (상태 변형 없음)
+  - 원본: Carnivoret Weapon Set Volume 1 (elitecreatures 제작)
+  - CraftEngine 포맷 기준 추출
+  - 텍스처 키가 "2" 단독 (hammer/spear/scythe의 "1"+"particle" 패턴과 다름)
+  - hammer_carnivoret_poro_01, spear_carnivoret_poro_01, scythe_carnivoret_poro_01과 동일 세트 (포식자 시리즈)

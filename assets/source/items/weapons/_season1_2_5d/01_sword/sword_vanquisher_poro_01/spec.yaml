@@ -1,0 +1,17 @@
+asset_id: sword_vanquisher_poro_01
+display_name: 정복자의 검
+category: sword
+weapon_class: sword
+asset_type: cosmetic_weapon
+source_type: external_asset
+pipeline_type: existing_json_png_import
+target_season: season1
+needs_blockbench_edit: false
+needs_texture_edit: optional
+needs_ingame_test: true
+resourcepack:
+  material: NETHERITE_SWORD
+  custom_model_data: 100101
+  namespace: poro
+  model_path: poro:item/weapons/sword_vanquisher_poro_01
+  texture_path: poro:item/weapons/sword_vanquisher_poro_01

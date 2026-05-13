@@ -1,0 +1,33 @@
+asset_id: spear_adventurer_poro_01
+display_name: 모험가의 창
+category: weapon
+weapon_class: spear
+asset_type: cosmetic_weapon
+source_type: custom_blockbench
+pipeline_type: blockbench_new_build
+target_season: season1
+needs_blockbench_edit: true
+needs_texture_edit: true
+needs_ingame_test: true
+rarity: starter
+acquisition:
+  - starter_quest
+  - initial_weapon
+resourcepack:
+  material: TRIDENT
+  custom_model_data: 100302
+  namespace: poro
+  model_path: poro:item/weapons/spear_adventurer_poro_01
+  texture_path: poro:item/weapons/spear_adventurer_poro_01
+blockbench:
+  target_elements: 11
+  texture_size: [64, 64]
+  ref_image: original/spear_adventurer_poro_01_ref.png
+  ref_spec: source/ref_spec.json
+  asset_brief: source/asset_brief.md
+notes:
+  - 레퍼런스 기반 신규 Blockbench 제작 (외부 팩 임포트 아님)
+  - 11 elements 목표 — starter 등급 경량 구조
+  - 핵심 파츠: spearhead / lugs / shaft_collar / shaft / grip_wrap / butt_cap
+  - TRIDENT material — trident.json에 100301 보존 + 100302 추가 예정
+  - Carnivoret 창(100301) display 기준 참고, scale 인게임 테스트 후 확정

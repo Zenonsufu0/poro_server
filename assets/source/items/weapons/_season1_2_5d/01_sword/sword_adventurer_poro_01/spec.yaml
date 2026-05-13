@@ -1,0 +1,28 @@
+asset_id: sword_adventurer_poro_01
+display_name: 모험가의 검
+category: weapon
+weapon_class: sword
+asset_type: cosmetic_weapon
+source_type: external_asset
+pipeline_type: existing_json_png_import
+target_season: season1
+needs_blockbench_edit: false
+needs_texture_edit: false
+needs_ingame_test: true
+rarity: starter
+acquisition:
+  - starter_quest
+  - initial_weapon
+resourcepack:
+  material: NETHERITE_SWORD
+  custom_model_data: 100102
+  namespace: poro
+  model_path: poro:item/weapons/sword_adventurer_poro_01
+  texture_path: poro:item/weapons/sword_adventurer_poro_01
+notes:
+  - 5 elements 단순 모델 — 스타터 등급 경량 구조
+  - 원본: adventurer_tools_v8 (Adventurer set / akaleaf)
+  - 텍스처 키 "1" + "particle", namespace 제거 후 poro: 변경
+  - mcmodels 키 제거 완료
+  - netherite_sword.json에 100101 보존 + 100102 추가
+  - Adventurer 시리즈 세트 완성 계획 (axe/spear/staff 별도 추진)

@@ -1,0 +1,434 @@
+[
+  {
+    "dest": "00_raw_uploaded_sequence/raw_01_66556dcc-13fc-4a2c-a73d-51ad9d36d8de.png",
+    "source_basename": "66556dcc-13fc-4a2c-a73d-51ad9d36d8de.png",
+    "size_px": "113x113",
+    "bytes": 8688,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_02_6d71bf35-f29d-45bc-9980-707ae875bd90.png",
+    "source_basename": "6d71bf35-f29d-45bc-9980-707ae875bd90.png",
+    "size_px": "113x113",
+    "bytes": 10692,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_03_4ed95017-b81f-404f-a2ba-d6790a313a67.png",
+    "source_basename": "4ed95017-b81f-404f-a2ba-d6790a313a67.png",
+    "size_px": "113x113",
+    "bytes": 11663,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_04_7e152931-a2cb-49ee-9f92-bd11a3934b54.png",
+    "source_basename": "7e152931-a2cb-49ee-9f92-bd11a3934b54.png",
+    "size_px": "113x113",
+    "bytes": 9038,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_05_0b92e87b-f3d5-4bd6-a82c-c3d843cfc2cf.png",
+    "source_basename": "0b92e87b-f3d5-4bd6-a82c-c3d843cfc2cf.png",
+    "size_px": "113x113",
+    "bytes": 19706,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_06_f50773d1-7586-482f-98d7-3c2de4e3afdc.png",
+    "source_basename": "f50773d1-7586-482f-98d7-3c2de4e3afdc.png",
+    "size_px": "113x113",
+    "bytes": 20020,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_07_3de6a968-dd46-44a1-a49f-70869425dea3.png",
+    "source_basename": "3de6a968-dd46-44a1-a49f-70869425dea3.png",
+    "size_px": "113x113",
+    "bytes": 19375,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_08_289e5c38-ec2f-4c57-9825-a62be208d3b5.png",
+    "source_basename": "289e5c38-ec2f-4c57-9825-a62be208d3b5.png",
+    "size_px": "113x113",
+    "bytes": 16643,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_09_e4f648da-fb19-4e4f-8e55-30cc8d3ab461.png",
+    "source_basename": "e4f648da-fb19-4e4f-8e55-30cc8d3ab461.png",
+    "size_px": "113x113",
+    "bytes": 10832,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_10_b0ea424c-742f-4e84-afa6-2b09925d2312.png",
+    "source_basename": "b0ea424c-742f-4e84-afa6-2b09925d2312.png",
+    "size_px": "113x113",
+    "bytes": 10150,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_11_279c1c56-6a1f-4ff7-909c-13229446d587.png",
+    "source_basename": "279c1c56-6a1f-4ff7-909c-13229446d587.png",
+    "size_px": "113x113",
+    "bytes": 11839,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_12_ab439e2e-8a19-42e9-ad0a-d418fa53e83d.png",
+    "source_basename": "ab439e2e-8a19-42e9-ad0a-d418fa53e83d.png",
+    "size_px": "113x113",
+    "bytes": 10420,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_13_2157bc87-ed7d-4b12-8106-608865c37f11.png",
+    "source_basename": "2157bc87-ed7d-4b12-8106-608865c37f11.png",
+    "size_px": "113x113",
+    "bytes": 10789,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_14_85d9600a-be9f-4bf8-8faa-296cb5fac22e.png",
+    "source_basename": "85d9600a-be9f-4bf8-8faa-296cb5fac22e.png",
+    "size_px": "113x113",
+    "bytes": 11361,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_15_7a45dfad-5b49-403e-b282-64eab4d6c7db.png",
+    "source_basename": "7a45dfad-5b49-403e-b282-64eab4d6c7db.png",
+    "size_px": "113x113",
+    "bytes": 11199,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_16_2ced73c6-2466-4d52-8ad4-f1832983a07d.png",
+    "source_basename": "2ced73c6-2466-4d52-8ad4-f1832983a07d.png",
+    "size_px": "2048x1152",
+    "bytes": 2456761,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_17_e7342035-a4da-46ff-b5c4-b3aef8fb3f29.png",
+    "source_basename": "e7342035-a4da-46ff-b5c4-b3aef8fb3f29.png",
+    "size_px": "2048x1152",
+    "bytes": 433138,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_18_8040d04f-3489-43d8-999a-d9772e52ceb2.png",
+    "source_basename": "8040d04f-3489-43d8-999a-d9772e52ceb2.png",
+    "size_px": "2048x1152",
+    "bytes": 450461,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_19_df1c09db-d770-4209-8939-9d7bdc66816c.png",
+    "source_basename": "df1c09db-d770-4209-8939-9d7bdc66816c.png",
+    "size_px": "2048x1152",
+    "bytes": 2439812,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_20_508eb6d6-a710-4d50-8a4c-d843dc7bf88c.png",
+    "source_basename": "508eb6d6-a710-4d50-8a4c-d843dc7bf88c.png",
+    "size_px": "1080x470",
+    "bytes": 561246,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_21_908ca57e-c416-4138-b180-f8e1664dc583.png",
+    "source_basename": "908ca57e-c416-4138-b180-f8e1664dc583.png",
+    "size_px": "192x230",
+    "bytes": 81636,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_22_66d19e58-980f-49b8-9d92-f2c3d483d0a8.png",
+    "source_basename": "66d19e58-980f-49b8-9d92-f2c3d483d0a8.png",
+    "size_px": "760x430",
+    "bytes": 426000,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_23_91439cfd-860a-439f-ba2f-57b56c14ebf5.png",
+    "source_basename": "91439cfd-860a-439f-ba2f-57b56c14ebf5.png",
+    "size_px": "2048x1152",
+    "bytes": 1813852,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_24_e4de62b3-6172-4ad4-ac9b-2ae491536d87.png",
+    "source_basename": "e4de62b3-6172-4ad4-ac9b-2ae491536d87.png",
+    "size_px": "337x599",
+    "bytes": 317621,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_25_959361d5-d0ed-45cb-83ff-5c89e87c423d.png",
+    "source_basename": "959361d5-d0ed-45cb-83ff-5c89e87c423d.png",
+    "size_px": "696x960",
+    "bytes": 708563,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_26_bf2b21d9-f4bc-438e-8a00-1cce9338d0b5.png",
+    "source_basename": "bf2b21d9-f4bc-438e-8a00-1cce9338d0b5.png",
+    "size_px": "2048x1152",
+    "bytes": 1859954,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "00_raw_uploaded_sequence/raw_27_bdf8e4de-4678-49d4-99e5-2f2434f5f62e.png",
+    "source_basename": "bdf8e4de-4678-49d4-99e5-2f2434f5f62e.png",
+    "size_px": "2048x1152",
+    "bytes": 1799157,
+    "group": "raw",
+    "note": "원본 업로드 순서 보존"
+  },
+  {
+    "dest": "02_sword/orange_unknown_sword/selected/orange_unknown_sword_angle_01.png",
+    "source_basename": "66556dcc-13fc-4a2c-a73d-51ad9d36d8de.png",
+    "size_px": "113x113",
+    "bytes": 8688,
+    "group": "orange_unknown_sword",
+    "note": "저해상도 4각도 한손검/태도 후보"
+  },
+  {
+    "dest": "02_sword/orange_unknown_sword/selected/orange_unknown_sword_angle_02.png",
+    "source_basename": "6d71bf35-f29d-45bc-9980-707ae875bd90.png",
+    "size_px": "113x113",
+    "bytes": 10692,
+    "group": "orange_unknown_sword",
+    "note": "저해상도 4각도 한손검/태도 후보"
+  },
+  {
+    "dest": "02_sword/orange_unknown_sword/selected/orange_unknown_sword_angle_03.png",
+    "source_basename": "4ed95017-b81f-404f-a2ba-d6790a313a67.png",
+    "size_px": "113x113",
+    "bytes": 11663,
+    "group": "orange_unknown_sword",
+    "note": "저해상도 4각도 한손검/태도 후보"
+  },
+  {
+    "dest": "02_sword/orange_unknown_sword/selected/orange_unknown_sword_angle_04.png",
+    "source_basename": "7e152931-a2cb-49ee-9f92-bd11a3934b54.png",
+    "size_px": "113x113",
+    "bytes": 9038,
+    "group": "orange_unknown_sword",
+    "note": "저해상도 4각도 한손검/태도 후보"
+  },
+  {
+    "dest": "02_sword/blue_sword/support/blue_sword_detail_01.png",
+    "source_basename": "0b92e87b-f3d5-4bd6-a82c-c3d843cfc2cf.png",
+    "size_px": "113x113",
+    "bytes": 19706,
+    "group": "blue_sword_support",
+    "note": "파란 검 디테일 보조 레퍼런스"
+  },
+  {
+    "dest": "02_sword/blue_sword/support/blue_sword_detail_02.png",
+    "source_basename": "f50773d1-7586-482f-98d7-3c2de4e3afdc.png",
+    "size_px": "113x113",
+    "bytes": 20020,
+    "group": "blue_sword_support",
+    "note": "파란 검 디테일 보조 레퍼런스"
+  },
+  {
+    "dest": "02_sword/blue_sword/support/blue_sword_detail_03.png",
+    "source_basename": "3de6a968-dd46-44a1-a49f-70869425dea3.png",
+    "size_px": "113x113",
+    "bytes": 19375,
+    "group": "blue_sword_support",
+    "note": "파란 검 디테일 보조 레퍼런스"
+  },
+  {
+    "dest": "99_unsorted/red_silver_mecha_weapon/support/red_silver_mecha_weapon_detail_01.png",
+    "source_basename": "289e5c38-ec2f-4c57-9825-a62be208d3b5.png",
+    "size_px": "113x113",
+    "bytes": 16643,
+    "group": "red_silver_mecha_support",
+    "note": "빨강/은색 기계형 무기 디테일 보조 레퍼런스"
+  },
+  {
+    "dest": "99_unsorted/red_silver_mecha_weapon/support/red_silver_mecha_weapon_detail_02.png",
+    "source_basename": "e4f648da-fb19-4e4f-8e55-30cc8d3ab461.png",
+    "size_px": "113x113",
+    "bytes": 10832,
+    "group": "red_silver_mecha_support",
+    "note": "빨강/은색 기계형 무기 디테일 보조 레퍼런스"
+  },
+  {
+    "dest": "99_unsorted/red_silver_mecha_weapon/support/red_silver_mecha_weapon_detail_03.png",
+    "source_basename": "b0ea424c-742f-4e84-afa6-2b09925d2312.png",
+    "size_px": "113x113",
+    "bytes": 10150,
+    "group": "red_silver_mecha_support",
+    "note": "빨강/은색 기계형 무기 디테일 보조 레퍼런스"
+  },
+  {
+    "dest": "99_unsorted/red_silver_mecha_weapon/support/red_silver_mecha_weapon_detail_04.png",
+    "source_basename": "279c1c56-6a1f-4ff7-909c-13229446d587.png",
+    "size_px": "113x113",
+    "bytes": 11839,
+    "group": "red_silver_mecha_support",
+    "note": "빨강/은색 기계형 무기 디테일 보조 레퍼런스"
+  },
+  {
+    "dest": "03_spear/wood_shaft_spearhead/support/wood_shaft_spearhead_detail_01.png",
+    "source_basename": "ab439e2e-8a19-42e9-ad0a-d418fa53e83d.png",
+    "size_px": "113x113",
+    "bytes": 10420,
+    "group": "wood_spearhead_support",
+    "note": "나무 샤프트 창/봉 헤드 보조 레퍼런스"
+  },
+  {
+    "dest": "03_spear/wood_shaft_spearhead/support/wood_shaft_spearhead_detail_02.png",
+    "source_basename": "2157bc87-ed7d-4b12-8106-608865c37f11.png",
+    "size_px": "113x113",
+    "bytes": 10789,
+    "group": "wood_spearhead_support",
+    "note": "나무 샤프트 창/봉 헤드 보조 레퍼런스"
+  },
+  {
+    "dest": "03_spear/wood_shaft_spearhead/support/wood_shaft_spearhead_detail_03.png",
+    "source_basename": "85d9600a-be9f-4bf8-8faa-296cb5fac22e.png",
+    "size_px": "113x113",
+    "bytes": 11361,
+    "group": "wood_spearhead_support",
+    "note": "나무 샤프트 창/봉 헤드 보조 레퍼런스"
+  },
+  {
+    "dest": "03_spear/wood_shaft_spearhead/support/wood_shaft_spearhead_detail_04.png",
+    "source_basename": "7a45dfad-5b49-403e-b282-64eab4d6c7db.png",
+    "size_px": "113x113",
+    "bytes": 11199,
+    "group": "wood_spearhead_support",
+    "note": "나무 샤프트 창/봉 헤드 보조 레퍼런스"
+  },
+  {
+    "dest": "02_sword/changli_blazing_brilliance/selected/large_weapon_view_01.png",
+    "source_basename": "2ced73c6-2466-4d52-8ad4-f1832983a07d.png",
+    "size_px": "2048x1152",
+    "bytes": 2456761,
+    "group": "large_weapon_candidates",
+    "note": "단독 고해상도 무기 후보"
+  },
+  {
+    "dest": "99_unsorted/uncertain_support/black_or_empty_frame_02.png",
+    "source_basename": "e7342035-a4da-46ff-b5c4-b3aef8fb3f29.png",
+    "size_px": "2048x1152",
+    "bytes": 433138,
+    "group": "large_weapon_candidates",
+    "note": "대검/검 단독 고해상도 후보. 검은 프레임은 참고 제외 후보"
+  },
+  {
+    "dest": "99_unsorted/uncertain_support/black_or_empty_frame_03.png",
+    "source_basename": "8040d04f-3489-43d8-999a-d9772e52ceb2.png",
+    "size_px": "2048x1152",
+    "bytes": 450461,
+    "group": "large_weapon_candidates",
+    "note": "대검/검 단독 고해상도 후보. 검은 프레임은 참고 제외 후보"
+  },
+  {
+    "dest": "02_sword/changli_blazing_brilliance/selected/large_weapon_view_04.png",
+    "source_basename": "df1c09db-d770-4209-8939-9d7bdc66816c.png",
+    "size_px": "2048x1152",
+    "bytes": 2439812,
+    "group": "large_weapon_candidates",
+    "note": "단독 고해상도 무기 후보"
+  },
+  {
+    "dest": "02_sword/changli_blazing_brilliance/support/changli_blazing_brilliance_ingame_ui_01.png",
+    "source_basename": "508eb6d6-a710-4d50-8a4c-d843dc7bf88c.png",
+    "size_px": "1080x470",
+    "bytes": 561246,
+    "group": "changli_support",
+    "note": "장리 Blazing Brilliance 인게임/이펙트 보조 레퍼런스"
+  },
+  {
+    "dest": "02_sword/changli_blazing_brilliance/support/changli_blazing_brilliance_max_stack_effect_01.png",
+    "source_basename": "908ca57e-c416-4138-b180-f8e1664dc583.png",
+    "size_px": "192x230",
+    "bytes": 81636,
+    "group": "changli_support",
+    "note": "장리 Blazing Brilliance 인게임/이펙트 보조 레퍼런스"
+  },
+  {
+    "dest": "99_unsorted/uncertain_support/black_or_empty_frame_01.png",
+    "source_basename": "66d19e58-980f-49b8-9d92-f2c3d483d0a8.png",
+    "size_px": "760x430",
+    "bytes": 426000,
+    "group": "changli_ages_candidates",
+    "note": "장리/금희 대검/검 후보. 필요 시 수동 분류"
+  },
+  {
+    "dest": "02_sword/changli_blazing_brilliance/selected/changli_or_ages_highres_weapon_candidate_02.png",
+    "source_basename": "91439cfd-860a-439f-ba2f-57b56c14ebf5.png",
+    "size_px": "2048x1152",
+    "bytes": 1813852,
+    "group": "changli_ages_candidates",
+    "note": "장리/금희 대검/검 후보. 필요 시 수동 분류"
+  },
+  {
+    "dest": "02_sword/changli_blazing_brilliance/selected/changli_or_ages_highres_weapon_candidate_03.png",
+    "source_basename": "e4de62b3-6172-4ad4-ac9b-2ae491536d87.png",
+    "size_px": "337x599",
+    "bytes": 317621,
+    "group": "changli_ages_candidates",
+    "note": "장리/금희 대검/검 후보. 필요 시 수동 분류"
+  },
+  {
+    "dest": "99_unsorted/uncertain_support/black_or_empty_frame_04.png",
+    "source_basename": "959361d5-d0ed-45cb-83ff-5c89e87c423d.png",
+    "size_px": "696x960",
+    "bytes": 708563,
+    "group": "changli_ages_candidates",
+    "note": "장리/금희 대검/검 후보. 필요 시 수동 분류"
+  },
+  {
+    "dest": "02_sword/changli_blazing_brilliance/selected/changli_or_ages_highres_weapon_candidate_05.png",
+    "source_basename": "bf2b21d9-f4bc-438e-8a00-1cce9338d0b5.png",
+    "size_px": "2048x1152",
+    "bytes": 1859954,
+    "group": "changli_ages_candidates",
+    "note": "장리/금희 대검/검 후보. 필요 시 수동 분류"
+  },
+  {
+    "dest": "02_sword/changli_blazing_brilliance/selected/changli_or_ages_highres_weapon_candidate_06.png",
+    "source_basename": "bdf8e4de-4678-49d4-99e5-2f2434f5f62e.png",
+    "size_px": "2048x1152",
+    "bytes": 1799157,
+    "group": "changli_ages_candidates",
+    "note": "장리/금희 대검/검 후보. 필요 시 수동 분류"
+  }
+]

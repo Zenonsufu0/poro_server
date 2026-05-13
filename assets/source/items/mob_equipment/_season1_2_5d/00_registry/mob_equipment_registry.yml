@@ -1,0 +1,36 @@
+# Poro Server Season 1 — 몬스터 장비 CMD 레지스트리
+# 몬스터 head/mainhand 슬롯에 custom model을 적용하는 장비 자산 관리.
+# prop_registry.yml, weapon_cosmetic_registry.yml과 분리 관리.
+# namespace: poro
+#
+# 구현 슬롯명과 콘텐츠 분류명 분리 원칙:
+#   actual_slot: Minecraft Equipment 슬롯 (HELMET / CHESTPLATE / MAINHAND 등)
+#   visual_role: 인게임 연출상 의미 (head armor / body armor / backpack / weapon 등)
+#
+# CMD 범위 배정
+# 200101 ~ 200199: island_prop → reclassified 항목도 동일 CMD 재사용 가능
+# 300101 ~ 300199: mob_equipment (barrelknight 계열)
+# 300201 ~ 300299: mob_equipment (reserved)
+
+version: "1.0"
+season: season1
+
+entries:
+  # ── barrelknight 계열 (300101 ~ 300199) ──────────────────
+  - asset_id: mob_barrelknight_body_01
+    display_name: 배럴 나이트 갑옷
+    visual_role: body_armor       # 콘텐츠 분류 (시각적 역할)
+    actual_slot: HELMET           # 구현 슬롯 (Minecraft Equipment)
+    material: PAPER
+    custom_model_data: 200101     # prop_barrel_poro_01에서 재사용
+    status: candidate
+    model_path: poro:item/props/prop_barrel_poro_01
+    texture_path: poro:item/props/prop_barrel_poro_01
+    source_pack: BarrelKnight_1.1
+    source_origin: prop_barrel_poro_01
+    recommended_mobs:
+      - Barrel Knight (SKELETON base)
+      - Workshop Guardian (ZOMBIE base)
+      - Wooden Guard (ZOMBIE base)
+    needs_mythicmobs_test: true
+    note: "prop_barrel_poro_01에서 재분류. HELMET 슬롯이나 시각상 등짐/몸통 갑옷 연출."

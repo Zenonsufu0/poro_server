@@ -1,0 +1,49 @@
+asset_id: scythe_adventurer_poro_01
+display_name: 모험가의 낫
+category: scythe
+weapon_class: scythe
+asset_type: cosmetic_weapon
+source_type: custom_blockbench
+pipeline_type: blockbench_new_build
+target_season: season1
+status: export_ready
+needs_blockbench_edit: false
+needs_texture_edit: false
+needs_ingame_test: true
+rarity: starter
+acquisition:
+  - starter_quest
+  - initial_weapon
+resourcepack:
+  material: NETHERITE_HOE
+  custom_model_data: 100502
+  namespace: poro
+  model_path: poro:item/weapons/scythe_adventurer_poro_01
+  texture_path: poro:item/weapons/scythe_adventurer_poro_01
+blockbench:
+  target_elements: 10
+  texture_size: [64, 64]
+  blade_method: texture_alpha_plane
+  ref_image_primary: original/scythe_adventurer_poro_01_texture_ref.png
+  ref_image_secondary: original/scythe_adventurer_poro_01_ref.png
+  ref_spec: ref_spec.json
+  asset_brief: asset_brief.md
+  groups:
+    - blade: [blade_plane_main]
+    - socket: [socket_body, socket_band_upper, socket_band_lower]
+    - shaft: [shaft_upper, shaft_lower]
+    - grip: [grip_front, grip_back]
+    - hardware: [collar, butt_cap]
+notes:
+  - Phase 1 완료 — 레퍼런스 분석 + 설계 문서 작성 완료
+  - 레퍼런스 기반 신규 Blockbench 제작 (외부 팩 임포트 아님)
+  - 13 elements 목표 — starter 등급 경량 (blade×4 / socket×3 / shaft×2 / grip×2 / hardware×2)
+  - 날 커브 표현: stepped rectangles (base→mid→upper→tip, 우상향 계단식)
+  - NETHERITE_HOE material — 우클릭 흙 경작 상호작용 EmpireRPG intercept 필요 (후속 검토)
+  - scythe_carnivoret_poro_01(100501) display 기준 참고, scale 인게임 테스트 후 확정
+  - 등록 보류 — Phase 5 완료 후 weapon_cosmetic_registry.yml 등록 예정
+  - Phase 3 재구성 (2026-05-09) — texture-first 방식으로 전환, 10 elements / 5 groups
+  - 낫날: stepped-cube(4ea) → blade_plane_main(1ea) + 투명 PNG 초승달 texture alpha
+  - textures/scythe_adventurer_poro_01.png 64x64 초안 생성 (Zone A: 날/B: 철/C: 목재/D: 가죽)
+  - blade_plane_main UV 방향 수정 (2026-05-09) — 크레센트가 뒤집혀 있던 버그 수정, putImageData로 alpha=0 배경 보장
+  - 크레센트 v3: outer arc V=0-4까지 U=15 유지 후 완만 하강, inner concave 1px 심화, 최대 8px 두께 (starter scythe 실루엣 확정)

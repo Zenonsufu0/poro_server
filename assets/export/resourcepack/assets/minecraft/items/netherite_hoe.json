@@ -1,0 +1,61 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:custom_model_data",
+    "cases": [
+      {
+        "when": "100501",
+        "model": {
+          "type": "minecraft:model",
+          "model": "poro:item/weapons/scythe_carnivoret_poro_01"
+        }
+      },
+      {
+        "when": "100502",
+        "model": {
+          "type": "minecraft:model",
+          "model": "poro:item/weapons/scythe_adventurer_poro_01"
+        }
+      },
+      {
+        "when": "100598",
+        "model": {
+          "type": "minecraft:model",
+          "model": "poro:item/weapons/debug_scythe_blade_only"
+        }
+      },
+      {
+        "when": "100599",
+        "model": {
+          "type": "minecraft:model",
+          "model": "poro:item/weapons/debug_magenta_cube"
+        }
+      },
+      {
+        "when": "100597",
+        "model": {
+          "type": "minecraft:model",
+          "model": "poro:item/weapons/scythe_adventurer_clean_01"
+        }
+      },
+      {
+        "when": "100596",
+        "model": {
+          "type": "minecraft:model",
+          "model": "poro:item/weapons/scythe_adventurer_clean_02"
+        }
+      },
+      {
+        "when": "100595",
+        "model": {
+          "type": "minecraft:model",
+          "model": "poro:item/weapons/scythe_adventurer_manual_01"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/netherite_hoe"
+    }
+  }
+}

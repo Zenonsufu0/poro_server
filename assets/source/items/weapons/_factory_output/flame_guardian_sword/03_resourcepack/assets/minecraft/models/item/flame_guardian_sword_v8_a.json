@@ -1,0 +1,61 @@
+{
+  "ambientocclusion": false,
+  "textures": {
+    "weapon": "minecraft:item/poro_weapons/flame_guardian_sword",
+    "particle": "minecraft:item/poro_weapons/flame_guardian_sword"
+  },
+  "elements": [
+    {
+      "name": "flat_weapon_front_back",
+      "from": [0, 0, 7.98],
+      "to": [16, 16, 8.02],
+      "faces": {
+        "north": {
+          "texture": "#weapon",
+          "uv": [0, 0, 16, 16]
+        },
+        "south": {
+          "texture": "#weapon",
+          "uv": [16, 0, 0, 16]
+        }
+      }
+    }
+  ],
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [0, -25, -52],
+      "translation": [-0.6, 3.6, 1.2],
+      "scale": [1.45, 1.45, 1.45]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [0, -25, -52],
+      "translation": [-0.6, 3.6, 1.2],
+      "scale": [1.45, 1.45, 1.45]
+    },
+    "firstperson_righthand": {
+      "rotation": [0, -25, -35],
+      "translation": [1.0, 2.8, 0.5],
+      "scale": [1.15, 1.15, 1.15]
+    },
+    "firstperson_lefthand": {
+      "rotation": [0, 25, 35],
+      "translation": [1.0, 2.8, 0.5],
+      "scale": [1.15, 1.15, 1.15]
+    },
+    "gui": {
+      "rotation": [0, 0, -45],
+      "translation": [0, 0, 0],
+      "scale": [1.15, 1.15, 1.15]
+    },
+    "ground": {
+      "rotation": [0, 0, -45],
+      "translation": [0, 3, 0],
+      "scale": [0.95, 0.95, 0.95]
+    },
+    "fixed": {
+      "rotation": [0, 0, -45],
+      "translation": [0, 0, 0],
+      "scale": [1.1, 1.1, 1.1]
+    }
+  }
+}

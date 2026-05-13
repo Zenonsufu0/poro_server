@@ -1,0 +1,24 @@
+asset_id: prop_barrel_poro_01
+display_name: 낡은 공방 나무통
+category: island_prop
+prop_class: barrel
+asset_type: cosmetic_prop
+source_type: external_asset
+pipeline_type: existing_json_png_import
+target_season: season1
+needs_blockbench_edit: false
+needs_texture_edit: false
+needs_ingame_test: true
+resourcepack:
+  material: PAPER
+  custom_model_data: 200101
+  namespace: poro
+  model_path: poro:item/props/prop_barrel_poro_01
+  texture_path: poro:item/props/prop_barrel_poro_01
+notes:
+  - 단일 정적 모델 (상태 변형 없음)
+  - 원본: BarrelKnight_1.1 (HMCCosmetics 전용 head cosmetics 팩)
+  - ItemsAdder 포맷 기준 추출 (CraftEngine 포맷 미포함)
+  - 원본이 head cosmetics 설계 → ground scale 없음 (y translation 22), thirdperson scale 없음 주의
+  - 텍스처 키 "0" + "particle" (Carnivoret 무기 세트의 "1"+"particle"과 다른 패턴)
+  - 원본 namespace: cosmetics: → poro: 변경

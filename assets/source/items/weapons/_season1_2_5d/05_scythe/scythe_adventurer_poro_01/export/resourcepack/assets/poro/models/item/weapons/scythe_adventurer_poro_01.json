@@ -1,0 +1,48 @@
+{
+  "credit": "scaffold_placeholder — Phase 0 only, not production ready. Replace with bb-export-register output in Phase 5.",
+  "textures": {
+    "1": "poro:item/weapons/scythe_adventurer_poro_01",
+    "particle": "poro:item/weapons/scythe_adventurer_poro_01"
+  },
+  "elements": [],
+  "display": {
+    "thirdperson_righthand": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 1.75, 1.75],
+      "scale": [0.8, 0.8, 0.8]
+    },
+    "thirdperson_lefthand": {
+      "rotation": [0, 0, 0],
+      "translation": [0, 1.75, 1.75],
+      "scale": [0.8, 0.8, 0.8]
+    },
+    "firstperson_righthand": {
+      "rotation": [6, 0, 0],
+      "translation": [4, 4.75, 0],
+      "scale": [0.45742, 0.45742, 0.45742]
+    },
+    "firstperson_lefthand": {
+      "rotation": [6, 0, 0],
+      "translation": [4, 4.75, 0],
+      "scale": [0.45742, 0.45742, 0.45742]
+    },
+    "gui": {
+      "rotation": [90, 45, -90],
+      "translation": [-2, -1.5, 0],
+      "scale": [0.53375, 0.53375, 0.53375]
+    },
+    "head": {
+      "scale": [0, 0, 0]
+    },
+    "ground": {
+      "rotation": [-45, 0, 0],
+      "translation": [0, 6, 0],
+      "scale": [0.6, 0.6, 0.6]
+    },
+    "fixed": {
+      "rotation": [0, -90, 0],
+      "translation": [0, 0.75, -1.75],
+      "scale": [2, 2, 2]
+    }
+  }
+}

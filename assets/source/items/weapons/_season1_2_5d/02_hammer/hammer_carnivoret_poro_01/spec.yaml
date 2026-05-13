@@ -1,0 +1,21 @@
+asset_id: hammer_carnivoret_poro_01
+display_name: 포식자의 망치
+category: hammer
+weapon_class: hammer
+asset_type: cosmetic_weapon
+source_type: external_asset
+pipeline_type: existing_json_png_import
+target_season: season1
+needs_blockbench_edit: false
+needs_texture_edit: false
+needs_ingame_test: true
+resourcepack:
+  material: MACE
+  custom_model_data: 100201
+  namespace: poro
+  model_path: poro:item/weapons/hammer_carnivoret_poro_01
+  texture_path: poro:item/weapons/hammer_carnivoret_poro_01
+notes:
+  - 단일 정적 모델 (상태 변형 없음)
+  - 원본: Carnivoret Weapon Set Volume 1 (elitecreatures 제작)
+  - CraftEngine 포맷 기준 추출

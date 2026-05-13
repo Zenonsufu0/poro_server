@@ -1,0 +1,22 @@
+asset_id: scythe_carnivoret_poro_01
+display_name: 포식자의 낫
+category: scythe
+weapon_class: scythe
+asset_type: cosmetic_weapon
+source_type: external_asset
+pipeline_type: existing_json_png_import
+target_season: season1
+needs_blockbench_edit: false
+needs_texture_edit: false
+needs_ingame_test: true
+resourcepack:
+  material: NETHERITE_HOE
+  custom_model_data: 100501
+  namespace: poro
+  model_path: poro:item/weapons/scythe_carnivoret_poro_01
+  texture_path: poro:item/weapons/scythe_carnivoret_poro_01
+notes:
+  - 단일 정적 모델 (상태 변형 없음)
+  - 원본: Carnivoret Weapon Set Volume 1 (elitecreatures 제작)
+  - CraftEngine 포맷 기준 추출
+  - hammer_carnivoret_poro_01, spear_carnivoret_poro_01과 동일 세트 (포식자 시리즈)

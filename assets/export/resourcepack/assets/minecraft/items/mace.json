@@ -1,0 +1,26 @@
+{
+  "model": {
+    "type": "minecraft:select",
+    "property": "minecraft:custom_model_data",
+    "cases": [
+      {
+        "when": "100201",
+        "model": {
+          "type": "minecraft:model",
+          "model": "poro:item/weapons/hammer_carnivoret_poro_01"
+        }
+      },
+      {
+        "when": "100202",
+        "model": {
+          "type": "minecraft:model",
+          "model": "poro:item/weapons/hammer_adventurer_poro_01"
+        }
+      }
+    ],
+    "fallback": {
+      "type": "minecraft:model",
+      "model": "minecraft:item/mace"
+    }
+  }
+}

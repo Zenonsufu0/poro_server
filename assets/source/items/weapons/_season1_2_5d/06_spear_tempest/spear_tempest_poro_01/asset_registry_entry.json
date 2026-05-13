@@ -1,0 +1,30 @@
+{
+  "asset_id": "spear_tempest_poro_01",
+  "category": "weapon/spear",
+  "display_name_ko": "폭풍의 창",
+  "source_inspiration": [],
+  "poro_transform_notes": "번개 테마 프리미엄 창 치장무기. 24개 cube blockout 완료 (blade 7파트/wing 4파트/socket 2파트/crystal 3파트/shaft 2파트/ring 3파트/grip 1파트/butt 2파트). 텍스처 64×64 단일 PNG (placeholder 단계). display 설정 완료 (spear_carnivoret 기준 복사). CMD 100303 (trident).",
+  "final_files": {
+    "bbmodel": "assets/source/items/weapons/_season1_2_5d/06_spear_tempest/spear_tempest_poro_01/source/spear_tempest_poro_01.bbmodel",
+    "texture": "assets/export/resourcepack/assets/poro/textures/item/weapons/spear_tempest_poro_01.png",
+    "renders": [
+      "assets/source/items/weapons/_season1_2_5d/06_spear_tempest/spear_tempest_poro_01/renders/spear_tempest_poro_01_front.png",
+      "assets/source/items/weapons/_season1_2_5d/06_spear_tempest/spear_tempest_poro_01/renders/spear_tempest_poro_01_angle.png"
+    ],
+    "export_json": "assets/export/resourcepack/assets/poro/models/item/weapons/spear_tempest_poro_01.json"
+  },
+  "cmd": {
+    "item": "minecraft:trident",
+    "strings": ["100303"]
+  },
+  "phase_status": {
+    "0_policy": "done",
+    "1_geometry": "done",
+    "2_texture": "needs_work",
+    "3_display": "done",
+    "4_export_json": "done",
+    "5_cmd_registry": "done"
+  },
+  "status": "needs_review",
+  "export_date": "2026-05-11"
+}

@@ -1,0 +1,41 @@
+# Poro Server Season 1 — 소품 CMD 레지스트리
+# 단일 진실 원본. 모든 소품 CMD는 이 파일에서만 할당한다.
+# 무기 치장 레지스트리(weapon_cosmetic_registry.yml)와 분리 관리.
+# namespace: poro
+
+version: "1.0"
+season: season1
+
+# CMD 범위 배정
+# 200101 ~ 200199: island_prop (영지/마인팜 소품)
+# 200201 ~ 200299: (reserved)
+
+entries:
+  # ── island_prop (200101 ~ 200199) ────────────────────────
+  - asset_id: prop_chest_poro_01
+    display_name: 낡은 보관 상자
+    prop_class: island_prop
+    material: PAPER
+    custom_model_data: 200102
+    status: active
+    model_path: poro:item/props/prop_chest_poro_01
+    texture_path: poro:item/props/prop_chest_poro_01
+    source_type: external_asset_import
+    source_pack: Chests_Pack-p7uqtu (normal_chest)
+    needs_ingame_test: true
+    note: "1단계 정적 모델. firstperson scale 없음 주의. medium/premium은 보상 상자 후속 등록 예정."
+
+  - asset_id: prop_barrel_poro_01
+    display_name: 낡은 공방 나무통
+    prop_class: island_prop
+    material: PAPER
+    custom_model_data: 200101
+    status: reclassified
+    model_path: poro:item/props/prop_barrel_poro_01
+    texture_path: poro:item/props/prop_barrel_poro_01
+    source_type: external_asset_import
+    source_pack: BarrelKnight_1.1
+    needs_ingame_test: false
+    reclassified_as: "mob_barrelknight_body_01"
+    reclassify_reason: "영지 소품 부적합. 인게임에서 barrel backpack / 몸통 갑옷형 몬스터 장비로 보임."
+    note: "export/resourcepack 파일 유지. CMD 200101은 mob_equipment 등록 시 재사용."

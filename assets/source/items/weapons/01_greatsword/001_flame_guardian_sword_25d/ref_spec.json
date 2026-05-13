@@ -1,0 +1,270 @@
+{
+  "asset_id": "poro_flame_guardian_sword_25d",
+  "category": "greatsword",
+  "source_family": "flame_guardian",
+  "theme": "flame / crimson / guardian",
+  "production_mode": "2.5D",
+  "reference_files": {
+    "primary": "source/poro_flame_guardian_sword_cutout_full.png",
+    "support": [
+      "refs/poro_flame_guardian_sword_concept_raw.png",
+      "textures/poro_flame_guardian_sword_25d.png"
+    ]
+  },
+  "dimensions_bb": {
+    "target_length_y": 48,
+    "max_width_x": 11,
+    "max_depth_z": 3,
+    "blade_depth_z": 1,
+    "guard_depth_z": 3
+  },
+  "y_layout": {
+    "pommel":       [0, 3],
+    "handle":       [3, 11],
+    "guard_lower":  [11, 15],
+    "guard_hub":    [15, 19],
+    "guard_wings":  [17, 23],
+    "blade_body":   [19, 45],
+    "blade_tip":    [45, 48]
+  },
+  "parts": [
+    {
+      "name": "blade_core",
+      "group": "blade_group",
+      "role": "검신 메인 평면 — 2.5D 핵심 파트",
+      "x": [-1.5, 1.5],
+      "y": [19, 45],
+      "z": [-0.5, 0.5],
+      "note": "Z 깊이 1u 유지. 불꽃 디테일은 텍스처 전담."
+    },
+    {
+      "name": "blade_edge_l_1",
+      "group": "blade_group",
+      "role": "좌측 불꽃 톱니 #1 (하단)",
+      "x": [-2.5, -1.5],
+      "y": [22, 24],
+      "z": [-0.5, 0.5]
+    },
+    {
+      "name": "blade_edge_l_2",
+      "group": "blade_group",
+      "role": "좌측 불꽃 톱니 #2 (중하단)",
+      "x": [-2.5, -1.5],
+      "y": [28, 30],
+      "z": [-0.5, 0.5]
+    },
+    {
+      "name": "blade_edge_l_3",
+      "group": "blade_group",
+      "role": "좌측 불꽃 톱니 #3 (중상단)",
+      "x": [-2.5, -1.5],
+      "y": [34, 36],
+      "z": [-0.5, 0.5]
+    },
+    {
+      "name": "blade_edge_l_4",
+      "group": "blade_group",
+      "role": "좌측 불꽃 톱니 #4 (상단)",
+      "x": [-2.0, -1.5],
+      "y": [39, 41],
+      "z": [-0.5, 0.5]
+    },
+    {
+      "name": "blade_edge_r_1",
+      "group": "blade_group",
+      "role": "우측 불꽃 톱니 #1 (하단)",
+      "x": [1.5, 2.5],
+      "y": [22, 24],
+      "z": [-0.5, 0.5]
+    },
+    {
+      "name": "blade_edge_r_2",
+      "group": "blade_group",
+      "role": "우측 불꽃 톱니 #2 (중하단)",
+      "x": [1.5, 2.5],
+      "y": [28, 30],
+      "z": [-0.5, 0.5]
+    },
+    {
+      "name": "blade_edge_r_3",
+      "group": "blade_group",
+      "role": "우측 불꽃 톱니 #3 (중상단)",
+      "x": [1.5, 2.5],
+      "y": [34, 36],
+      "z": [-0.5, 0.5]
+    },
+    {
+      "name": "blade_edge_r_4",
+      "group": "blade_group",
+      "role": "우측 불꽃 톱니 #4 (상단)",
+      "x": [1.5, 2.0],
+      "y": [39, 41],
+      "z": [-0.5, 0.5]
+    },
+    {
+      "name": "blade_tip_main",
+      "group": "blade_tip_group",
+      "role": "팁 상단 좁은 날",
+      "x": [-1.0, 1.0],
+      "y": [45, 47],
+      "z": [-0.5, 0.5]
+    },
+    {
+      "name": "blade_tip_spike",
+      "group": "blade_tip_group",
+      "role": "최상단 불꽃 스파이크",
+      "x": [-0.5, 0.5],
+      "y": [47, 48],
+      "z": [-0.5, 0.5]
+    },
+    {
+      "name": "guard_lower_core",
+      "group": "guard_group",
+      "role": "가드 하단 코어 — 날과 가드 연결",
+      "x": [-2.0, 2.0],
+      "y": [11, 15],
+      "z": [-1.0, 1.0]
+    },
+    {
+      "name": "guard_lower_spike_l",
+      "group": "guard_group",
+      "role": "좌측 하단 가드 스파이크",
+      "x": [-4.0, -2.0],
+      "y": [11, 13],
+      "z": [-0.75, 0.75]
+    },
+    {
+      "name": "guard_lower_spike_r",
+      "group": "guard_group",
+      "role": "우측 하단 가드 스파이크",
+      "x": [2.0, 4.0],
+      "y": [11, 13],
+      "z": [-0.75, 0.75]
+    },
+    {
+      "name": "guard_hub",
+      "group": "guard_group",
+      "role": "가드 중앙 허브 — 날개 연결점",
+      "x": [-2.0, 2.0],
+      "y": [15, 19],
+      "z": [-1.0, 1.0]
+    },
+    {
+      "name": "center_gem",
+      "group": "guard_group",
+      "role": "다이아몬드 중앙 보석",
+      "x": [-1.5, 1.5],
+      "y": [15.5, 18.5],
+      "z": [-1.25, 1.25],
+      "note": "guard_hub보다 Z 더 큼 — 돌출 효과. 떠있지 않게 guard_hub와 Z 겹침."
+    },
+    {
+      "name": "guard_wing_l_base",
+      "group": "guard_group",
+      "role": "좌측 날개 기부 — 허브에서 위 방향 시작",
+      "x": [-4.0, -1.0],
+      "y": [17, 20],
+      "z": [-1.0, 1.0]
+    },
+    {
+      "name": "guard_wing_l_mid",
+      "group": "guard_group",
+      "role": "좌측 날개 중단 — 위쪽으로 계속 스위핑",
+      "x": [-5.0, -3.0],
+      "y": [19, 22],
+      "z": [-1.0, 1.0]
+    },
+    {
+      "name": "guard_wing_l_tip",
+      "group": "guard_group",
+      "role": "좌측 날개 팁 — 안쪽으로 약간 꺾임",
+      "x": [-5.5, -4.0],
+      "y": [21, 23],
+      "z": [-0.75, 0.75]
+    },
+    {
+      "name": "guard_wing_r_base",
+      "group": "guard_group",
+      "role": "우측 날개 기부",
+      "x": [1.0, 4.0],
+      "y": [17, 20],
+      "z": [-1.0, 1.0]
+    },
+    {
+      "name": "guard_wing_r_mid",
+      "group": "guard_group",
+      "role": "우측 날개 중단",
+      "x": [3.0, 5.0],
+      "y": [19, 22],
+      "z": [-1.0, 1.0]
+    },
+    {
+      "name": "guard_wing_r_tip",
+      "group": "guard_group",
+      "role": "우측 날개 팁",
+      "x": [4.0, 5.5],
+      "y": [21, 23],
+      "z": [-0.75, 0.75]
+    },
+    {
+      "name": "handle_top_band",
+      "group": "handle_group",
+      "role": "손잡이 상단 밴드",
+      "x": [-1.0, 1.0],
+      "y": [10, 11],
+      "z": [-0.75, 0.75]
+    },
+    {
+      "name": "handle",
+      "group": "handle_group",
+      "role": "그립 본체",
+      "x": [-0.75, 0.75],
+      "y": [4, 10],
+      "z": [-0.5, 0.5]
+    },
+    {
+      "name": "handle_bot_band",
+      "group": "handle_group",
+      "role": "손잡이 하단 밴드",
+      "x": [-1.0, 1.0],
+      "y": [3, 4],
+      "z": [-0.75, 0.75]
+    },
+    {
+      "name": "pommel_neck",
+      "group": "pommel_group",
+      "role": "폼멜 연결 넥",
+      "x": [-0.75, 0.75],
+      "y": [2, 3],
+      "z": [-0.5, 0.5]
+    },
+    {
+      "name": "pommel_main",
+      "group": "pommel_group",
+      "role": "다이아몬드형 폼멜 메인",
+      "x": [-1.5, 1.5],
+      "y": [0, 2],
+      "z": [-1.0, 1.0]
+    }
+  ],
+  "palette": {
+    "primary": "#4A1200",
+    "secondary": "#CC4400",
+    "accent": "#FF7700",
+    "shadow": "#1A0500",
+    "glow": "#FFCC00"
+  },
+  "simplification_rules": [
+    "검신 불꽃 내부 디테일은 텍스처 전담 — 추가 geometry 금지",
+    "가드 날개는 3큐브 계단식 (base/mid/tip) — 실제 커브 geometry 불필요",
+    "손잡이 랩 디테일은 텍스처 전담",
+    "폼멜 다이아몬드 형태는 큐브 + 텍스처로 표현 (45도 회전 없이)"
+  ],
+  "validation_flags": [
+    "blade_depth_must_be_1u",
+    "guard_wings_sweep_upward",
+    "no_floating_cubes",
+    "total_cubes_under_35",
+    "gem_z_protrudes_from_guard_hub"
+  ]
+}

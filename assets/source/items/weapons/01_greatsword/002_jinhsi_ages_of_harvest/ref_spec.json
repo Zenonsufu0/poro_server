@@ -1,0 +1,105 @@
+{
+  "asset_id": "gs_002_harvest_blade",
+  "category": "greatsword",
+  "source_family": "wuthering_waves_jinhsi",
+  "theme": "harvest_ice_crystal",
+  "reference_files": {
+    "primary": "assets/source/items/weapons/_reference_library/wuthering_waves/03_selected_by_weapon_type/01_greatsword/selected/wuthering_waves_jinhsi_ages_of_harvest_broadblade_01.png",
+    "support": []
+  },
+  "dimensions_bb": {
+    "target_length_y": 32,
+    "max_width_x": 10,
+    "max_depth_z": 3
+  },
+  "parts": [
+    {
+      "name": "blade_core",
+      "role": "날 중심 기둥",
+      "size_uvw": [4, 24, 2],
+      "anchor": "center",
+      "notes": "Y 방향 주축. 날의 두께와 길이 기준선."
+    },
+    {
+      "name": "blade_wide",
+      "role": "비대칭 광폭 날 면 (좌측)",
+      "size_uvw": [4, 20, 1],
+      "anchor": "left_of_blade_core",
+      "notes": "blade_core 좌측에 면 접합. 하단에서 상단으로 계단형 테이퍼."
+    },
+    {
+      "name": "blade_tip",
+      "role": "상단 크레센트 돌출",
+      "size_uvw": [3, 3, 1],
+      "anchor": "blade_core_top_left",
+      "notes": "비대칭 좌측 돌출. 날카로운 실루엣 강조."
+    },
+    {
+      "name": "wing_guard_l",
+      "role": "가드 좌측 날개",
+      "size_uvw": [5, 1, 1],
+      "anchor": "guard_core_left",
+      "notes": "최대 5u. 초과 시 클리핑 위험."
+    },
+    {
+      "name": "wing_guard_r",
+      "role": "가드 우측 날개",
+      "size_uvw": [3, 1, 1],
+      "anchor": "guard_core_right",
+      "notes": "비대칭 — 좌보다 짧게 유지."
+    },
+    {
+      "name": "guard_core",
+      "role": "가드 중심 연결 블록",
+      "size_uvw": [2, 2, 2],
+      "anchor": "blade_core_base",
+      "notes": "날개 2매 연결점. 깊이 2u로 입체감 부여."
+    },
+    {
+      "name": "gem_center",
+      "role": "포인트 젬",
+      "size_uvw": [1, 1, 1],
+      "anchor": "guard_core_front_center",
+      "notes": "가드 중앙 전면. 1개 한정."
+    },
+    {
+      "name": "handle",
+      "role": "손잡이",
+      "size_uvw": [1, 6, 1],
+      "anchor": "guard_core_bottom",
+      "notes": "단면 1×1 원기둥. 매트 텍스처."
+    },
+    {
+      "name": "pommel",
+      "role": "폼멜",
+      "size_uvw": [2, 1, 2],
+      "anchor": "handle_bottom",
+      "notes": "타원형 마무리. 단순 블록 처리."
+    }
+  ],
+  "palette": {
+    "primary":   "#A8C8E8",
+    "secondary": "#DCF0FF",
+    "accent":    "#C0E8FF",
+    "shadow":    "#1E3A5A",
+    "glow":      "#DCF0FF",
+    "mid":       "#5080A8",
+    "handle":    "#384858"
+  },
+  "simplification_rules": [
+    "모든 곡선 엣지 → 블록 계단으로 근사",
+    "반투명 날 질감 금지 — 불투명 텍스처 하이라이트로 대체",
+    "젬 최대 1개",
+    "색상 모자이크 배열 금지",
+    "부유 블록 금지 — 모든 파트 면 접합 필수",
+    "wing_guard_l ≤ 5u, wing_guard_r ≤ 3u",
+    "총 Y 길이 32u 초과 금지"
+  ],
+  "validation_flags": [
+    "blade_wide가 blade_core에 면 접합되었는가",
+    "비대칭 실루엣이 손에 들었을 때 좌측 치우침 없이 읽히는가",
+    "gem_center가 1개인가",
+    "부유 블록 없음",
+    "wing_guard 길이 제한 준수"
+  ]
+}

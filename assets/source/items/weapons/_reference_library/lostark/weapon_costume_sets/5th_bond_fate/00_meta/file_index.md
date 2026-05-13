@@ -1,0 +1,33 @@
+# File Index - 5th_bond_fate
+
+Generated: 20260503_172148
+
+00_meta/file_index.md
+00_meta/set_notes.md
+00_meta/source_note.md
+02_archetypes/assassin/notes.md
+02_archetypes/hunter/notes.md
+02_archetypes/hunter/weapons/raw/lostark_5th_hunter_blaster_launcher_01.png
+02_archetypes/hunter/weapons/raw/lostark_5th_hunter_devilhunter_guns_01.png
+02_archetypes/hunter/weapons/raw/lostark_5th_hunter_gunslinger_gun_bond_focus.png
+02_archetypes/hunter/weapons/raw/lostark_5th_hunter_gunslinger_gun_fate_focus.png
+02_archetypes/hunter/weapons/raw/lostark_5th_hunter_hawkeye_bow_01.png
+02_archetypes/hunter/weapons/raw/lostark_5th_hunter_scouter_smg_bond_focus.png
+02_archetypes/hunter/weapons/raw/lostark_5th_hunter_scouter_smg_fate_focus.png
+02_archetypes/mage/notes.md
+02_archetypes/martial_artist/notes.md
+02_archetypes/martial_artist/weapons/raw/lostark_5th_martialartist_battlemaster_gauntlet_01.png
+02_archetypes/martial_artist/weapons/raw/lostark_5th_martialartist_infighter_heavy_gauntlet_01.png
+02_archetypes/martial_artist/weapons/raw/lostark_5th_martialartist_lance_bond_focus.png
+02_archetypes/martial_artist/weapons/raw/lostark_5th_martialartist_lance_fate_focus.png
+02_archetypes/martial_artist/weapons/raw/lostark_5th_martialartist_orb_dark_focus.png
+02_archetypes/martial_artist/weapons/raw/lostark_5th_martialartist_orb_solar_focus.png
+02_archetypes/specialist/notes.md
+02_archetypes/warrior_female/notes.md
+02_archetypes/warrior_male/costumes/raw/lostark_5th_warrior_gold_armor_full_01.png
+02_archetypes/warrior_male/costumes/raw/lostark_5th_warrior_silver_black_armor_full_01.png
+02_archetypes/warrior_male/notes.md
+02_archetypes/warrior_male/weapons/raw/lostark_5th_warrior_berserker_greatsword_01.png
+02_archetypes/warrior_male/weapons/raw/lostark_5th_warrior_destroyer_hammer_01.png
+02_archetypes/warrior_male/weapons/raw/lostark_5th_warrior_holyknight_sword_01.png
+02_archetypes/warrior_male/weapons/raw/lostark_5th_warrior_warlord_lance_shield_01.png

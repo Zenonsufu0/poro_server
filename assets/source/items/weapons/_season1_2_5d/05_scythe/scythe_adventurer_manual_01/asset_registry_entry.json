@@ -1,0 +1,32 @@
+{
+  "asset_id": "scythe_adventurer_manual_01",
+  "category": "weapon/scythe",
+  "display_name_ko": "모험가의 낫",
+  "source_inspiration": [
+    "scythe_adventurer_ref_01.png (reference 폴더)"
+  ],
+  "poro_transform_notes": "모험가 컨셉의 낫 치장무기. 9개 cube blockout 완료 (shaft/grip/butt_cap/collar/socket/blade 4파트). 텍스처는 placeholder 단계. display 설정 완료. CMD 100595 (netherite_hoe).",
+  "final_files": {
+    "bbmodel": "assets/source/items/weapons/_season1_2_5d/05_scythe/scythe_adventurer_manual_01/source/scythe_adventurer_manual_01.bbmodel",
+    "texture": "assets/export/resourcepack/assets/poro/textures/item/weapons/scythe_adventurer_manual_01_{blade,metal,wood,grip}.png",
+    "renders": [
+      "assets/source/items/weapons/_season1_2_5d/05_scythe/scythe_adventurer_manual_01/renders/scythe_adventurer_manual_01_front.png",
+      "assets/source/items/weapons/_season1_2_5d/05_scythe/scythe_adventurer_manual_01/renders/scythe_adventurer_manual_01_angle.png"
+    ],
+    "export_json": "assets/export/resourcepack/assets/poro/models/item/weapons/scythe_adventurer_manual_01.json"
+  },
+  "cmd": {
+    "item": "minecraft:netherite_hoe",
+    "strings": ["100595"]
+  },
+  "phase_status": {
+    "0_policy": "done",
+    "1_geometry": "done",
+    "2_texture": "needs_work",
+    "3_display": "done",
+    "4_export_json": "done",
+    "5_cmd_registry": "pending"
+  },
+  "status": "needs_review",
+  "export_date": "2026-05-11"
+}
