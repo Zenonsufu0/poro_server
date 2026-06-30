@@ -121,6 +121,10 @@ public class CoreConfig {
         public int codeExpiryMinutes = 10;         // /인증 코드 유효시간
         public boolean confine = true;             // 미인증자 허브 감금(반경 밖 복귀)
         public int confineRadius = 100;            // 허브 spawn 기준 감금 반경
+        public boolean adventureModeBeforeVerify = true; // 미인증자는 인증 대기구역에서 Adventure 고정
+        public boolean survivalModeAfterVerify = true;   // 인증 완료 시 Survival 전환
+        public boolean teleportWildAfterVerify = true;   // 인증 완료 시 즉시 야생 랜덤 이동
+        public boolean blockVerifiedHubEntry = true;     // 인증자는 인증 대기 허브 반경 재진입 차단
     }
 
     /** 감사 로깅 토글 (0.1 일부만 사용). */

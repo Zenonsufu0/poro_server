@@ -515,3 +515,13 @@ jar 전수 검증(`egg_pool_design.md §8`)으로 Eggs Addon(`diesse`)의 실제
 **제외(별도 결정 필요):** `suitcase_block`(창고형 추정 불확실), `mega_showdown:rusted_sword/shield`(자시안/자마젠타 — MSD 도메인, LM 패스 범위 밖).
 
 **검증:** 40개 전부 유효 JSON + jar 실경로와 1:1 대조(orphan 0). **헤드리스 한계**: 실제 제작 차단·datapack 우선순위는 서버 기동 후 `/datapack list` + 레시피북/제작 시도로 **알파 인게임 확인 필요**. (보조: 재료 광석 placed_feature 비활성은 미적용 — 레시피 차단 시 재료 무용이라 1차 제외.)
+
+### 050. 인증 대기 허브 운영 보정 + 가격 관리 GUI + 특성 마개조 일시 비활성 (2026-07-01)
+
+알파 운영 전 인증 대기 허브 동선을 강화한다. 미인증자는 인증 대기 허브에서 Adventure 모드로 고정하고, 인증 완료 시 Survival 전환 후 야생 이동 기능이 활성화되어 있으면 안전 지표 탐색 로직으로 야생에 배치한다. 인증 완료자가 허브 반경에 재진입한 경우에도 야생 이동 기능이 켜져 있을 때만 자동으로 야생 이동을 수행해 `wild.enabled=false` 설정에서 반복 메시지/이동 실패 루프가 생기지 않게 한다.
+
+운영자 GUI에 가격 관리 메뉴를 추가한다. `/zenonmon admin gui` → 가격 관리에서 상점 카테고리별 품목을 선택하고 채팅 숫자 입력으로 가격을 수정하며, 변경값은 `config/zenonmoncore/economy.json`에 즉시 저장한다.
+
+특성 마개조는 밸런스 영향이 커서 일단 비활성화한다. `economy.json → engineering.abilityMakeoverEnabled=false`를 기본값으로 두며, 비활성 상태에서는 정수·특성 구매 GUI, 특성 변경 GUI, 기존 특성 정수 우클릭 해제가 모두 차단된다. 기술 각인 포로공학 트랙은 유지한다.
+
+부가로 Windows 설치기 아이콘 리소스를 번들 기준에 반영한다.

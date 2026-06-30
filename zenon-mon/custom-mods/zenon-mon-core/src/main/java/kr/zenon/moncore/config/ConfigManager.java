@@ -55,6 +55,17 @@ public final class ConfigManager {
         }
     }
 
+    /** 현재 economy 설정을 디스크에 저장(운영자 가격 관리 GUI). */
+    public static void saveEconomy() {
+        Path file = file("economy.json");
+        try {
+            Files.createDirectories(file.getParent());
+            Files.writeString(file, GSON.toJson(economy));
+        } catch (Exception e) {
+            ZenonMonCore.LOGGER.error("[Config] economy.json 저장 실패", e);
+        }
+    }
+
     /** 최초 로드(없으면 기본값 생성). onInitialize 에서 1회. */
     public static void load() {
         core = loadOrCreate("core.json", CoreConfig.class, CoreConfig::new);

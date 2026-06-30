@@ -9,6 +9,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.text.Text;
+import net.minecraft.world.GameMode;
 import net.minecraft.world.World;
 
 import java.security.SecureRandom;
@@ -73,30 +74,78 @@ public final class AuthManager {
             state.markDirty();
             ServerPlayerEntity online = s.getPlayerManager().getPlayer(p.uuid());
             if (online != null) {
+                CoreConfig.DiscordAuth cfg = ConfigManager.core().discordAuth;
+                if (cfg.survivalModeAfterVerify && !online.hasPermissionLevel(2)) {
+                    online.changeGameMode(GameMode.SURVIVAL);
+                }
                 online.sendMessage(Text.literal("§a§l[인증 완료] §r§a디스코드 인증이 완료되었습니다! 이제 자유롭게 플레이하세요."), false);
+                if (cfg.teleportWildAfterVerify && ConfigManager.core().wild.enabled) {
+                    online.sendMessage(Text.literal("§2[인증] 야생 시작 지점으로 이동합니다."), true);
+                    kr.zenon.moncore.wild.WildManager.forceTeleport(online);
+                }
             }
             ZenonMonCore.LOGGER.info("[Auth] 인증 완료: {} ↔ discord {}", p.uuid(), discordId);
         });
         return p.uuid();
     }
 
+    /** 접속 직후 인증 상태에 맞는 게임모드/위치를 보정한다. */
+    public static void onJoin(ServerPlayerEntity player) {
+        CoreConfig.DiscordAuth cfg = ConfigManager.core().discordAuth;
+        if (!cfg.enabled) return;
+        CoreConfig.Spawn hub = ConfigManager.core().hub.spawn;
+        double r2 = (double) cfg.confineRadius * cfg.confineRadius;
+        if (isVerified(player)) {
+            moveVerifiedOutOfHub(player, cfg, hub, r2);
+            return;
+        }
+        applyWaitingMode(player, cfg);
+        if (cfg.confine && !isInsideHub(player, hub, r2)) {
+            teleportHub(player, hub);
+        }
+    }
+
     /** 매 틱(20틱): 미인증자 허브 감금(반경 밖이면 복귀). */
     public static void tickConfine(MinecraftServer s) {
         CoreConfig.DiscordAuth cfg = ConfigManager.core().discordAuth;
-        if (!cfg.enabled || !cfg.confine) return;
+        if (!cfg.enabled) return;
         CoreConfig.Spawn hub = ConfigManager.core().hub.spawn;
         double r2 = (double) cfg.confineRadius * cfg.confineRadius;
         for (ServerPlayerEntity player : s.getPlayerManager().getPlayerList()) {
-            if (isVerified(player)) continue;
+            if (isVerified(player)) {
+                moveVerifiedOutOfHub(player, cfg, hub, r2);
+                continue;
+            }
+            applyWaitingMode(player, cfg);
+            if (!cfg.confine) continue;
             // 오버월드 허브 반경 밖이면 복귀
             boolean overworld = player.getServerWorld().getRegistryKey() == World.OVERWORLD;
             if (!overworld) { teleportHub(player, hub); continue; } // 미인증자는 타 차원 금지
-            double dx = player.getX() - hub.x, dz = player.getZ() - hub.z;
-            if (dx * dx + dz * dz > r2) {
+            if (!isInsideHub(player, hub, r2)) {
                 teleportHub(player, hub);
                 player.sendMessage(Text.literal("§c[인증] 인증 전에는 허브를 벗어날 수 없습니다. §7/인증"), true);
             }
         }
+    }
+
+    private static void moveVerifiedOutOfHub(ServerPlayerEntity player, CoreConfig.DiscordAuth cfg,
+                                             CoreConfig.Spawn hub, double radiusSquared) {
+        if (!cfg.blockVerifiedHubEntry || !ConfigManager.core().wild.enabled || player.hasPermissionLevel(2)) return;
+        if (!isInsideHub(player, hub, radiusSquared)) return;
+        player.sendMessage(Text.literal("§e[허브] 인증 대기구역은 신규 인증 전용입니다. 야생으로 이동합니다."), true);
+        kr.zenon.moncore.wild.WildManager.forceTeleport(player);
+    }
+
+    private static void applyWaitingMode(ServerPlayerEntity player, CoreConfig.DiscordAuth cfg) {
+        if (cfg.adventureModeBeforeVerify && !player.hasPermissionLevel(2)) {
+            player.changeGameMode(GameMode.ADVENTURE);
+        }
+    }
+
+    private static boolean isInsideHub(ServerPlayerEntity player, CoreConfig.Spawn hub, double radiusSquared) {
+        if (player.getServerWorld().getRegistryKey() != World.OVERWORLD) return false;
+        double dx = player.getX() - hub.x, dz = player.getZ() - hub.z;
+        return dx * dx + dz * dz <= radiusSquared;
     }
 
     private static void teleportHub(ServerPlayerEntity player, CoreConfig.Spawn hub) {

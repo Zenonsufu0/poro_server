@@ -153,7 +153,8 @@ public class EconomyConfig {
         public long priceMedium = 2500;    // 위력 61~90
         public long priceStrong = 4000;    // 위력 91~110
         public long pricePremium = 6000;   // 위력 111+
-        // 특성 마개조(완전 강제 부여 = 사기성 → 기술보다 비싸게, 배지 게이트 상향). 결정 034.
+        // 특성 마개조(완전 강제 부여 = 사기성 → 일단 비활성). 결정 034.
+        public boolean abilityMakeoverEnabled = false;
         public long abilityStonePrice = 500000; // 포로공학 정수·특성 가격
         public int abilityStoneBadges = 6;      // 특성 정수 구매 배지 게이트
         public long abilityChangePrice = 50000; // 특성 1회 강제 부여 비용(단일가)

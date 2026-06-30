@@ -64,6 +64,10 @@ public final class EngineeringMenu {
         return ZenonMonState.get(p.getServer()).getOrCreate(p.getUuid()).badges.size();
     }
 
+    private static boolean abilityMakeoverEnabled() {
+        return ConfigManager.economy().engineering.abilityMakeoverEnabled;
+    }
+
     // ===== 메인 =====
     public static void open(ServerPlayerEntity player) {
         ServerMenuHandler.show(player, Text.literal("포로공학").formatted(Formatting.LIGHT_PURPLE),
@@ -73,7 +77,7 @@ public final class EngineeringMenu {
                     String unit = ConfigManager.economy().currencyDisplay;
                     inv.setStack(ShopLayout.BALANCE_SLOT, MenuIcons.icon(Items.GOLD_NUGGET,
                             "§6잔액: " + EconomyBridge.getBalance(player) + " " + unit,
-                            List.of("§7정수로 포켓몬을 해제 → 기술 각인 / 특성 변경")));
+                            List.of("§7정수로 포켓몬을 해제 → 기술 각인")));
                     inv.setStack(ShopLayout.BACK_SLOT, MenuIcons.icon(Items.ARROW, "§e← 메뉴로", List.of()));
                     // 기술 트랙
                     inv.setStack(STONE_SLOT, MenuIcons.iconModel(Items.PAPER, 82030, "§d포로공학 정수 · 기술머신",
@@ -83,21 +87,23 @@ public final class EngineeringMenu {
                     inv.setStack(ENGRAVE_SLOT, MenuIcons.icon(Items.ENDER_EYE, "§d기술 각인",
                             List.of("§7해제된 포켓몬에 배울 수 없는 기술 각인", "§7각인마다 골드(위력 등급가)",
                                     "§e클릭 — 포켓몬 선택")));
-                    // 특성 트랙 (결정 034)
-                    inv.setStack(ABILITY_STONE_SLOT, MenuIcons.iconModel(Items.PAPER, 82031, "§d포로공학 정수 · 특성",
-                            List.of("§7포켓몬에 우클릭 → 그 포켓몬 영구 해제",
-                                    "§7가격: §6" + cfg.abilityStonePrice + " " + unit,
-                                    "§7배지 " + cfg.abilityStoneBadges + "개 필요", "§e클릭 — 구매")));
-                    inv.setStack(ABILITY_SLOT, MenuIcons.icon(Items.NETHER_STAR, "§d특성 변경",
-                            List.of("§7해제된 포켓몬에 어떤 특성이든 강제 부여", "§7변경마다 §6" + cfg.abilityChangePrice + " " + unit,
-                                    "§e클릭 — 포켓몬 선택")));
+                    if (abilityMakeoverEnabled()) {
+                        // 특성 트랙 (결정 034)
+                        inv.setStack(ABILITY_STONE_SLOT, MenuIcons.iconModel(Items.PAPER, 82031, "§d포로공학 정수 · 특성",
+                                List.of("§7포켓몬에 우클릭 → 그 포켓몬 영구 해제",
+                                        "§7가격: §6" + cfg.abilityStonePrice + " " + unit,
+                                        "§7배지 " + cfg.abilityStoneBadges + "개 필요", "§e클릭 — 구매")));
+                        inv.setStack(ABILITY_SLOT, MenuIcons.icon(Items.NETHER_STAR, "§d특성 변경",
+                                List.of("§7해제된 포켓몬에 어떤 특성이든 강제 부여", "§7변경마다 §6" + cfg.abilityChangePrice + " " + unit,
+                                        "§e클릭 — 포켓몬 선택")));
+                    }
                 },
                 (p, slot, button, shift) -> {
                     if (slot == ShopLayout.BACK_SLOT) MenuGuiManager.open(p);
                     else if (slot == STONE_SLOT) buyStone(p);
                     else if (slot == ENGRAVE_SLOT) openPokemonSelect(p);
-                    else if (slot == ABILITY_STONE_SLOT) buyAbilityStone(p);
-                    else if (slot == ABILITY_SLOT) openAbilityPokemonSelect(p);
+                    else if (abilityMakeoverEnabled() && slot == ABILITY_STONE_SLOT) buyAbilityStone(p);
+                    else if (abilityMakeoverEnabled() && slot == ABILITY_SLOT) openAbilityPokemonSelect(p);
                 });
     }
 
@@ -122,6 +128,10 @@ public final class EngineeringMenu {
     }
 
     private static void buyAbilityStone(ServerPlayerEntity player) {
+        if (!abilityMakeoverEnabled()) {
+            player.sendMessage(Text.literal("§c[포로공학] 특성 마개조는 현재 비활성화되어 있습니다."), true);
+            return;
+        }
         EngineeringConfig cfg = ConfigManager.economy().engineering;
         if (badgeCount(player) < cfg.abilityStoneBadges) {
             player.sendMessage(Text.literal("§c[포로공학] 특성 정수는 배지 " + cfg.abilityStoneBadges + "개가 필요합니다."), true);
@@ -364,6 +374,11 @@ public final class EngineeringMenu {
 
     // ===== 특성 마개조 (결정 034) =====
     public static void openAbilityPokemonSelect(ServerPlayerEntity player) {
+        if (!abilityMakeoverEnabled()) {
+            player.sendMessage(Text.literal("§c[포로공학] 특성 마개조는 현재 비활성화되어 있습니다."), true);
+            open(player);
+            return;
+        }
         ServerMenuHandler.show(player, Text.literal("특성 변경 — 포켓몬 선택").formatted(Formatting.LIGHT_PURPLE),
                 inv -> {
                     for (int i = 0; i < ServerMenuHandler.DISPLAY_SIZE; i++) inv.setStack(i, MenuIcons.pane());
@@ -467,6 +482,12 @@ public final class EngineeringMenu {
     }
 
     private static void applyAbility(ServerPlayerEntity player, AbilityCatalog.Entry entry) {
+        if (!abilityMakeoverEnabled()) {
+            player.sendMessage(Text.literal("§c[포로공학] 특성 마개조는 현재 비활성화되어 있습니다."), true);
+            TARGET.remove(player.getUuid());
+            open(player);
+            return;
+        }
         Pokemon pk = MakeoverService.findPartyPokemon(player, TARGET.get(player.getUuid()));
         if (pk == null) {
             player.sendMessage(Text.literal("§c[포로공학] 대상 포켓몬을 파티에서 찾을 수 없습니다."), true);

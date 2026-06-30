@@ -66,6 +66,10 @@ public class ZenonMonCore implements ModInitializer {
                 return net.minecraft.util.ActionResult.SUCCESS;
             }
             boolean ability = kind == kr.zenon.moncore.item.MakeoverStone.Kind.ABILITY;
+            if (ability && !kr.zenon.moncore.config.ConfigManager.economy().engineering.abilityMakeoverEnabled) {
+                sp.sendMessage(net.minecraft.text.Text.literal("§c[포로공학] 특성 마개조는 현재 비활성화되어 있습니다."), true);
+                return net.minecraft.util.ActionResult.SUCCESS;
+            }
             boolean unlocked = ability
                     ? kr.zenon.moncore.shop.MakeoverService.unlockAbility(sp, target)
                     : kr.zenon.moncore.shop.MakeoverService.unlock(sp, target);
@@ -201,8 +205,11 @@ public class ZenonMonCore implements ModInitializer {
 
         // 디스코드 미인증 안내(결정 041): 인증 전 허브 감금
         if (!kr.zenon.moncore.auth.AuthManager.isVerified(player)) {
+            kr.zenon.moncore.auth.AuthManager.onJoin(player);
             player.sendMessage(net.minecraft.text.Text.literal(
                     "§6§l[디스코드 인증 필요] §r§7인증 전에는 허브만 이용할 수 있습니다. §e/인증 §7으로 코드를 발급받으세요."), false);
+        } else {
+            kr.zenon.moncore.auth.AuthManager.onJoin(player);
         }
     }
 }

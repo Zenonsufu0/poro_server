@@ -58,6 +58,17 @@ public final class WildManager {
         // 카운트다운은 tickWarmups가 매 초 액션바로 갱신
     }
 
+    /** 운영/시스템용 즉시 야생 이동. 웜업과 쿨다운 검사는 생략하지만 이동 후 쿨다운은 기록한다. */
+    public static void forceTeleport(ServerPlayerEntity player) {
+        CoreConfig.Wild cfg = ConfigManager.core().wild;
+        if (!cfg.enabled) {
+            player.sendMessage(Text.literal("§c[야생] 비활성화되어 있습니다."), true);
+            return;
+        }
+        PENDING.remove(player.getUuid());
+        beginSearch(player);
+    }
+
     /** 매 틱 호출(ZenonMonCore): 웜업 진행/취소/완료. */
     public static void tickWarmups(MinecraftServer server) {
         if (PENDING.isEmpty()) return;

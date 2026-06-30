@@ -31,6 +31,7 @@ public final class AdminMenu {
     private static final int SLOT_APEX = 40;
     private static final int SLOT_FIELD_FAST = 34;
     private static final int SLOT_MONITOR = 42;
+    private static final int SLOT_PRICE = 44;
     private static final int SLOT_CLOSE = 49;
 
     public static void open(ServerPlayerEntity player) {
@@ -70,6 +71,8 @@ public final class AdminMenu {
                         "§e클릭 — 토글")));
         inv.setStack(SLOT_MONITOR, MenuIcons.icon(Items.GOLD_BLOCK, "§6경제 모니터",
                 List.of("§7골드 유입/유출 통계", "§e클릭")));
+        inv.setStack(SLOT_PRICE, MenuIcons.icon(Items.WRITABLE_BOOK, "§6가격 관리",
+                List.of("§7상점 가격 수정", "§7클릭 → 카테고리 선택")));
         inv.setStack(SLOT_CLOSE, MenuIcons.icon(Items.BARRIER, "§c닫기", List.of()));
     }
 
@@ -85,6 +88,7 @@ public final class AdminMenu {
             case SLOT_ANNOUNCE -> promptAnnounce(player);
             case SLOT_ENCOUNTER -> EncounterAdminMenu.open(player);
             case SLOT_MONITOR -> EconomyMonitorMenu.open(player);
+            case SLOT_PRICE -> PriceAdminMenu.open(player);
             case SLOT_CLOSE -> player.closeHandledScreen();
             default -> { /* 무시 */ }
         }

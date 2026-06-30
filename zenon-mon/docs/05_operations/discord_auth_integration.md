@@ -4,16 +4,18 @@
 > MC 측은 ZenonMonCore가 구현(이 저장소). **봇 측은 `porong-discord` 워크트리에서 별도 구현**(이 문서가 계약).
 
 ## 흐름
-1. 플레이어가 MC 접속(Zenon 디스코드 멤버 전제). **미인증 상태** = 허브 감금 + 메뉴는 "인증하기"만.
+1. 플레이어가 MC 접속(Zenon 디스코드 멤버 전제). **미인증 상태** = 인증 대기 허브 감금 + Adventure 모드 + 메뉴는 "인증하기"만.
 2. 플레이어 `/인증`(또는 `/auth`, 또는 메뉴 "인증하기") → **6자리 코드** 발급(예: `AB12CD`, 기본 10분 유효).
 3. 플레이어가 그 코드를 **디스코드 봇**에게 입력(명령/DM).
 4. 봇이 MC 인증 HTTP API `POST /auth/verify` 호출(코드 + 디스코드 ID).
 5. MC가 코드 검증 → 해당 MC UUID를 **인증 완료**(UUID↔디스코드 ID 연결, 영속) → 봇에 200 응답.
-6. MC 내 해당 플레이어(온라인 시) 자동 안내 "인증 완료", 허브 감금/메뉴 잠금 해제.
+6. MC 내 해당 플레이어(온라인 시) 자동 안내 "인증 완료", Survival 모드 전환 후 야생 이동 기능이 활성화되어 있으면 야생 랜덤 시작 지점으로 이동.
+7. 인증 완료 유저는 야생 이동 기능이 활성화되어 있는 경우 인증 대기 허브 반경 재진입 시 자동으로 야생으로 되돌려 보낸다.
 
 ## MC 인증 HTTP API (ZenonMonCore 제공)
 - 설정: `config/zenonmoncore/core.json` → `discordAuth`
   - `enabled`, `bindAddress`(기본 127.0.0.1), `httpPort`(기본 25580), `apiKey`(**반드시 변경**), `codeExpiryMinutes`(10), `confine`(허브 감금), `confineRadius`(100).
+  - 인증 대기구역 정책: `adventureModeBeforeVerify`, `survivalModeAfterVerify`, `teleportWildAfterVerify`, `blockVerifiedHubEntry`.
 - 인증 헤더: `X-API-Key: <apiKey>` (모든 요청).
 
 ### `GET /auth/ping`
@@ -60,7 +62,7 @@
 
 ### B5. 봇측 검증 체크리스트
 - [ ] `GET /auth/ping` 200 (봇 호스트에서)
-- [ ] 올바른 코드 → 200 + 역할 부여 + MC 플레이어 "인증 완료"·감금 해제(MC측 자동)
+- [ ] 올바른 코드 → 200 + 역할 부여 + MC 플레이어 "인증 완료"·Survival 전환·야생 이동(MC측 자동)
 - [ ] 만료/오타 코드 → 404 안내
 - [ ] 잘못된 키 → 401(운영 알림 동작)
 - [ ] 전체 흐름 1회: MC `/인증` 코드 발급 → 디스코드 `/인증코드` → 접속 해제까지(알파)
@@ -69,5 +71,5 @@
 
 ## MC 측 구현 현황(이 저장소, ✅)
 - `auth/AuthManager`(코드 발급·검증·허브 감금), `auth/AuthHttpServer`(JDK HttpServer, 무의존), `auth/AuthMenu`(인증하기 GUI).
-- `PlayerProgress.discordVerified/discordId`(영속). `/인증`·`/auth` 명령. 미인증 = 메뉴→AuthMenu, 텔레포트 명령 차단, 허브 반경 감금.
+- `PlayerProgress.discordVerified/discordId`(영속). `/인증`·`/auth` 명령. 미인증 = 메뉴→AuthMenu, 텔레포트 명령 차단, 인증 대기 허브 반경 감금+Adventure. 인증 완료 = Survival+야생 이동, 인증자는 야생 이동 기능 활성화 시 허브 반경 재진입 차단.
 - 검증: 헤드리스 — ping·401·404·config 생성·에러0. ⚠️ 알파(플레이어): `/인증` 코드 발급·실제 verify 연결·감금·메뉴 잠금.

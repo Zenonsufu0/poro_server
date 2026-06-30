@@ -108,12 +108,18 @@ tar xzf server/backups/world-<TS>.tar.gz -C server/run
 2. **엔드포인트 확인**(서버 기동 후):
    - `curl -s -H "X-API-Key: <key>" http://127.0.0.1:25580/auth/ping` → `{"ok":true,"service":"zenonmoncore-auth"}`
    - 잘못된 키 → 401, 없는 코드로 verify → 404 (헤드리스 검증 항목).
-3. **흐름 점검(알파)**: 인게임 `/인증` → 6자리 코드 → 봇에 입력 → 역할 부여 + 허브 감금/메뉴 잠금 해제.
+3. **흐름 점검(알파)**: 인게임 `/인증` → 6자리 코드 → 봇에 입력 → 역할 부여 + Survival 전환 + 야생 랜덤 이동.
 
-### 9-2. 허브 spawn (오버월드)
+### 9-2. 인증 대기 허브 spawn (오버월드)
 - `core.json → hub.spawn{ x, y, z, yaw, pitch }`. **인게임 sethub 명령 없음 → JSON 직접 편집.**
-- 정책(`protection_policy.md`): **월드 스폰 = 허브 중심**. 빌드 후 실좌표로 맞추고 `/setworldspawn <x> <y> <z>`로 정렬, `spawn-protection`(server.properties)을 허브 반경으로.
+- `core.json → discordAuth.confineRadius`가 인증 대기 허브 경계 반경이다.
+- 정책(`protection_policy.md`): **월드 스폰 = 인증 대기 허브 중심**. 빌드 후 실좌표로 맞추고 `/setworldspawn <x> <y> <z>`로 정렬, `spawn-protection`(server.properties)을 허브 반경으로.
 - 기본값 `0.5/64/0.5`는 월드 스폰(0,0) 플레이스홀더 — 실제 빌드 바닥 Y/방향으로 갱신.
+
+### 9-2a. 가격 관리
+- OP 인게임: `/zenonmon admin gui` → **가격 관리**.
+- 카테고리 선택 → 품목 클릭 → 채팅에 새 가격 입력. 변경값은 즉시 `config/zenonmoncore/economy.json`에 저장된다.
+- 파일을 직접 수정한 경우에는 `/zenonmon admin reload`로 재로드한다.
 
 ### 9-3. 네더 허브 (결정 039-b/c)
 - op로 1회: `/zenonmon admin netherhub`(자동 위치) 또는 `/zenonmon admin netherhub here`(현재 위치). → 플랫폼+벽+귀환포탈+블레이즈 스포너 자동 건설.

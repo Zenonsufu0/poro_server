@@ -123,6 +123,8 @@ row5  [▓]     [▓]     [▓]     [▓]     [ 닫기 ] [▓]     [▓]     [�
   - 0.1 활성 슬롯: 4(플레이어 정보) · 10(진행도 채팅) · 19(허브 TP) · 49(닫기). 나머지(배지/가이드/상점/시설 안내)는 "준비 중" placeholder.
   - 인게임 검증 완료(2026-06-06, zenonsufu0): 우클릭 메뉴·허브 TP·진행 조회·드롭/이동 잠금.
 - **0.2 ✅ 구현 완료(2026-06-06)**: 매입소(28)·편의 상점(29) GUI + `EconomyBridge`(골드) + `economy.json`(매입/구매가 단일 출처). 매입=인벤 판매가능 자동진열·클릭 전부판매·전부팔기 / 편의=볼·회복약 좌1·우8 구매(환불 안전). 범용 `ServerMenuHandler.show()`로 **메뉴 전환 커서 점프 제거**(재오픈 없이 내용 교체). `/zenonmon admin economy give|set|balance`. 인게임 검증 완료.
+- **운영자 가격 관리 ✅ 구현**: `/zenonmon admin gui` → 가격 관리. 카테고리별 상점 가격을 클릭 후 채팅 숫자 입력으로 수정하고, `economy.json`에 즉시 저장한다.
+- **특성 마개조 일시 비활성**: `economy.json → engineering.abilityMakeoverEnabled=false` 기본값. 정수·특성 구매/특성 변경 GUI/기존 특성 정수 우클릭은 차단한다.
 - **슬롯20 = 홈(결정 029, 0.1 구현 완료)**: "야생 귀환"(직전 위치) 폐기 → 홈 등록/이동. 5칸(1 무료 + 4 골드 점진 해금 10k/30k/70k/150k), 좌클릭 이동/우클릭 재등록/쉬프트 이름변경, 쿨다운30s+웜업3s 채널링(이동·피격 취소)+카운트다운. `home/{HomeManager,HomeMenu}`·`data/Home`·`util/ChatInputManager`. `/zenonmon home`.
 - **리그 패스 보호 완성**: Q-드롭(`ServerPlayerEntityMixin`)·인벤 이동/드롭(`ScreenHandlerMixin`)·매 틱 슬롯 고정(`enforce`), 취소 후 `syncState()` 재동기화. lockSlot 기본 true.
 - **0.3+**: 허브 시설 안내(37–41) + 텔레포트, 배지/짐 가이드 조회, 커스텀 패스 모델(CustomModelData).
