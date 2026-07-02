@@ -62,25 +62,25 @@ public class ZenonMonCore implements ModInitializer {
             com.cobblemon.mod.common.pokemon.Pokemon target =
                     kr.zenon.moncore.shop.MakeoverService.findPartyPokemon(sp, pe.getPokemon().getUuid());
             if (target == null) {
-                sp.sendMessage(net.minecraft.text.Text.literal("§c[포로공학] 본인 파티 포켓몬에만 사용할 수 있습니다."), true);
+                sp.sendMessage(net.minecraft.text.Text.literal("§c[제논공학] 본인 파티 포켓몬에만 사용할 수 있습니다."), true);
                 return net.minecraft.util.ActionResult.SUCCESS;
             }
             boolean ability = kind == kr.zenon.moncore.item.MakeoverStone.Kind.ABILITY;
             if (ability && !kr.zenon.moncore.config.ConfigManager.economy().engineering.abilityMakeoverEnabled) {
-                sp.sendMessage(net.minecraft.text.Text.literal("§c[포로공학] 특성 마개조는 현재 비활성화되어 있습니다."), true);
+                sp.sendMessage(net.minecraft.text.Text.literal("§c[제논공학] 특성 마개조는 현재 비활성화되어 있습니다."), true);
                 return net.minecraft.util.ActionResult.SUCCESS;
             }
             boolean unlocked = ability
                     ? kr.zenon.moncore.shop.MakeoverService.unlockAbility(sp, target)
                     : kr.zenon.moncore.shop.MakeoverService.unlock(sp, target);
             if (!unlocked) {
-                sp.sendMessage(net.minecraft.text.Text.literal("§e[포로공학] 이미 해제된 포켓몬입니다."), true);
+                sp.sendMessage(net.minecraft.text.Text.literal("§e[제논공학] 이미 해제된 포켓몬입니다."), true);
                 return net.minecraft.util.ActionResult.SUCCESS;
             }
             held.decrement(1);
-            String tail = ability ? " §a해제 완료! 메뉴 → 포로공학에서 특성을 새길 수 있습니다."
-                                  : " §a해제 완료! 메뉴 → 포로공학에서 기술을 각인할 수 있습니다.";
-            sp.sendMessage(net.minecraft.text.Text.literal("§a[포로공학] ")
+            String tail = ability ? " §a해제 완료! 메뉴 → 제논공학에서 특성을 새길 수 있습니다."
+                                  : " §a해제 완료! 메뉴 → 제논공학에서 기술을 각인할 수 있습니다.";
+            sp.sendMessage(net.minecraft.text.Text.literal("§a[제논공학] ")
                     .append(target.getSpecies().getTranslatedName())
                     .append(net.minecraft.text.Text.literal(tail)), false);
             return net.minecraft.util.ActionResult.SUCCESS;

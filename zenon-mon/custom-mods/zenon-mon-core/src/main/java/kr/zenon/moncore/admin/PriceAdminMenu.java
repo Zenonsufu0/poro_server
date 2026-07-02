@@ -37,7 +37,7 @@ public final class PriceAdminMenu {
             new Category("mega", "메가 연구소", Items.NETHER_STAR),
             new Category("altar", "전설 제단 해금", Items.END_CRYSTAL),
             new Category("ticket", "조우권 사용가", Items.ENDER_EYE),
-            new Category("engineering", "포로공학", Items.SMITHING_TABLE)
+            new Category("engineering", "제논공학", Items.SMITHING_TABLE)
     );
 
     public static void open(ServerPlayerEntity admin) {

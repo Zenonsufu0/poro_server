@@ -12,7 +12,7 @@ import net.minecraft.util.Formatting;
 import java.util.List;
 
 /**
- * 포로공학 정수 (결정 033-a / 034). 포켓몬에 우클릭 → 그 포켓몬 영구 해제(소모).
+ * 제논공학 정수 (결정 033-a / 034). 포켓몬에 우클릭 → 그 포켓몬 영구 해제(소모).
  * 리그패스와 동일 패턴(paper + CUSTOM_DATA 태그)으로 신규 아이템 등록 없이 식별.
  * 2종: {@link Kind#TECH}(기술머신=off-learnset 기술 각인) / {@link Kind#ABILITY}(특성=임의 강제 부여).
  */
@@ -21,11 +21,11 @@ public final class MakeoverStone {
 
     /** 정수 종류. 태그/모델(CMD)/이름/lore가 종류별로 다르다. */
     public enum Kind {
-        TECH("zenonmoncore_makeover_stone", 82030, "포로공학 정수 · 기술머신", List.of(
-                "포로공학의 정수이다",
+        TECH("zenonmoncore_makeover_stone", 82030, "제논공학 정수 · 기술머신", List.of(
+                "제논공학의 정수이다",
                 "모든 기술머신을 배울 수 있게 된다")),
-        ABILITY("zenonmoncore_ability_stone", 82031, "포로공학 정수 · 특성", List.of(
-                "포로공학의 정수이다",
+        ABILITY("zenonmoncore_ability_stone", 82031, "제논공학 정수 · 특성", List.of(
+                "제논공학의 정수이다",
                 "어떤 특성이든 새길 수 있게 된다"));
 
         public final String tagKey;

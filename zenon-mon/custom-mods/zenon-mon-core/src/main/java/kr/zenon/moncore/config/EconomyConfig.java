@@ -141,12 +141,12 @@ public class EconomyConfig {
     }
 
     /**
-     * 포로공학 (결정 033-a): 해금석으로 포켓몬 영구 해제 → off-learnset 기술 각인(각인마다 골드, 위력 등급가).
+     * 제논공학 (결정 033-a): 해금석으로 포켓몬 영구 해제 → off-learnset 기술 각인(각인마다 골드, 위력 등급가).
      */
     public EngineeringConfig engineering = new EngineeringConfig();
 
     public static class EngineeringConfig {
-        public long stonePrice = 300000;   // 포로공학 정수·기술머신 가격(초기: 매우 높게)
+        public long stonePrice = 300000;   // 제논공학 정수·기술머신 가격(초기: 매우 높게)
         public int stoneBadges = 4;        // 기술 정수 구매 배지 게이트
         public long priceStatus = 1000;    // 각인가: 위력 0 이하(변화기)
         public long priceWeak = 1500;      // 위력 ≤ 60
@@ -155,7 +155,7 @@ public class EconomyConfig {
         public long pricePremium = 6000;   // 위력 111+
         // 특성 마개조(완전 강제 부여 = 사기성 → 일단 비활성). 결정 034.
         public boolean abilityMakeoverEnabled = false;
-        public long abilityStonePrice = 500000; // 포로공학 정수·특성 가격
+        public long abilityStonePrice = 500000; // 제논공학 정수·특성 가격
         public int abilityStoneBadges = 6;      // 특성 정수 구매 배지 게이트
         public long abilityChangePrice = 50000; // 특성 1회 강제 부여 비용(단일가)
 

@@ -45,7 +45,7 @@ public final class MenuGuiManager {
     private static final int SLOT_TM = 39;
     private static final int SLOT_PRACTICE = 40;  // 실전 육성(알 슬롯 폐기 자리)
     private static final int SLOT_TRAINING = 41;
-    private static final int SLOT_ENGINEERING = 42;  // 포로공학(off-learnset 각인)
+    private static final int SLOT_ENGINEERING = 42;  // 제논공학(off-learnset 각인)
     private static final int SLOT_CLOSE = 49;
 
     public static void open(ServerPlayerEntity player) {
@@ -102,8 +102,8 @@ public final class MenuGuiManager {
                 List.of("§7메가팔찌·메가스톤 (배지 게이트)", "§7클릭 — 메가 상점 열기")));
         inv.setStack(SLOT_TM, MenuIcons.icon(Items.PAPER, "§b기술머신 상점",
                 List.of("§7선별 기술머신(정규 습득 기술)", "§7클릭 — TM 상점 열기")));
-        inv.setStack(SLOT_ENGINEERING, MenuIcons.icon(Items.ENDER_EYE, "§d포로공학",
-                List.of("§7해금석으로 포켓몬 해제 → 배울 수 없는 기술 각인", "§7클릭 — 포로공학 열기")));
+        inv.setStack(SLOT_ENGINEERING, MenuIcons.icon(Items.ENDER_EYE, "§d제논공학",
+                List.of("§7해금석으로 포켓몬 해제 → 배울 수 없는 기술 각인", "§7클릭 — 제논공학 열기")));
         inv.setStack(SLOT_PRACTICE, MenuIcons.icon(Items.POTION, "§d실전 육성 상점",
                 List.of("§7성격 민트·특성 캡슐/패치", "§7클릭 — 실전 육성 상점 열기")));
         inv.setStack(SLOT_TRAINING, MenuIcons.icon(Items.EXPERIENCE_BOTTLE, "§a성장 상점",

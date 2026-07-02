@@ -17,7 +17,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 /**
- * Cobblemon 특성 카탈로그(포로공학 정수·특성 = 완전 마개조용). 결정 034.
+ * Cobblemon 특성 카탈로그(제논공학 정수·특성 = 완전 마개조용). 결정 034.
  * Cobblemon ko_kr.json의 {@code cobblemon.ability.<name>} 키로 특성 목록을 구성하고,
  * {@link Abilities#get(String)}로 실제 템플릿이 존재하는 것만 채택. 한글명은 표시·검색용.
  * 최초 1회 빌드 후 캐시.
