@@ -47,8 +47,10 @@ _ROLE_SPEC: list[tuple[str, str]] = [
 #   key       = server_categories.group_key (레지스트리 키)
 #   suffix    = 카테고리명 접미("<표시명> · <suffix>")
 #   audience  = active 시 가시성 대상.
-#               "player"=플레이어 전체공개 / "onboarding"=채널별(_ONBOARDING_AUDIENCE)
-#               "logs"=제재내역은 플레이어 읽기전용, 경고는 운영자 전용
+#               "player"=플레이어 공개(read_only=True 면 읽기 전용) / "onboarding"=
+#               채널별(_ONBOARDING_AUDIENCE) / "logs"=제재내역은 플레이어 읽기전용,
+#               경고는 운영자 전용
+#   read_only = (선택) audience="player" 인데 플레이어가 읽기만 가능(정보 카테고리).
 #   channels  = [(이름, "text"|"voice")] — 생성 순서 = 배치 순서
 _TEMPLATE_GROUPS: list[dict] = [
     {
@@ -57,7 +59,8 @@ _TEMPLATE_GROUPS: list[dict] = [
         "channels": [("약관", "text"), ("인증", "text")],
     },
     {
-        "key": "info", "suffix": "정보", "audience": "player",
+        # 정보 = 운영자만 게시, 플레이어는 읽기 전용(공지·접속정보·가이드·FAQ).
+        "key": "info", "suffix": "정보", "audience": "player", "read_only": True,
         # 접속정보 = 서버 IP·실시간 상태 게시 자리(T18 후속)
         "channels": [("공지", "text"), ("접속정보", "text"), ("가이드", "text"), ("FAQ", "text")],
     },
@@ -232,9 +235,16 @@ async def apply_visibility(
         connect=visible,
         speak=visible,
     )
+    # 읽기 전용: 보고 히스토리는 읽되 글은 못 씀(정보·로그·제재내역·온보딩 안내).
+    # send_messages 를 명시적으로 deny 하지 않으면 @everyone 기본 Send 권한이 살아
+    # 플레이어가 글을 쓸 수 있으므로 스레드 글쓰기까지 명시 차단한다.
     read_overwrite = discord.PermissionOverwrite(
         view_channel=visible,
         read_message_history=visible,
+        send_messages=False if visible else None,
+        send_messages_in_threads=False if visible else None,
+        create_public_threads=False if visible else None,
+        create_private_threads=False if visible else None,
     )
     deny_view = discord.PermissionOverwrite(view_channel=False)
 
@@ -290,10 +300,12 @@ async def apply_visibility(
                         restricted = guild.get_role(role_ids.get(role_key, 0))
                         if restricted is not None:
                             await ch.set_permissions(restricted, overwrite=deny_view, reason=_REASON)
-            else:  # "player"
+            else:  # "player" (read_only=True 면 플레이어는 읽기 전용)
+                read_only = g.get("read_only", False)
                 role = guild.get_role(role_ids.get("player", 0))
                 if role is not None:
-                    await cat.set_permissions(role, overwrite=_allow_for_channel(cat), reason=_REASON)
+                    cat_ow = read_overwrite if read_only else _allow_for_channel(cat)
+                    await cat.set_permissions(role, overwrite=cat_ow, reason=_REASON)
                     touched += 1
                 for role_key in ("access", "pending"):
                     restricted = guild.get_role(role_ids.get(role_key, 0))
@@ -302,7 +314,8 @@ async def apply_visibility(
                 for ch in cat.channels:
                     await _set_staff(ch)
                     if role is not None:
-                        await ch.set_permissions(role, overwrite=_allow_for_channel(ch), reason=_REASON)
+                        ch_ow = read_overwrite if read_only else _allow_for_channel(ch)
+                        await ch.set_permissions(role, overwrite=ch_ow, reason=_REASON)
                         touched += 1
                     for role_key in ("access", "pending"):
                         restricted = guild.get_role(role_ids.get(role_key, 0))
