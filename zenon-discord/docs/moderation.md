@@ -1,12 +1,13 @@
 # 모더레이션 / 운영 제재 설계 (T15)
 
-> **[STATUS: DRAFT]** — 2026-06-06. 디스코드 측 제재(경고·타임아웃·추방·차단) + 운영/감사 로그.
-> 저장 = [`data_model.md`](data_model.md) §2.4 `warnings`·§2.5 `mod_log`. 권한 = [`roles_and_permissions.md`](roles_and_permissions.md) §B. 인터페이스 단계(구현 전).
+> **[STATUS: PARTIAL]** — 디스코드 측 제재(경고·타임아웃·추방·차단) + 운영/감사 로그 구현.
+> 저장 = [`data_model.md`](data_model.md) §2.4 `warnings`·§2.5 `mod_log`. 권한 = [`roles_and_permissions.md`](roles_and_permissions.md) §B.
 
 ## 0. 경계
 - **디스코드 측 제재만.** 게임 내 제재(인게임 밴·아이템 회수 등)는 게임서버 API(A-3) 별개 — 본 모듈 범위 아님.
+- Zenon Mon 마크 제재는 `modules/zenon_mon/commands.py`의 `마크*` 명령과 ZenonMonCore 운영 API가 담당한다. 디스코드 제재와 자동 동기화하지 않는다.
 - 자동 키워드/스팸 차단은 **디스코드 네이티브 AutoMod**(봇 외부, §9.2). 본 모듈은 **수동 운영 제재**만.
-- 모든 제재는 `mod_log` 적재 + `#운영로그` 채널 게시(누가·언제·무엇·왜).
+- 모든 제재는 `mod_log` 적재 + `#운영로그` 채널 게시(누가·언제·무엇·왜) + active 서버 `로그/제재내역` 공개 기록을 남긴다.
 
 ## 1. 명령어 (모두 `requires_permission`)
 
@@ -20,9 +21,15 @@
 | `/추방` 🟢 | `유저, 사유` | kick + DM(사전 발송) | admin |
 | `/차단` 🟢 | `유저, 사유` | ban + DM(사전 발송) | admin |
 | `/차단해제` 🟢 | `유저_id` | unban | admin |
+| `/제재패널` 🟢 | — | active 서버 `로그/제재내역`에 자기 조회/운영 경고 패널 게시 | admin·support |
 
 - Owner 는 항상 통과. 권한 역할 전부 미설정이면 보수적 차단(roles_and_permissions §B).
-- 응답 ephemeral, 공개 기록은 `#운영로그`.
+- 명령 응답은 ephemeral, 공개 기록은 `#운영로그` 및 active 서버 `로그/제재내역`.
+
+### 1a. 제재내역 패널
+- `/제재패널`은 active 서버 `로그/제재내역` 채널에 영구 버튼 패널을 게시한다.
+- 유저: **내 제재 확인** 버튼으로 본인의 `warnings`와 최근 `mod_log` 제재 이력을 ephemeral 조회.
+- 운영진(admin·support): **유저 조회**·**경고 부여**·**경고 취소** 버튼 사용. 강한 제재(타임아웃·추방·차단)는 기존 slash 명령을 사용한다.
 
 ### 1b. 대상 보호 (필수 가드)
 - **operator보다 같거나 높은 권한 보유자·Owner는 제재 대상에서 제외.** admin이 다른 admin/owner를 추방·차단·타임아웃하는 것을 코드에서 차단.
@@ -43,6 +50,7 @@
 - 모든 액션(경고·타임아웃·추방·차단·서버 생애주기·XP보정 등) → `mod_log`:
   `{action, target_id, operator_id, reason, detail, created_at}`.
 - 동시에 `#운영로그`(`CHANNEL_MODLOG_ID`, 신규 `.env`) 임베드 게시.
+- 제재 액션(`warn`·`warn_revoke`·`timeout`·`timeout_clear`·`kick`·`ban`·`unban`)은 active 서버 `로그/제재내역`에도 공개 임베드로 게시한다.
 - 🟢 **인프라 구현(2026-06-09): `core/mod_log.py` `record(bot, *, action, operator_id, target_id, reason, detail)`** — DB 적재 보장 + `#운영로그` 게시 best-effort(채널 미설정/실패여도 적재). 모더레이션 명령은 이 헬퍼만 호출(raw INSERT 금지). action 코드 라벨 매핑 = `_ACTION_META`(경고=`warn`·타임아웃=`timeout`·추방=`kick`·차단=`ban`·서버전이=`server_*` 등).
 - 봇이 멤버 역할/상태 변경 시 항상 `reason` 기록(roles_and_permissions §보안메모).
 

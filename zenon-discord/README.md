@@ -11,8 +11,8 @@ Zenon 서버 **중앙제어** 디스코드 봇. RPG·Zenon Mon·공지·역할·
 ```
 main.py            엔트리포인트 (EXTENSIONS 모듈 로드)
 core/              config(.env 로드) · permissions(권한/알림 역할 정책)
-integrations/      rpg_api(구현) · zenon_mon_api(스텁)
-modules/           common · rpg · roles · poromon(스텁) · event(스텁) · admin(스텁)
+integrations/      rpg_api(구현) · zenon_mon_api(인증 구현, 조회/운영 스텁)
+modules/           common · rpg · roles · onboarding · zenon_mon(조회 스텁) · event(스텁) · admin(스텁)
 docs/              설계/명세 문서
 ```
 

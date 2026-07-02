@@ -81,6 +81,8 @@
 | `common.update` | `CHANNEL_NOTICE_ID` | `업데이트알림` |
 | `common.event_start` / `event_end` | `CHANNEL_NOTICE_ID` | `이벤트알림` |
 | `poromon.event` | `CHANNEL_ZENON_MON_NOTICE_ID`(신규) | `포로몬알림` |
+| `poromon.anomaly` | active 서버 `로그/경고` | 없음 |
+| `poromon.minecraft_sanction` | active 서버 `로그/제재내역` | 없음 |
 
 > 신규 채널 ID(`CHANNEL_NOTICE_ID`·`CHANNEL_ZENON_MON_NOTICE_ID` 등)는 `config.py`+`.env` 추가. 다수 공지를 단일 공지채널로 묶을지 분리할지는 운영 채널구조에 맞춰 확정.
 

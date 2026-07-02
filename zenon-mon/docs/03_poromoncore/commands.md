@@ -20,6 +20,10 @@
 /poromon admin pass <player>  # League Pass 아이템 재지급/복원
 /poromon admin ticket give <player> <ticketType>   # 티켓 발급(테스트/운영)
 /poromon admin progress <player>                   # 대상 플레이어 진행 조회
+/poromon admin warn <player> <reason>              # 마크 경고(AuditLog + Discord push)
+/poromon admin kick <player> <reason>              # 마크 킥(AuditLog + Discord push)
+/poromon admin ban <player> <reason>               # 마크 밴(AuditLog + Discord push)
+/poromon admin unban <player> <reason>             # 마크 밴해제(AuditLog + Discord push)
 ```
 
 | 명령 | 측 | 권한 | 동작 |
@@ -32,6 +36,10 @@
 | `/poromon admin pass <player>` | 서버 | op2 | MenuItemManager 아이템 지급 |
 | `/poromon admin ticket give <player> <type>` | 서버 | op2 | EncounterTicketManager 발급 + AuditLog |
 | `/poromon admin progress <player>` | 서버 | op2 | 대상 진행 조회 |
+| `/poromon admin warn <player> <reason>` | 서버 | op2 | 마크 경고 기록 + AuditLog + Discord push |
+| `/poromon admin kick <player> <reason>` | 서버 | op2 | 대상 킥 + AuditLog + Discord push |
+| `/poromon admin ban <player> <reason>` | 서버 | op2 | 대상 밴 + AuditLog + Discord push |
+| `/poromon admin unban <player> <reason>` | 서버 | op2 | 밴 해제 + AuditLog + Discord push |
 
 ## 3. 인자 타입
 - `<player>`: `EntityArgumentType.player()` (온라인). 오프라인 대상은 향후(UUID/GameProfile).
@@ -40,7 +48,8 @@
 
 ## 4. 피드백 / 로깅
 - 성공/실패는 `source.sendFeedback`/`sendError`로 명확히(한국어 메시지).
-- 관리자 명령·티켓 발급·아이템 지급은 `AuditLogManager`에 기록(`logAdminCommand`, `logTicketUse`).
+- 관리자 명령·티켓 발급·아이템 지급·마크 제재는 `AuditLogManager`에 기록(`logAdminCommand`, `logTicketUse`, `logSanction`).
+- 마크 제재는 디스코드 제재와 분리한다. Discord 봇에는 `poromon.minecraft_sanction` 이벤트로 push해 `로그/제재내역`에 표시한다.
 - 리로드 시 "레지스트리성 변경(아이템 등)은 재시작 필요" 안내.
 
 ## 5. 향후 명령 (참고, 0.1 제외)

@@ -2,7 +2,7 @@
 
 > **[STATUS: ACTIVE]** — 봇 구동·스테이징 검증 절차. 호스팅 위치는 무관(오라클·VPS·집서버·도커
 > 어디든). 봇은 호스팅 비종속이며, 위치에 따라 달라지는 건 코드가 아니라 `.env` 값뿐이다.
-> 코드 사실 기준(2026-06-10): discord.py 2.3.2 / Python 3.12 / aiosqlite·aiohttp·mcstatus.
+> 코드 사실 기준(2026-07-01): discord.py 2.3.2 / Python 3.12 / aiohttp·mcstatus.
 
 ## 0. 전제
 
@@ -14,7 +14,7 @@
 
 ```bash
 python3.12 -m venv .venv && source .venv/bin/activate
-pip install -r requirements.txt          # discord.py·aiohttp·python-dotenv·aiosqlite·mcstatus
+pip install -r requirements.txt          # discord.py·aiohttp·python-dotenv·mcstatus
 cp .env.example .env                      # 값 채우기(§3)
 python -m compileall main.py core integrations modules   # 구문 점검(선택)
 python main.py                            # 기동
@@ -50,7 +50,7 @@ python main.py                            # 기동
 > ⚠ **역할 위계:** 봇 최상위 역할이 봇이 다루는 역할(온보딩·임시·제재 대상)보다 **위**에 있어야
 > 한다. 아니면 `Forbidden`(코드가 graceful 안내). 권한 역할(owner/admin/매니저)은 봇이 절대
 > 자동 지급하지 않음 — 운영진 수동 부여(권한 상승 통로 차단).
-> Manage Nicknames(닉 `[LV.nn]` prefix)는 현재 **보류** 기능이라 미필요.
+> Manage Nicknames는 칭호 닉네임 prefix(`「칭호」 닉네임`) 반영에 필요하다. 서버 소유자나 봇보다 상위/동급 역할은 디스코드 제한으로 변경 불가.
 
 ## 3. `.env` 설정
 
@@ -93,7 +93,7 @@ python main.py                            # 기동
 전역 단일 active 모델 — 한 시점에 한 게임만 운영(task.md §5).
 
 1. `/서버신설 <도메인> <시즌> <표시명> [접속주소]` — 레지스트리 `prep` + 카테고리/3역할 자동 전개.
-2. `/약관설정` — 약관 본문 입력(모달).
+2. `/약관설정` — 약관 본문 입력(모달, 4000자 이하). 긴 약관은 `/약관파일설정` 으로 `.txt` 업로드.
 3. `/서버시작 <id>` — `prep→active` + 카테고리 가시화 + **온보딩 패널 자동 게시** + 일괄 역할 전이.
 4. (선택) `/서버주소`로 접속주소 등록 → `접속정보` 채널 라이브 갱신.
 5. 시즌 종료: `/서버종료 <id> <사유>` — 아카이브 + `서버준비` 일괄 부여.

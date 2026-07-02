@@ -43,12 +43,13 @@ zenon-discord/
     permissions.py        # 권한/역할 정책 (권한↔알림 분리, 권한 데코레이터)
   integrations/           # 외부 서버 연동 (도메인별 분리)
     rpg_api.py            # ZenonRPG HTTP API 클라이언트 (구현됨)
-    zenon_mon_api.py        # Zenon Mon 연동 (스텁 — 인터페이스만)
+    zenon_mon_api.py      # Zenon Mon 인증 구현 + 조회/운영 스텁
   modules/                # 도메인 명령어/기능 모듈 (Cog)
     common/               # 게임 비종속 공통 (/핑 등)
-    rpg/                  # RPG 전용 (auth/player/field_boss/role_poll)
+    rpg/                  # RPG 전용 (player/field_boss, 온보딩은 modules/onboarding)
     roles/                # 역할 선택 (/클래스선택, /알림설정)
-    poromon/              # Zenon Mon 전용 (스텁)
+    zenon_mon/            # Zenon Mon 전용 (조회 명령어 스텁)
+    onboarding/           # 공통 온보딩(약관 동의 + 인증 코드 모달)
     event/                # 이벤트 (스텁)
     admin/                # 운영/관리자 (스텁 — 설계 선행)
   docs/                   # 봇 설계/명세 문서
@@ -75,14 +76,15 @@ zenon-discord/
 - Support
 
 ### 온보딩 권한 역할 (시스템 자동 승급)
-인증 플로우에 따라 봇이 자동 승급 (미인증 → 접속대기 → 인증유저). 운영 권한과 무관.
+active 서버의 인증 플로우에 따라 봇이 자동 승급(접근/임시 → 인증전 → 플레이어). 운영 권한과 무관.
 
 운영 명령어는 반드시 `permissions.requires_permission("admin", ...)` 로 보호한다.
 
 ## 4. 구현 범위 제한 (중요)
 
-- RPG/Zenon Mon 서버와 **직접 연결하는 API 구현은 사용자가 명시할 때만** 한다.
-  그 외에는 인터페이스/TODO 수준으로만 남긴다 (`integrations/zenon_mon_api.py` 참조).
+- RPG/Zenon Mon 서버와 **직접 연결하는 신규 API 구현은 사용자가 명시할 때만** 한다.
+  Zenon Mon 인증(`verify_code`)은 구현 완료, 조회/운영 API는 인터페이스/TODO 수준이다
+  (`integrations/zenon_mon_api.py` 참조).
 - **계정 연동 · 역할 지급 · 관리자 명령어**는 보안 영향이 크다.
   실제 구현 전 **설계 문서 또는 인터페이스부터 제안**한다 (`modules/admin/` 은 현재 스텁).
 
@@ -93,10 +95,12 @@ zenon-discord/
 - 코드/문서에 실제 토큰·ID·URL 을 하드코딩하지 않는다.
 
 ### 봇이 요구하는 환경변수 (`.env`)
-필수: `DISCORD_TOKEN`, `ZENON_RPG_API_KEY`(구 `PORONG_API_KEY` 폴백), `GUILD_ID`, `CHANNEL_FIELD_BOSS_ID`
+필수: `DISCORD_TOKEN`, `GUILD_ID`
 DEPRECATED(구 RPG 단일서버 온보딩 — DL-138 폐기, 미참조·optional): `CHANNEL_AUTH_ID`,
 `ROLE_접속대기_ID`, `ROLE_인증유저_ID`, `ROLE_미인증_ID`, `TERMS_MESSAGE_ID`
-선택(미설정 시 0 → 기능 비활성): `ZENON_RPG_API_URL`(구 `PORONG_API_URL` 폴백),
+선택(미설정 시 0/빈 값 → 기능 비활성): `ZENON_RPG_API_URL`(구 `PORONG_API_URL` 폴백),
+`ZENON_RPG_API_KEY`(구 `PORONG_API_KEY` 폴백), `CHANNEL_FIELD_BOSS_ID`,
+`ZENON_MON_AUTH_URL`(구 `POROMON_AUTH_URL` 폴백), `ZENON_MON_AUTH_KEY`(구 `POROMON_AUTH_KEY` 폴백),
 클래스 역할(`ROLE_검사_ID` …), 알림 역할(`ROLE_필드보스알림_ID`, `ROLE_월드보스알림_ID`,
 `ROLE_포로몬알림_ID`, `ROLE_이벤트알림_ID`, `ROLE_점검알림_ID`, `ROLE_업데이트알림_ID`),
 운영 권한 역할(`ROLE_OWNER_ID`, `ROLE_ADMIN_ID`, `ROLE_RPG_MANAGER_ID`,

@@ -12,12 +12,13 @@ zenon-discord/
     permissions.py        권한/역할 정책 (권한↔알림 분리, requires_permission 데코레이터)
   integrations/           외부 게임 서버 연동 (도메인별 분리)
     rpg_api.py            ZenonRPG HTTP API 클라이언트 (구현)
-    zenon_mon_api.py        Zenon Mon 연동 (스텁 — 인터페이스만)
+    zenon_mon_api.py      Zenon Mon 인증 구현 + 조회/운영 스텁
   modules/                도메인 명령어/기능 (discord.py Cog)
     common/               게임 비종속 공통 (/핑 등)
-    rpg/                  RPG 전용 (auth · player_commands · field_boss · role_poll)
+    rpg/                  RPG 전용 (player_commands · field_boss, 온보딩은 modules/onboarding)
     roles/                역할 선택 (/클래스선택 · /알림설정)
-    poromon/              Zenon Mon 전용 (스텁)
+    zenon_mon/            Zenon Mon 전용 (조회 명령어 스텁)
+    onboarding/           공통 온보딩(약관 동의 + 인증 코드 모달)
     event/                이벤트 (스텁)
     admin/                운영/관리자 (스텁 — 설계 선행)
   docs/                   설계/명세 문서
@@ -83,8 +84,8 @@ zenon-discord/
 ### 통신 패턴
 
 - **봇 → 게임서버 (요청-응답, HTTP)**: 인증·조회·운영명령 트리거. `integrations/*_api.py`.
-  - RPG: 구현(`/auth/*`·`/player`·`/island`·`/boss-history`). 인증 역할 부여는 `role-queue` **폴링**(현행).
-  - Zenon Mon: **ZenonMonCore가 RPG와 동일한 HTTP API 패턴 노출**(DL-133). `zenon_mon_api`가 클라이언트(스텁).
+  - RPG: 구현(`/auth/verify`·`/player`·`/island`·`/boss-history`). 인증은 공통 온보딩 verify 경로를 사용한다.
+  - Zenon Mon: **ZenonMonCore가 RPG와 동일한 HTTP API 패턴 노출**(DL-133). `zenon_mon_api`가 인증 클라이언트이며 조회/운영 API는 스텁.
 - **게임서버 → 봇 (push)**: 게임 이벤트(보스·점검·이벤트)는 게임서버가 봇 **인바운드 HTTP 수신
   엔드포인트**로 push → `core/notifier`가 채널 라우팅+멘션+전송([`notifications.md`](notifications.md)).
   - 봇은 경량 HTTP 리스너(aiohttp.web 등)를 discord 루프와 함께 띄운다.
@@ -121,11 +122,10 @@ zenon-discord/
 
 ## 공통 온보딩 vs 서버별 화이트리스트 (DL-131)
 
-- **공통 디스코드 인증**(규칙/약관 동의 + 닉네임 1회)은 **도메인 비종속**이다 → 논리적으로 `core/`
-  또는 공통 온보딩 모듈에 속한다. 현재는 RPG 전용 경로(`modules/rpg/auth.py`)에 있어,
-  멀티서버 확장 시 공통 계층으로 분리가 필요(→ [`task.md`](task.md) T7).
+- **공통 온보딩 UI**(약관 동의 + 인증 버튼/모달)는 **도메인 비종속**이다 →
+  `modules/onboarding/panels.py`가 담당한다.
 - **서버별 약관동의 + 인게임 인증 + 화이트리스트 등록**은 **도메인별**이다 →
-  `modules/rpg/`(구현), `modules/zenon_mon/`(TODO). 역할 정의는
+  `integrations/rpg_api.py`와 `integrations/zenon_mon_api.py`의 verify 계약으로 분기한다. 역할 정의는
   [`roles_and_permissions.md`](roles_and_permissions.md) §A(공통)·§D(서버별).
 
 ## core 내부 계약 — DB 접근 + 게이팅 (T12·T20·T21)
@@ -134,7 +134,7 @@ zenon-discord/
 > 생애주기 = [`server_lifecycle.md`](server_lifecycle.md), 가시성 정책 = [`task.md`](task.md) §10. 인터페이스 단계(구현 전).
 
 ### `core/db.py` — 비동기 SQLite 접근 계층
-- **`aiosqlite`** 단일 커넥션(또는 경량 풀). 봇 기동 시 1회 연결 + 마이그레이션, 종료 시 close. 동기 `sqlite3` 금지(루프 블로킹).
+- **표준 `sqlite3` + `asyncio.to_thread`** 단일 커넥션. 봇 기동 시 1회 연결 + 마이그레이션, 종료 시 close. 모든 DB 작업은 lock 으로 직렬화해 이벤트 루프 블로킹과 동시 접근을 피한다.
 - 책임: 연결 수명관리 · 마이그레이션 실행 · 쿼리 헬퍼. **도메인 모듈은 raw SQL 을 직접 쓰지 않고** db 함수(또는 테이블별 리포지토리 함수) 경유.
 - 인터페이스(시그니처 수준):
   - `async def init_db(path)` — 연결 + 마이그레이션까지.
@@ -173,7 +173,7 @@ zenon-discord/
 | `CHANNEL_MODLOG_ID` | **운영/감사 로그(=#운영로그, 정식 키)** | moderation §3 |
 | 임시음성 허브(카테고리별 다중 — 템플릿 생성 `➕ 음성방 만들기`) · `AFK_CHANNEL_ID` · `XP_EXCLUDE_CHANNEL_IDS` | 임시음성 허브·음성 XP 제외 | community_level §1·§8 |
 | XP 튜닝(`CHAT_XP_PER_MSG`·`CHAT_XP_COOLDOWN_SEC`·`VOICE_XP_PER_TICK`·`VOICE_TICK_SEC`·곡선 계수) | 레벨 밸런스 | community_level §6 |
-| `ZENON_MON_API_URL` · `ZENON_MON_API_KEY` | Zenon Mon 연동 | integration_contract §D |
+| `ZENON_MON_AUTH_URL` · `ZENON_MON_AUTH_KEY` | Zenon Mon 인증 연동 | integration_contract §A-4 |
 | 접근역할(`ROLE_RPG접근_ID`·`ROLE_포로몬접근_ID`…) | 카테고리 가시성 | roles §A-2(T10) |
 
 > `#운영로그`는 문서마다 이름으로 불렸으나 **정식 키 = `CHANNEL_MODLOG_ID`** 로 통일. server_lifecycle·admin의 "#운영로그"는 이 키를 가리킨다.
@@ -183,6 +183,6 @@ zenon-discord/
 - `core/notifier.py` — 도메인 무관 알림 디스패처(채널 라우팅 + 멘션 + 트리거 인터페이스).
   현재 알림 로직이 `modules/rpg/field_boss.py` 에 도메인 종속으로 박혀 있음.
   Zenon Mon/이벤트/월드보스/점검 알림을 일관되게 붙이려면 이 계층이 필요.
-- 공통 온보딩 계층 분리(공통 디스코드 인증을 `core/`로) — DL-131.
-- `integrations/zenon_mon_api.py` 실구현(현재 스텁).
-- `modules/admin` · `modules/event` · `modules/zenon_mon` 실구현(현재 스텁, 설계 선행).
+- 공통 온보딩 후속 고도화 — 현재 `modules/onboarding/panels.py` 1차 구현, DB 기록/운영 UX는 후속.
+- `integrations/zenon_mon_api.py` 조회/운영 API 실구현(인증은 구현됨).
+- `modules/admin` 상태변경 명령 · `modules/event` 일정 영속 · `modules/zenon_mon` 조회 명령 실구현.

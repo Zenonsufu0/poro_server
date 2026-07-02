@@ -23,7 +23,7 @@
 ## A. 봇 → 게임서버 (요청-응답 API)
 
 ### A-0. 공통 규약
-- **전송:** JSON over HTTP(S). 도메인별 베이스 URL — RPG `ZENON_RPG_API_URL`(구 `PORONG_API_URL` 폴백), Zenon Mon `ZENON_MON_API_URL`(신규).
+- **전송:** JSON over HTTP(S). 도메인별 베이스 URL — RPG `ZENON_RPG_API_URL`(구 `PORONG_API_URL` 폴백), Zenon Mon 인증 `ZENON_MON_AUTH_URL`(구 `POROMON_AUTH_URL` 폴백).
 - **인증:** `X-Api-Key: <서버별 키>` 헤더(`.env`). `Content-Type: application/json`.
 - **에러:** HTTP status + `{error, message}`. 4xx → 사용자에게 정중한 메시지(ephemeral), 5xx → 재시도/실패무시 후 로깅.
 - **상태변경 멱등성:** 운영 명령(골드지급·화이트리스트 등)은 재요청 안전성(idempotency key) 고려.
@@ -77,15 +77,25 @@ admin 명령의 게임서버 측 계약. 모두 상태 변경 → **API 경유 +
 | 화이트리스트 정합 | `POST /admin/whitelist` | `{nick, action: add\|remove, reason}` | admin | DL-132 |
 | 유저 상세 조회 | `GET /admin/player/{nick}` | — | admin | admin.md |
 
-### A-4. Zenon Mon — 🟡 (동일 패턴, 미구현)
-`integrations/zenon_mon_api.py`(스텁). **ZenonMonCore가 RPG와 동일한 HTTP API 패턴 제공**(DL-133).
-인증/조회/운영은 위 A-1~A-3과 동형으로 설계. 구체 엔드포인트·스키마는 ZenonMonCore 설계 확정 선행.
+### A-4. Zenon Mon — 🟡 (인증 구현, 마크 제재 클라이언트 구현/API 서버 미확정)
+클라이언트: `integrations/zenon_mon_api.py`.
 
-| 용도(예시) | 엔드포인트(제안) | 응답 |
-|---|---|---|
-| 서버 상태 | `GET /server/status` | `{online, tps, …}` |
-| 플레이어 요약 | `GET /player/{nick}` | 표시용 카드 |
-| 인증/온보딩 | `/auth/*` (동형) | RPG와 동일 계약 |
+Zenon Mon 온보딩 인증은 RPG와 동일한 `/auth/verify` 계약으로 봇 측 구현이 끝났다.
+마크 제재는 디스코드 제재와 분리하며, 봇은 ZenonMonCore 운영 API 성공 응답 후에만 `제재내역`에 기록한다.
+조회/상세 운영 API는 아직 서버측 엔드포인트 구현이 필요하다.
+
+| 메서드 | 엔드포인트 | 요청 | 응답 | 상태 |
+|---|---|---|---|---|
+| `verify_code` | `POST /auth/verify` | `{code, discordId}` (헤더 `X-Api-Key`) | 200 `{uuid, name}` / 404 / 429 / 401 | 🟢 봇 측 구현 |
+| `minecraft_sanction` | `POST /admin/sanctions/{warn\|kick\|ban\|unban}` | `{target, reason, operatorDiscordId}` | 200/201 `{id, player, uuid}` / 404 / 409 / 501 | 🟡 봇 측 구현, 서버측 필요 |
+| `list_minecraft_sanctions` | `GET /admin/sanctions?target=<nick-or-uuid>` | — | `{sanctions: [...]}` | 🟡 봇 측 구현, 서버측 필요 |
+| `get_server_status` | `GET /server/status` | — | `{online, tps, …}` | 🟡 스텁 |
+| `get_player_summary` | `GET /player/{nick}` | — | 표시용 카드 | 🟡 스텁 |
+
+환경변수:
+- `ZENON_MON_AUTH_URL` — 기본 `http://127.0.0.1:25580`, 구 `POROMON_AUTH_URL` 폴백.
+- `ZENON_MON_AUTH_KEY` — 인증 API 키, 구 `POROMON_AUTH_KEY` 폴백. 미설정 시 Zenon Mon 인증은 운영자 오류로 응답한다.
+- `ZENON_MON_API_URL`, `ZENON_MON_API_KEY` — 조회/운영 API. 미설정 시 인증 URL/KEY를 폴백으로 사용한다.
 
 ---
 
@@ -124,6 +134,8 @@ admin 명령의 게임서버 측 계약. 모두 상태 변경 → **API 경유 +
 | `common.update` | `@업데이트알림` | `{version, summary}` | 패치/업데이트 |
 | `common.event_start` / `event_end` | `@이벤트알림` | `{event_name, info}` | 이벤트 시작/종료 |
 | `poromon.event` | `@포로몬알림` | `{title, info}` | Zenon Mon 이벤트/공지 |
+| `poromon.anomaly` | 없음 | `{severity, category, metric, player, value, baseline, window, summary}` | Zenon Mon 경제/아이템 등 이상징후 → active 서버 `로그/경고` |
+| `poromon.minecraft_sanction` | 없음 | `{action, target, player, uuid, operator, reason, source, sanction_id}` | 마크 서버 제재 기록 → active 서버 `로그/제재내역` |
 
 > **현행 RPG 필드보스는 폴링**(`A-2 /field-boss/status`)으로 구현돼 있다. push 구조 완성 후
 > `rpg.field_boss_*` 이벤트로 점진 이관(DL-133). 그때까지 폴링·push 병행 가능.
@@ -134,18 +146,21 @@ admin 명령의 게임서버 측 계약. 모두 상태 변경 → **API 경유 +
 
 | 항목 | RPG | Zenon Mon |
 |---|---|---|
-| 봇→서버 인증/온보딩 (A-1) | 🟢 구현 | 🟡 설계(동형) |
+| 봇→서버 인증/온보딩 (A-1/A-4) | 🟢 구현 | 🟢 봇 측 구현 |
 | 봇→서버 조회 (A-2) | 🟢 구현 | 🟡 설계 |
-| 봇→서버 운영 (A-3) | 🟡 설계 | 🟡 설계 |
-| 서버→봇 push (B) | 🟡 설계(현행 필드보스는 폴링) | 🟡 설계 |
+| 봇→서버 운영 (A-3/A-4) | 🟡 설계 | 🟡 마크 제재 클라이언트 구현/API 서버 필요 |
+| 서버→봇 push (B) | 🟡 설계(현행 필드보스는 폴링) | 🟡 라우트 구현/서버 push 필요 |
 
 ## D. 환경변수 추가 예정 (`.env` / `.env.example` placeholder)
-- Zenon Mon: `ZENON_MON_API_URL`, `ZENON_MON_API_KEY`
+- Zenon Mon 인증: `ZENON_MON_AUTH_URL`, `ZENON_MON_AUTH_KEY` — `config.py`와 `.env.example` 반영 완료.
+- Zenon Mon 운영: `ZENON_MON_API_URL`, `ZENON_MON_API_KEY` — `config.py`와 `.env.example` 반영 완료.
 - 인바운드 push: `BOT_INBOUND_BASE`(또는 PORT), `INBOUND_SECRET`, `INBOUND_ALLOW_IPS`(선택)
-- 실제 추가는 인바운드/Zenon Mon 연동 구현 시(→ [`task.md`](task.md) T1·T4).
+- Zenon Mon 조회/운영 API 키는 해당 엔드포인트 확정 시 별도 추가한다(→ [`task.md`](task.md) T4).
 
 ## 미확정
-- Zenon Mon 엔드포인트·스키마 구체화 (ZenonMonCore `../../zenon-mon/docs/03_zenonmoncore/` 선행).
+- Zenon Mon 조회/운영 엔드포인트·스키마 구체화 (ZenonMonCore `../../zenon-mon/docs/03_poromoncore/` 선행).
+- Zenon Mon 이상징후(`poromon.anomaly`) 산출 기준 구체화: EconomyStats(`goldFaucet`/`goldSink`, `itemSellCount`/`itemBuyCount`)와 AuditLog 기반 임계값.
+- 마크 제재 API의 대상 식별 정책: 닉네임/UUID/디스코드 연동 ID 허용 범위와 오프라인 유저 처리.
 - 필드보스 폴링 → push 이관 시점.
 - 운영 API(A-3) 실구현 시점·게임서버 측 엔드포인트 합의.
 - ✅ 인바운드 인증 = **HMAC-SHA256 + timestamp 확정**(2026-06-06). 검증 순서·`.env` = [`notifications.md`](notifications.md) ①.

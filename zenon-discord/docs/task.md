@@ -12,12 +12,12 @@
 | T1 | 알림 인바운드 수신(push) + `core/notifier.py` 디스패처 | core | — | 🟢 (inbound 리스너+notifier+빌더 9종 / 게임서버 push e2e 스테이징) |
 | T2 | `rpg.md §8` Node.js 표기 → Python 정합 | docs | — | ⬜ |
 | T3 | `modules/admin` 명령어 설계 확정 | admin | 권한정책 | 🟡 |
-| T4 | `integrations/poromon_api.py` 인터페이스 확정 | poromon | 포로몬 설계 | 🟡 |
+| T4 | `integrations/zenon_mon_api.py` 인증 구현 + 조회 인터페이스 확정 | poromon | 포로몬 설계 | 🟡 |
 | T5 | 알림 후보(시즌/월드보스·점검·업데이트) 배선 | notify | T1 | 🟢 (운영 명령 6종 배선 / 게임서버 push 트리거만 대기) |
 | T6 | `modules/event` 실구현 설계 | event | — | 🟡 |
 | T7 | 공통 디스코드 인증을 `core/`로 분리 (멀티서버 온보딩) | core/onboarding | — | 🟡 |
 | T8 | 상시 배포(24h, 위치 무관) 런북 + 실제 배포 | infra | — | 🟡 (런북 deployment.md 🟢 / 실배포·e2e ⬜) |
-| T9 | 포로몬 서버별 약관동의+화이트리스트 온보딩 (봇측 구현) | poromon | T7, T4 | 🟡 |
+| T9 | 포로몬 서버별 약관동의+화이트리스트 온보딩 (봇측 구현) | poromon | T7, T4 | 🟢 |
 | T10 | ~~이모지 서버선택~~ → **폐기(2026-06-09)**. 전역 단일 active 모델 → 입장 시 자동 배정(§5). | roles/onboarding | — | ❌ 폐기 |
 | T11 | 운영자 닉네임 변경 명령(`/닉네임변경`·`/닉네임재입력`) | admin | API | 🟡 |
 | T12 | SQLite 저장 계층 도입(봇 영속 DB) — community/moderation/support 공통 선행 | core | — | 🟢 |
@@ -31,14 +31,14 @@
 | T20 | 도메인 명령어 가시성 정책 — 접근역할 제한(1차) + 카테고리 가드 헬퍼(2차) | core | T10 | 🟡 |
 | T21 | 서버 레지스트리 + 생애주기(준비→활성→종료) 상태머신 + `/서버시작`·`/서버종료`·`/서버목록` | core/admin | T12 | 🟢 |
 
-> **T21 구현(2026-06-08, `modules/server_lifecycle/commands.py` + `core/servers.py` + `core/gating.py`):** 🟢 `/서버목록`·`/서버정보`(읽기), `/서버신설`(prep 행 + 카테고리/역할 선택 연결), `/서버시작`(prep→active)·`/서버종료`(active→ended) 상태전이 + 카테고리 가시성(공개/[종료] 아카이브). domain당 active 1 = 부분유니크 인덱스 강제. 게이팅 3층 헬퍼 `core/gating.py`(순수 판정 + `requires_category`/`requires_server_active` 데코레이터 — 도메인 명령 부착 대기). ✅ mod_log 적재+#운영로그(§2) 배선 완료(2026-06-09). ⬜ 후속: 카테고리/역할 자동생성(T17), 이모지 서버선택 패널(§3).
+> **T21 구현(2026-06-08, `modules/server_lifecycle/commands.py` + `core/servers.py` + `core/gating.py`):** 🟢 `/서버목록`·`/서버정보`(읽기), `/서버신설`(prep 행 + 카테고리/역할 선택 연결), `/서버시작`(prep→active)·`/서버종료`(active→ended) 상태전이 + 카테고리 가시성(공개/[종료] 아카이브). domain당 active 1 = 부분유니크 인덱스 강제. 게이팅 3층 헬퍼 `core/gating.py`(순수 판정 + `requires_category`/`requires_server_active` 데코레이터 — 도메인 명령 부착 대기). ✅ mod_log 적재+#운영로그(§2) 배선 완료(2026-06-09). ✅ 카테고리/역할 자동생성(T17). T10 이모지 서버선택은 폐기, active 서버 자동 배정.
 
 > T12~T18·T20·T21 = **🟡 설계 완료·구현 전**(상세 docs 작성됨). T19 = ⬜ 코드 이관(설계 불필요). 실구현은 사용자 명시 요청 시.
 
 > T12~T18 은 §9 후보 기능 백로그에서 승격(2026-06-06). 상세 명세·근거는 §9. Tier3(초대추적·건의투표)는 §9에 보류 유지.
 > T19(클래스 RPG 이관)·T20(명령어 가시성)은 도메인 격리 후속 결정(2026-06-06). T20 설계 노트는 §10.
 > **T12 SQLite 스키마 1차안 = [`data_model.md`](data_model.md)** (servers 레지스트리 포함 — T21·T13~T16 공통 기반).
-> **T12 기반 구현(2026-06-08): `core/db.py`** = aiosqlite 단일커넥션 + 쓰기 lock + `schema_meta` 증분 마이그레이션 러너. v1 = `servers` 테이블(§2.1, domain당 active 1 부분유니크). `BOT_DB_PATH`(.env). 나머지 테이블(community_xp·warnings·tickets…)은 각 기능 구현 시 v2+ 마이그레이션으로 추가. main.py 가 기동 시 연결→`bot.db`.
+> **T12 기반 구현(2026-06-08, 2026-07-01 런타임 보강): `core/db.py`** = 표준 `sqlite3` 단일커넥션 + `asyncio.to_thread` + 직렬화 lock + `schema_meta` 증분 마이그레이션 러너. v1 = `servers` 테이블(§2.1, domain당 active 1 부분유니크). `BOT_DB_PATH`(.env). 나머지 테이블(community_xp·warnings·tickets…)은 각 기능 구현 시 v2+ 마이그레이션으로 추가. main.py 가 기동 시 연결→`bot.db`.
 > **T13 커뮤니티 레벨 상세 = [`community_level.md`](community_level.md)**, T21 생애주기 상세 = [`server_lifecycle.md`](server_lifecycle.md).
 > **T15 모더레이션 상세 = [`moderation.md`](moderation.md)**, **T16 지원/문의 상세 = [`support.md`](support.md)**.
 
@@ -57,8 +57,8 @@
 ## 2. integrations (외부 서버 연동)
 
 - 🟢 `rpg_api.py` — PorongRPG HTTP API 클라이언트(구현됨). 신규 엔드포인트는 RPG API 확정 시 추가.
-- 🟡 **T4. `poromon_api.py`** — 현재 인터페이스 스텁. 연동 방식 = HTTP API(PoroMonCore, RPG와 동일 패턴, DL-133).
-  - ⬜ API 포트·인증 시크릿·엔드포인트 계약(인증/조회/이벤트 push 스키마) 확정 — `../../poromon/docs/03_poromoncore/` 선행.
+- 🟡 **T4. `zenon_mon_api.py`** — 인증은 구현, 조회/운영은 인터페이스 스텁. 연동 방식 = HTTP API(ZenonMonCore, RPG와 동일 패턴, DL-133).
+  - ✅ 인증 API 포트·시크릿·엔드포인트 계약 반영 — `ZENON_MON_AUTH_URL`/`ZENON_MON_AUTH_KEY`, `POST /auth/verify`.
   - ⬜ `get_server_status`(접속/TPS), 도감 조회 인터페이스 확정.
   - ⬜ 이벤트 알림 = 포로몬 서버 → 봇 push(T1 인바운드 수신 공용).
   - ⚠ 실 API 연동은 사용자 명시 요청 시에만(DL-130 ⑤).
@@ -81,8 +81,8 @@
   - ⬜ 운영 명령어 전용 채널(`#운영로그`) 제한 검토.
   - ⚠ 상태 변경 명령은 게임 서버 API 경유 + 사용자 명시 요청 시에만 실구현.
 
-### poromon/ 🟡 (스텁)
-- ⬜ `/포로몬현황` `/포로몬도감` — `poromon_api` 실구현(T4) 선행.
+### poromon/ 🟡 (인증 구현, 조회 스텁)
+- ⬜ `/포로몬현황` `/포로몬도감` — `zenon_mon_api` 조회 API 실구현(T4) 선행.
 
 ### event/ 🟡 (이벤트 알림 구현 / 일정 영속은 스텁)
 - 🟢 `/이벤트알림 시작|종료`(T5, 2026-06-10) — `notifier.dispatch`(common.event_start/end) + mod_log(announce). event_manager·admin.
@@ -99,9 +99,9 @@
 
 ### community/ 🟢 (T13·T14)
 - 🟢 `temp_voice.py` — 임시 음성방(허브 입장 → 개인방 생성·비면 삭제). voice_states.
-- 🟢 `level.py` — 채팅·음성 XP → 레벨(`core/community.py` 곡선·접근, DB v8), `/레벨`(칭호 표시)·`/리더보드`, 레벨업 알림.
-- 🟢 칭호(`core/titles.py`, DB v9 titles/user_titles) — 레벨 임계 자동 획득, `/칭호`(Select 장착), 카탈로그 시드 5종. `/xp지급`·`/xp회수`(운영, mod_log).
-- 🟢 `attendance.py` — 출석(T14, 2026-06-10): `/출석` 하루 1회(KST) streak·total + 보상 XP(BASE+streak×PER, 캡), 레벨업 위임. db **v12 `attendance`**, `core/attendance.py`. community_level §9.
+- 🟡 `level.py` — 레벨/XP 자동 성장 비활성. 수동 칭호 운영(`/칭호생성`·`/칭호목록`·`/칭호부여`·`/칭호회수`) + 유저 `/칭호` 장착.
+- 🟢 칭호(`core/titles.py`, DB v9 titles/user_titles) — 운영자 수동 생성/부여/회수, `/칭호`(Select 장착). 칭호=역할 아님(코스메틱), mod_log(title_create/grant/revoke).
+- 🟢 `attendance.py` — 출석(T14, 2026-06-10): `/출석` 하루 1회(KST) streak·total 기록. 레벨/XP 비활성 중 XP 보상 없음. db **v12 `attendance`**, `core/attendance.py`. community_level §9.
 - 🟢 `temp_roles.py` — 임시역할 자동만료(T14, 2026-06-10): `/임시역할부여`(admin, 분/시간/일) + 60초 tick 만료 회수. db **v13 `temp_roles`**, `core/temp_roles.py`, mod_log(temp_role_grant/expire). community_level §10.
 - ⬜ 닉 `[LV.nn]` prefix(보류).
 
@@ -156,23 +156,22 @@
 
 ### 온보딩 — 공통 인증 ↔ 서버별 화이트리스트 분리
 - 🟡 **T7. 공통 온보딩 모듈 = `modules/onboarding/panels.py` (1차 구현).**
-  - 🟢 도메인 비종속 약관 게이트 + 인증 버튼/모달 패널 + 3단계 역할 전이(접근→인증전→플레이어) 구현. 서버 레지스트리 = `core/config.ONBOARDING_SERVERS`(코드 기반, DB 전).
-  - 🟢 verify 라우팅(도메인→API)·약관 게이트(인증전 역할 확인)·운영자 `/온보딩패널 <서버>` 게시 명령.
-  - ⬜ RPG 이관(아래) 후 RPG 도 레지스트리 등록 → `auth.py` 공통부 흡수.
+  - 🟢 도메인 비종속 약관 게이트 + 인증 버튼/모달 패널 + 3단계 역할 전이(접근→인증전→플레이어) 구현. 서버 레지스트리 = DB active 서버(`servers.get_any_active`).
+  - 🟢 verify 라우팅(도메인→API)·약관 게이트(인증전 역할 확인)·운영자 `/온보딩패널` 게시 명령.
+  - 🟢 RPG 이관 완료 — `auth.py`/`role_poll.py` 구 흐름 제거.
   - ✅ 매핑 비저장 확정: verify 응답 `uuid`+`name`은 표시/로깅용, 봇 DB 미저장(data_model §3). 영속 상태=부여된 디스코드 역할.
-- 🟢 RPG 서버별 단계: 약관동의 + 인게임 `/연동` 코드 → RPG 화이트리스트 + `인증유저`. **(현행 — 구 코드방향, 이관 대상)**
-- 🟡 **T9. 포로몬 서버별 단계:** 인게임 `/인증` 발급 → 봇 인증 버튼/모달 verify → `포로몬플레이어` 승급.
-  - 🟢 봇 측 = `poromon_api.verify_code` + 공통 온보딩 패널로 구현. env(`ROLE_포로몬접근/인증전/플레이어_ID`, `CHANNEL_포로몬약관/인증_ID`) 추가.
-  - ⬜ 포로몬 게임서버 측 = 인게임 `/인증` 코드 발급 + `/auth/verify` 엔드포인트(`name` 반환) 실구현 — `../../porong-mon/` 영역(읽기전용, 협의 필요).
+- 🟢 RPG 서버별 단계: 약관동의 + 인게임 `/인증` 코드 → 봇 인증 버튼/모달 verify → `인증유저`.
+- 🟢 **T9. 포로몬 서버별 단계:** 인게임 `/인증` 발급 → 봇 인증 버튼/모달 verify → `포로몬플레이어` 승급.
+  - 🟢 봇 측 = `zenon_mon_api.verify_code` + 공통 온보딩 패널로 구현. env(`ROLE_포로몬접근/인증전/플레이어_ID`, `CHANNEL_포로몬약관/인증_ID`) 추가.
+  - 🟢 Zenon Mon 게임서버 측 = 인게임 `/인증` 코드 발급 + `/auth/verify` 엔드포인트(`name` 반환) 준비 완료.
 - ⚠ 본인인증 코드는 서버별로 유지 — 소유권 검증·사칭 방지(DL-131).
 - ⚠ **미인증 인게임 접속 허용 전제**: 화이트리스트로 *접속 자체*를 막으면 `/인증` 불가 → 제한 로비 진입 허용 + 화이트리스트는 *플레이 권한*으로 분리.
 
-### 채널/카테고리 구조 + 서버 선택 (DL-132)
-- 🔴 **T10. 이모지 서버선택 → 카테고리 접근 역할 → 역할기반 가시성.**
-  - ⬜ 카테고리 구조 확정(공통 / RPG / 포로몬 / 기타) + 카테고리별 약관 채널 배치.
-  - ⬜ 서버선택 이모지 패널(reaction) → `RPG접근`·`포로몬접근`·`기타접근` 역할 자동 부여/해제.
-  - ⬜ 카테고리 채널 권한 = 접근 역할에게만 가시(디스코드 권한 설정 + 봇 검증).
-  - ⬜ 카테고리/역할/이모지 ID `core/config.py` + `.env`(`ROLE_RPG접근_ID` 등) 추가.
+### 채널/카테고리 구조 + active 서버 접근 (DL-132/T10 폐기 반영)
+- ❌ **T10. 이모지 서버선택은 폐기(2026-06-09).** 전역 active 서버 1개 모델로 통일.
+  - 🟢 `/서버신설`이 active 후보 서버의 카테고리 + 3역할 세트를 만든다(T17).
+  - 🟢 신규 유저는 현재 active 서버의 접근/임시 역할을 자동으로 받는다.
+  - 🟢 카테고리 채널 권한 = 접근 역할에게만 가시(디스코드 권한 설정 + 봇 검증).
   - ⚠ 카테고리 접근 ≠ 화이트리스트 — 게임 접속은 §D 약관동의+인게임 인증 필요(DL-132 대원칙⑤).
 
 ### 운영자 닉네임 변경 (DL-132)
@@ -220,7 +219,7 @@
 1. **FAQ(T16)** — faq 테이블(v11) + `/faq`·CRUD + 미매칭 시 티켓 폴백(방금 만든 티켓 연결) → FAQ 채널 활성화.
 2. **버그제보(T16)** — 기타·봇 경로(채널 게시)는 봇 단독 가능 / RPG·포로몬 경로는 게임 API(`create_bug_report`) 선행.
 3. **출석·임시역할만료(T14)** + 닉 `[LV.nn]` prefix(보류 중) — community 확장.
-4. **포로몬 게임서버 verify**(porong-mon 협의) / **master 동기화(B)**(합본 원본에서) / RPG verify 필드명(`discordId`) 실계약 확인.
+4. **Zenon Mon verify 스테이징 e2e** / **master 동기화(B)**(합본 원본에서) / RPG verify 필드명(`discordId`) 실계약 확인.
 5. **DL 동기화**(RPG worktree): 전역 active 1·다중허브·티켓아카이브·칭호 결정 → decision_log 번호 부여.
 
 ---
@@ -230,7 +229,7 @@ T17 서버 신설을 프리픽스 카테고리 4그룹 + 온보딩 3역할 자�
 
 **구현 산출:**
 - **T17 구조**(commit `0fa6a7d`): `templates.py` provision(3역할 access·pending·player + 카테고리 4그룹[온보딩·정보·커뮤니티·지원·음성] + 채널, prep=비공개)/apply_visibility(약관→접근/인증→인증전/그외→플레이어)/cleanup. db v4(`pending_role_id`·`player_role_id`+`server_categories`), servers 다중카테고리 헬퍼, gating 집합 매칭(`get_active_category_ids`). 구조 결정 = B안 프리픽스, 중첩 시즌/서버 미운영.
-- **약관 저장**(이번): db **v5 `terms`** + `core/terms.py`(get/set upsert) + `/약관설정`(모달 4000자)·`/약관보기`(`modules/onboarding/panels.py`). `/온보딩패널`이 저장된 약관을 약관 채널 임베드로 게시. 약관 수정 = `mod_log(terms_update)`.
+- **약관 저장**(이번): db **v5 `terms`** + `core/terms.py`(get/set upsert) + `/약관설정`(모달 4000자)·`/약관파일설정`(긴 약관 txt 업로드)·`/약관보기`(`modules/onboarding/panels.py`). `/온보딩패널`이 저장된 약관을 약관 채널 임베드로 분할 게시. 약관 수정 = `mod_log(terms_update)`.
 
 - **전역 단일 active 모델**(이번): db **v6**(전역 active 1 강제) + `/서버시작·종료` 일괄 역할 전이(`_bulk_transition`) + `on_member_join` 자동배정 + 통합 카테고리 토글. `서버준비`/`통합 카테고리` = `.env`(`ROLE_서버준비_ID`·`CATEGORY_통합_ID`). 온보딩 카테고리명 `온보딩`→`임시`. **서버선택(T10) 폐기**. 결정 근거 = task.md §5.
 
@@ -239,15 +238,15 @@ T17 서버 신설을 프리픽스 카테고리 4그룹 + 온보딩 3역할 자�
 **온보딩 배선 — 진행:**
 - ✅ **약관/인증 버튼 역할전이 DB화(2026-06-09):** `panels.py` 전면 DB 전환 — `TermsAgreeView`/`AuthPanelView`/`handle_auth_submit`/`_promote`가 `servers.get_any_active()`의 3역할 + 온보딩 카테고리 채널(이름 매칭)을 사용. 영구 뷰 custom_id 도메인 제거(`onb_terms`/`onb_auth`, 전역 단일). `/온보딩패널`(무인자, active 서버에 게시). `ONBOARDING_SERVERS`(env) SUPERSEDE(config 주석 deprecated).
 - ✅ **verify 라우팅 — rpg 클라이언트 추가(2026-06-09):** `rpg_api.verify_code`(POST /auth/verify, DL-138 동일 계약) + `panels._verifiers["rpg"]` 등록. 공통 에러 베이스 `integrations/common.VerifyError`(PoromonAuthError·RpgAuthError 상위) → 온보딩 `except VerifyError` 단일 처리.
-  > ⚠ **verify 양측 엇갈림(현실):** RPG=게임서버 엔드포인트 준비됨(DL-138)·봇 클라이언트 이번 추가 → **봇측 e2e 가능**(단 필드명 `discordId` 실계약 확인 필요). 포로몬=봇 클라이언트 준비됨·**게임서버 `/auth/verify` 미구현**(`porong-mon/` 영역) → 게임서버 작업 선행 필요. 즉 RPG가 끝까지 도는 첫 게임 후보.
+  > ⚠ **verify 스테이징 필요:** RPG와 Zenon Mon 모두 봇 측 클라이언트가 준비됨. 실제 오픈 전 실길드에서 `discordId` 필드명·키·역할 전이를 e2e로 확인한다.
 - ✅ **RPG auth 구 흐름 정리(2026-06-09, DL-138):** `modules/rpg/auth.py`(닉 모달·약관 메시지)·`role_poll.py`(role-queue 폴러) 삭제 + EXTENSIONS 제거. `rpg_api` 구방향 4메서드(create_pending·get_auth_status·poll_role_queue·acknowledge_role_granted) 제거. 구 역할/채널 config(`ROLE_접속대기/인증유저/미인증_ID`·`CHANNEL_AUTH_ID`·`TERMS_MESSAGE_ID`) optional+deprecated. 온보딩 단일화 완료.
   > ⚠ **라이브 영향:** 구 RPG 온보딩(미인증→접속대기→인증유저)이 제거됨 → 실제 RPG 서버는 `/서버신설 rpg`로 레지스트리 등록 + `/서버시작` + `/약관설정`+`/온보딩패널` 거쳐야 신 온보딩 동작. on_member_join도 신 모델(server_lifecycle)로 통일.
 - ✅ **온보딩 패널 자동 게시(2026-06-09):** `/서버시작`이 `OnboardingCog.publish_panels`(추출) 위임으로 약관/인증 패널 자동 게시 → 운영자 `/온보딩패널` 수동 단계 생략 가능. 런북 = 신설→약관설정→서버시작(자동게시). 약관은 시작 시점 저장본(미설정 시 경고 패널, 재게시는 /온보딩패널).
 - ✅ **접속정보 라이브(T18, 2026-06-09):** `integrations/mcping.py`(SLP, mcstatus — 게임서버 API 불필요) + db **v7**(`connect_address`·`status_message_id`) + `/서버주소`·신설 `접속주소` 옵션 + `modules/common/server_status.py`(3분 주기 `접속정보` 채널 임베드 갱신, on/off·인원·핑) + `/접속정보`(수동 갱신). requirements `mcstatus==11.1.1`. mcstatus 미설치 시 graceful(기능만 비활성).
-- ✅ **임시 음성방(T13 일부, 2026-06-09):** `modules/community/temp_voice.py` — 허브(`➕ 음성방 만들기`, 템플릿 생성) 입장 → 같은 카테고리에 개인방 생성·이동, 비면 삭제, 재시작 orphan 청소. 이름매칭 식별, 런타임 추적(DB 불필요), voice_states(비특권). 봇 권한 Manage Channels·Move Members(배포 T8).
-- ✅ **커뮤니티 레벨(T13, 2026-06-09):** db **v8 `community_xp`** + `core/community.py`(곡선 `5L²+50L+100`·접근·순위) + `modules/community/level.py` — 채팅 XP(쿨다운 메모리 핫패스 방어)·음성 XP(tick, self-mute/deaf·AFK·혼자 제외) + `/레벨`·`/리더보드` + 레벨업 알림(`CHANNEL_LEVELUP_ID`). 튜닝 config(.env). 메시지 내용 미열람.
+- ✅ **임시 음성방(T13 일부, 2026-06-09 / 2026-07-02 보강):** `modules/community/temp_voice.py` — 1명 제한 허브(`➕ 음성방 만들기`, 템플릿 생성) 입장 → 같은 카테고리에 개인방 생성·즉시 이동, 비면 삭제, 재시작 orphan 청소. 생성 임시방에는 봇/생성자 권한을 명시. 이름매칭 식별, 런타임 추적(DB 불필요), voice_states(비특권). 봇 권한 Manage Channels·Move Members·Connect(배포 T8).
+- 🟡 **커뮤니티 레벨(T13, 2026-07-02 비활성):** db **v8 `community_xp`** + `core/community.py`는 보존하되, 채팅/음성 XP·`/레벨`·`/리더보드`·레벨업 알림은 현재 비활성.
 - ✅ **티켓/1:1 문의(T16 일부, 2026-06-09):** db **v10 `tickets`** + `core/tickets.py` + `modules/support/tickets.py` — `/문의`(비공개 채널 생성, @everyone 숨김+개설자/admin/support 가시, 동시 1개 제한) + `/티켓종료`·[종료] 영구버튼(개설자/운영) + 종료=잠금·아카이브(채널 보존). `CATEGORY_티켓_ID`(.env). mod_log(ticket_open/close). **후속:** FAQ(faq 테이블·`/faq`·CRUD·미매칭 티켓폴백), 버그제보(게임 API 선행).
-- ✅ **칭호 + XP보정(T13 마무리, 2026-06-09):** db **v9 `titles`/`user_titles`**(시드 5종 Lv5~50) + `core/titles.py` — 레벨업 시 임계 칭호 자동 획득(누적) + 획득 알림, `/칭호`(Select 장착·equipped 유일), `/레벨` 카드에 장착 칭호 표시. `/xp지급`·`/xp회수`(admin, `mod_log` xp_grant/xp_revoke). 칭호=역할 아님(코스메틱). **T13 코어 완료**(출석·임시역할만료 = T14).
+- ✅ **수동 칭호(T13 조정, 2026-07-02):** db **v9 `titles`/`user_titles`** + `core/titles.py` — 운영자 `/칭호생성`·`/칭호목록`·`/칭호부여`·`/칭호회수`, 유저 `/칭호`(Select 장착·equipped 유일). 칭호=역할 아님(코스메틱).
 > ✅ 위 ⬜(온보딩 레지스트리 DB화·verify 라우팅·접속정보·임시음성)는 이번 세션에 모두 해소됨 — 온보딩은 `get_any_active` + 온보딩 카테고리 채널 **이름 매칭**으로 DB화(별도 채널ID 저장 불필요), verify rpg 클라이언트 추가, 접속정보/임시음성 구현 완료. 아래 종합 요약 참조.
 
 ### 이번 세션 완료 (2026-06-09, feature/discord-dev) — moderation T15 (경고계 + 제재)
@@ -271,7 +270,7 @@ mod_log 인프라 위에 경고계 + 상태변경 제재까지 구현(제재는 
 
 **다음 세션 착수 후보:**
 1. ✅ **T17 템플릿 신설 구현 완료(2026-06-09)** — `/서버신설 자동생성`이 카테고리+채널+접근역할 전개(§11·server_lifecycle §3). 후속: 생성된 약관/인증 채널을 온보딩 패널에 배선(레지스트리에 채널ID 영속화 필요).
-2. **RPG auth 이관**(DL-138) — RPG를 `ONBOARDING_SERVERS` 등록 + `modules/rpg/auth.py` 구 흐름 정리.
+2. ✅ **RPG auth 이관 완료**(DL-138) — RPG도 공통 온보딩 verify 경로 사용. `modules/rpg/auth.py` 구 흐름 제거.
 3. **B: master 동기화** — 합본 원본(`porong-server`)에서 수행(디스코드 워크트리 불가).
 
 ### 이번 세션 완료 (2026-06-09, feature/discord-dev) — mod_log 운영로그 인프라
@@ -283,13 +282,13 @@ moderation/admin/lifecycle 공통 선행(§12.2)인 운영/감사 로그 인프�
 - **배선** `modules/server_lifecycle/commands.py` — 신설(`server_create`)·시작(`server_start`)·종료(`server_end`, reason 포함) 전이에 `record()` 호출.
 - **설정** `core/config.CHANNEL_MODLOG_ID`(0=게시 생략) + `.env.example`.
 
-**검증:** stdlib sqlite3로 v1·v2 executescript + mod_log INSERT(strftime) + 인덱스 생성 확인. `compileall` 통과. (aiosqlite 미설치 환경이라 봇 e2e는 스테이징 대상.)
+**검증:** stdlib sqlite3로 v1·v2 executescript + mod_log INSERT(strftime) + 인덱스 생성 확인. `compileall` 통과. (실제 봇 e2e는 스테이징 대상.)
 
 **주의:** `warnings`(§2.4)는 T15 모더레이션 모듈과 함께 **v3**로 추가 예정(이번엔 mod_log만). moderation/admin 명령은 raw INSERT 금지, `mod_log.record()`만 호출.
 
 **다음 세션 착수 후보:**
 1. **moderation(T15) 본체** — v3(`warnings`) + `/경고`·`/경고목록`·`/경고취소`·`/타임아웃`·`/추방`·`/차단`. 대상 보호 가드(§1b) + `mod_log.record()` 재사용.
-2. **RPG auth 이관**(DL-138) — RPG를 `ONBOARDING_SERVERS` 등록 + `modules/rpg/auth.py` 구 흐름 정리.
+2. ✅ **RPG auth 이관 완료**(DL-138) — RPG도 공통 온보딩 verify 경로 사용. `modules/rpg/auth.py` 구 흐름 제거.
 3. **B: master 동기화** — 합본 원본(`porong-server`)에서 수행(디스코드 워크트리 불가).
 
 ### 이번 세션 완료 (2026-06-08~09, feature/discord-dev) — 인증·온보딩·DB·서버레지스트리 구현 패스
@@ -297,9 +296,9 @@ moderation/admin/lifecycle 공통 선행(§12.2)인 운영/감사 로그 인프�
 포로몬 인증(verify) → 공통 온보딩(약관게이트+버튼/모달) → SQLite 계층(core/db.py) → 서버 레지스트리/생애주기(T21).
 
 **구현 산출:**
-- **포로몬 인증** `integrations/poromon_api.py` `verify_code`(POST /auth/verify, X-Api-Key, {code,discordId} → 200{ok,uuid,name}/404/429/401).
-- **공통 온보딩** `modules/onboarding/panels.py` — 약관동의 버튼(접근→인증전 역할) + 인증 버튼/모달 → verify → 플레이어 승급. 서버 레지스트리 `core/config.ONBOARDING_SERVERS`(포로몬 등록). `main.py` 전역 `on_app_command_error` 추가.
-- **DB 계층(T12)** `core/db.py` — aiosqlite 단일커넥션 + 쓰기 lock + `schema_meta` 증분 마이그레이션. v1 = `servers` 테이블. `BOT_DB_PATH`. `bot.db` 배선.
+- **포로몬 인증** `integrations/zenon_mon_api.py` `verify_code`(POST /auth/verify, X-Api-Key, {code,discordId} → 200{ok,uuid,name}/404/429/401).
+- **공통 온보딩** `modules/onboarding/panels.py` — 약관동의 버튼(접근→인증전 역할) + 인증 버튼/모달 → verify → 플레이어 승급. 서버 레지스트리는 DB active 서버(`core/servers.py`) 기준. `main.py` 전역 `on_app_command_error` 추가.
+- **DB 계층(T12)** `core/db.py` — 표준 `sqlite3` 단일커넥션 + `asyncio.to_thread` + 직렬화 lock + `schema_meta` 증분 마이그레이션. v1 = `servers` 테이블. `BOT_DB_PATH`. `bot.db` 배선.
 - **서버 레지스트리/생애주기(T21)** `core/servers.py` + `core/gating.py` + `modules/server_lifecycle/commands.py` — `/서버목록`·`/서버정보`·`/서버신설`·`/서버시작`(prep→active)·`/서버종료`(active→ended) + 카테고리 가시성 + 게이팅 3층 헬퍼.
 
 **확정/정정:**
@@ -313,9 +312,9 @@ moderation/admin/lifecycle 공통 선행(§12.2)인 운영/감사 로그 인프�
 
 **다음 세션 착수 후보:**
 1. **mod_log 인프라**(§12.2 순서) — v2 마이그레이션 + `#운영로그` 게시 헬퍼. 붙이면 `/서버시작`·`종료`·`신설` 등 전이가 운영로그에 남음(moderation/admin 공통 선행).
-2. **RPG auth 이관**(DL-138 지정) — RPG를 `ONBOARDING_SERVERS`에 등록(verify 엔드포인트 준비됨) + `modules/rpg/auth.py` 구 흐름(닉 모달·create_pending·role-queue 폴링) 정리.
+2. ✅ **RPG auth 이관 완료**(DL-138 지정) — RPG를 공통 온보딩 verify 경로에 연결하고 `modules/rpg/auth.py` 구 흐름(닉 모달·create_pending·role-queue 폴링) 정리.
 3. **B: master 동기화** — 합본 원본에서 `feature/discord-dev`에 origin/master 머지(decision_log 충돌=theirs, 루트 CLAUDE.md 디스코드용 정리).
-4. **남은 열린 결정**: 약관동의 DB기록(b) 시점, T17 카테고리 자동생성, 이모지 서버선택 패널, XP 곡선·티켓·FAQ.
+4. **남은 열린 결정**: 약관동의 DB기록(b) 시점, XP 곡선·티켓·FAQ.
 
 > 미push 주의: 세션 종료 시점에 T21 상태전이 2커밋(`ee170d3`·`0919642`)이 origin 미반영일 수 있음 — 다음 세션 시작 시 `git log origin/feature/discord-dev..HEAD` 확인.
 
@@ -344,19 +343,19 @@ moderation/admin/lifecycle 공통 선행(§12.2)인 운영/감사 로그 인프�
 
 ### 확정된 핵심 결정 (요약)
 - 봇 = 포롱서버 중앙제어 허브, Python 3.12/discord.py, 오라클 24h 상시(게임 호스팅 분리).
-- 온보딩 = ①공통 디스코드 인증(규칙+닉네임 1회) → ②서버별 약관동의 + 인게임 `/연동` → 서버별 화이트리스트.
-- 채널 = 카테고리(공통/RPG/포로몬/기타), 이모지로 서버선택 → 카테고리 접근 역할(가시성). 접근 ≠ 화이트리스트.
+- 온보딩 = 전역 active 서버 1개 → 약관동의 → 인게임 `/인증` 발급 → 봇 verify → 서버별 플레이어 역할.
+- 채널 = 카테고리(공통/RPG/포로몬/기타), 전역 active 서버 자동 배정 → 카테고리 접근 역할(가시성). 접근 ≠ 화이트리스트.
 - 봇 관여 = API 경유만(DB/파일/임의 RCON 금지). 알림 = push(인바운드 HMAC+timestamp+IP).
 - 닉네임 변경 = 운영자 전용(`/닉네임변경`·`/닉네임재입력`).
 
 ### 다음 세션 착수 후보 (택1)
 1. **`core/notifier` 인터페이스 초안** — 통신 계약 B(push)를 소비. 인바운드 수신 → `(domain,kind)` 라우팅 테이블 → 전송. (T1)
-2. **온보딩 상세 시퀀스** — 공통 인증 `core/` 분리(T7) + 이모지 서버선택(T10) + `/연동`→화이트리스트 시퀀스 다이어그램.
+2. ✅ **온보딩 상세 시퀀스 최신화 완료** — 공통 온보딩(T7) + 전역 active 서버(T10 폐기 반영) + 인게임 `/인증`→봇 verify 흐름.
 3. **운영(admin) 명령 상세** — A-3 운영 API 계약과 짝지어 권한·입력·운영로그 설계. (T3·T11)
 
 ### 착수 전 열린 결정 (정해지면 진행 빨라짐)
 - ✅ 인바운드 인증: **HMAC+timestamp 확정**(2026-06-06). 상세 = notifications.md ①, T1 설계 반영.
-- 포로몬 API 포트·엔드포인트 계약: PoroMonCore(`../../poromon/docs/03_poromoncore/`) 설계 선행 — poromon 워크스페이스 영역.
+- Zenon Mon 조회/운영 API 포트·엔드포인트 계약: ZenonMonCore(`../../zenon-mon/docs/03_poromoncore/`) 설계 선행 — zenon-mon 워크스페이스 영역.
 - 운영 API(A-3) 게임서버 측 엔드포인트: RPG 워크스페이스 협의 필요(여기선 읽기전용).
 - 필드보스 폴링 → push 이관 시점.
 
@@ -392,7 +391,7 @@ moderation/admin/lifecycle 공통 선행(§12.2)인 운영/감사 로그 인프�
 | 커뮤니티 레벨 | 채팅·음성 활동 XP → 레벨업(내용 미열람, 메시지/voice 이벤트만 집계 + 어뷰징 쿨다운) | 1 |
 | 칭호 | 레벨 임계 도달 시 칭호 역할 자동 부여(레벨 연동) | 1 |
 | 리더보드 | 커뮤니티 레벨 랭킹 임베드(레벨 테이블 재사용) | 1 |
-| 임시 음성채널 🟢 | 허브 입장 시 같은 카테고리에 개인 음성방 자동 생성·비면 삭제. 허브=카테고리별 다중(T17 템플릿 `➕ 음성방 만들기`). **구현(2026-06-09): `modules/community/temp_voice.py`** — on_voice_state_update 이름매칭 허브→생성·이동, 빈 방 삭제, 재시작 orphan 청소. 런타임 추적(DB 불필요). voice_states(비특권) | 1 |
+| 임시 음성채널 🟢 | 1명 제한 허브 입장 시 같은 카테고리에 개인 음성방 자동 생성·즉시 이동·비면 삭제. 허브=카테고리별 다중(T17 템플릿 `➕ 음성방 만들기`). **구현(2026-06-09, 2026-07-02 보강): `modules/community/temp_voice.py`** — on_voice_state_update 이름매칭 허브→생성·이동, 빈 방 삭제, 재시작 orphan 청소. 런타임 추적(DB 불필요). voice_states(비특권) | 1 |
 | 출석/일일보상 | `/출석` 스트릭 + XP/보상(레벨 연동) | 2 |
 | 임시역할 자동만료 | 이벤트 한정 역할 만료 시각 도달 시 자동 회수 | 2 |
 
@@ -517,7 +516,7 @@ servers: { id, domain, season_no, display_name, state(준비|활성|종료),
 - **영구 View 영속화**: 신규 패널(서버선택·`/칭호`·티켓·FAQ)은 `auth.py` `TermsView`처럼 stable custom_id로 `add_view` 재등록 필수. 페이지네이션(`/리더보드`·`/도움말`)은 ephemeral timeout View로 영속화 회피.
 - **인바운드 aiohttp**: `web.run_app()` 금지(루프 충돌) → `AppRunner`+`TCPSite`를 봇 루프 task로 기동.
 - **명령 sync**: 단일 길드는 `tree.sync(guild=...)`로 즉시 반영(전역 sync는 최대 1h).
-- **aiosqlite 쓰기 직렬화**: 단일 커넥션에 여러 코루틴(on_message XP·voice tick·temp_roles tick·명령) 동시 쓰기 → statement autocommit 또는 쓰기 lock. on_message XP는 쿨다운 메모리 1차 판정 후에만 DB write(핫패스 방어).
+- **SQLite 작업 직렬화**: 단일 커넥션에 여러 코루틴(on_message XP·voice tick·temp_roles tick·명령) 동시 접근 → `core/db.py` lock 으로 직렬화. on_message XP는 쿨다운 메모리 1차 판정 후에만 DB write(핫패스 방어).
 - **인바운드 계약 갭**(notifications ① 보강): 봇 다운 중 push 유실 = **게임서버 재시도/실패허용 책임**. 미등록 `(domain,kind)`는 graceful(로깅+200). per-domain 시크릿은 추후 고려.
 - **운영명령 상태검증 강제**: 매트릭스가 운영명령에 `requires_server_active`를 안 거니, `/서버시작`을 ended 행에 호출 등은 공용 `assert_state` 헬퍼로 명시 검증.
 

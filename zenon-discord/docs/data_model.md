@@ -17,8 +17,8 @@
 ## 1. 런타임 / 접근 계층
 
 - **파일:** `<인스턴스 로컬>/yuki_bot.sqlite3` — **gitignored**(런타임 데이터, 커밋 금지). 경로는 `.env`(`BOT_DB_PATH`). 기존 `porong_bot.sqlite3` 은 `BOT_DB_PATH` 로 지정하면 그대로 사용(자동 마이그레이션 없음).
-- **드라이버:** `aiosqlite`(비동기) — discord 이벤트 루프 블로킹 방지. 동기 `sqlite3` 금지.
-- **접근 계층:** `core/db.py` — 연결 풀/단일 커넥션 + 쿼리 헬퍼. 각 모듈은 `core/db.py` 경유로만 접근(도메인 모듈이 raw SQL 흩뿌리지 않음).
+- **드라이버:** 표준 `sqlite3` 단일 커넥션 + `asyncio.to_thread` — discord 이벤트 루프 블로킹 방지.
+- **접근 계층:** `core/db.py` — 단일 커넥션 + 직렬화 lock + 쿼리 헬퍼. 각 모듈은 `core/db.py` 경유로만 접근(도메인 모듈이 raw SQL 흩뿌리지 않음).
 - **마이그레이션:** `schema_meta.version` 기반 단순 증분 러너(기동 시 현재 버전 → 목표 버전까지 순차 적용).
 
 ## 2. 테이블
@@ -52,7 +52,7 @@
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | server_id | INTEGER | `servers.id` |
-| group_key | TEXT | `onboarding`/`info`/`community`/`support` (템플릿 그룹) |
+| group_key | TEXT | `onboarding`/`info`/`community`/`support`/`logs` (템플릿 그룹) |
 | category_id | INTEGER | 디스코드 카테고리 ID |
 
 - `PRIMARY KEY(server_id, group_key)`. 자동전개(`/서버신설`)가 그룹별 카테고리 1개씩 적재.
@@ -72,8 +72,8 @@
 | voice_seconds | INTEGER | 누적 음성 활동(초) |
 | updated_at | INTEGER | |
 
-- XP는 길드 전역(디스코드 활동 기준), 도메인 무관. **메시지 내용 미열람** — 작성자·채널·voice state만 집계.
-- 🟢 **구현(2026-06-09, v8): `core/community.py`(곡선·접근) + `modules/community/level.py`** — 채팅(쿨다운)·음성(tick, mute/AFK/혼자 제외) XP, `/레벨`·`/리더보드`, 레벨업 알림(`CHANNEL_LEVELUP_ID`). 곡선 = `5L²+50L+100`. 칭호(§2.3)·XP보정은 후속.
+- XP는 길드 전역(디스코드 활동 기준), 도메인 무관. **현재 자동 적립/레벨 명령은 비활성**이며 테이블은 재활성 대비 보존한다.
+- 🟡 **보존(2026-07-02): `core/community.py`(곡선·접근) + `community_xp` 테이블은 남기되, `modules/community/level.py`는 수동 칭호 운영 명령만 제공한다.**
 
 ### 2.3 `titles` — 칭호 카탈로그 (T13)
 | 컬럼 | 타입 | 설명 |
@@ -81,9 +81,9 @@
 | id | INTEGER PK | |
 | key | TEXT UNIQUE | 내부 키 |
 | display_name | TEXT | 표시명 |
-| required_level | INTEGER NULL | 레벨 임계(자동 획득 조건) |
+| required_level | INTEGER NULL | 레거시 레벨 임계. 수동 칭호는 NULL |
 
-- **칭호는 디스코드 역할이 아니다.** 봇이 관리하는 순수 표시 데이터(코스메틱). 보유=`user_titles`, 장착(표시)=`user_titles.equipped`. 역할 부여·생성 없음(역할 난립 방지).
+- **칭호는 디스코드 역할이 아니다.** 봇이 관리하는 순수 표시 데이터(코스메틱). 운영자가 생성/부여/회수하고, 보유=`user_titles`, 장착(표시)=`user_titles.equipped`. 역할 부여·생성 없음(역할 난립 방지).
 
 ### 2.3b `user_titles` — 보유/장착 칭호 (T13)
 | 컬럼 | 타입 | 설명 |
@@ -93,9 +93,8 @@
 | acquired_at | INTEGER | 획득 시각 |
 | equipped | INTEGER | 1=장착(표시), 0=보유만 |
 
-- `PRIMARY KEY(discord_user_id, title_id)`. 보유는 누적(회수 안 함). **유저당 equipped=1 은 최대 1개**(교체 시 기존 0으로).
-- 닉네임 `[LV.nn]` prefix 는 `community_xp.level` 파생(별도 저장 없음, 기존 닉을 base 로 재적용).
-- 🟢 **구현(2026-06-09, v9): `core/titles.py`** — 카탈로그 시드 5종(Lv5~50), 레벨업 시 `newly_eligible`→`grant_title` 자동 획득, `/칭호`(Select 장착, equipped 유일), `/레벨` 카드 표시. 칭호=역할 아님(코스메틱).
+- `PRIMARY KEY(discord_user_id, title_id)`. 보유는 누적 가능하며 운영자가 회수할 수 있다. **유저당 equipped=1 은 최대 1개**(교체 시 기존 0으로).
+- 🟢 **구현(2026-07-02): `core/titles.py` + `modules/community/level.py`** — `/칭호생성`·`/칭호목록`·`/칭호부여`·`/칭호회수`(admin, mod_log) + `/칭호`(Select 장착, equipped 유일). 칭호=역할 아님(코스메틱).
 
 ### 2.4 `warnings` — 경고 (T15)
 | 컬럼 | 타입 | 설명 |
@@ -113,7 +112,7 @@
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | id | INTEGER PK | |
-| action | TEXT | `warn`/`timeout`/`kick`/`ban`/`server_start`/`server_end`/`relink`… |
+| action | TEXT | `warn`/`timeout`/`kick`/`ban`/`mc_ban`/`mc_kick`/`server_start`/`server_end`/`relink`… |
 | target_id | INTEGER NULL | 대상 유저(해당 시) |
 | operator_id | INTEGER | 처리 운영자 |
 | reason | TEXT NULL | |
@@ -168,11 +167,11 @@
 | 컬럼 | 타입 | 설명 |
 |---|---|---|
 | domain | TEXT PK | 서버 도메인(온보딩 키, domain당 1건) |
-| content | TEXT | 약관 본문(최대 4000자 — 모달 입력 상한) |
+| content | TEXT | 약관 본문. 모달 입력은 4000자 제한, 긴 약관은 파일 업로드 명령으로 저장 |
 | updated_by | INTEGER NULL | 수정 운영자 |
 | updated_at | INTEGER | |
 
-- 🟢 **구현(2026-06-09, v5): `core/terms.py` + `/약관설정`(모달)·`/약관보기`.** 약관은 서버마다/시즌마다 달라 코드 하드코딩 대신 봇 입력·DB 저장. 온보딩 약관 패널(`/온보딩패널`)이 저장본을 게시. 약관 수정은 `mod_log(action=terms_update)` 적재.
+- 🟢 **구현(2026-06-09, v5): `core/terms.py` + `/약관설정`(모달)·`/약관파일설정`(긴 약관 파일 업로드)·`/약관보기`.** 약관은 서버마다/시즌마다 달라 코드 하드코딩 대신 봇 입력·DB 저장. 온보딩 약관 패널(`/온보딩패널`)이 저장본을 여러 embed 로 분할 게시한다. 약관 수정은 `mod_log(action=terms_update)` 적재.
 
 ## 3. 안 넣는 것 (명시)
 - 게임 상태(프로필·영지·보스·화이트리스트) — 원격 HTTP 조회.
