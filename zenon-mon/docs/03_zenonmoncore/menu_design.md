@@ -51,7 +51,7 @@
         col0    col1    col2    col3    col4     col5    col6    col7    col8
 row0  [▓]     [▓]     [▓]     [▓]     (플레이어)[▓]     [▓]     [▓]     [▓]
 row1  [▓] [진행도][ 배지 ][짐가이드][리그/챔피언][서버가이드][▓]   [▓]     [▓]
-row2  [▓] [허브 TP][야생귀환][▓]    [▓]      [▓]     [▓]     [▓]     [▓]
+row2  [▓] [▓]     [ 홈 ][야생이동][TPA]     [▓]     [▓]     [▓]     [▓]
 row3  [▓] [매입소][편의상점][▓]     [▓]      [▓]     [▓]     [▓]     [▓]
 row4  [▓] [전설제단][메가연구소][기술머신][알 상점][육성 상점][▓]   [▓]     [▓]
 row5  [▓]     [▓]     [▓]     [▓]     [ 닫기 ] [▓]     [▓]     [▓]     [▓]
@@ -59,14 +59,15 @@ row5  [▓]     [▓]     [▓]     [▓]     [ 닫기 ] [▓]     [▓]     [�
 
 | 슬롯 | 항목 | 종류 | 아이콘 후보 | 동작 |
 |---|---|---|---|---|
-| 4 | 플레이어 정보 | 조회 | 플레이어 머리 | lore에 이름·**골드 잔액**·배지 수·해금 요약(읽기 전용) |
+| 4 | 플레이어 정보 | 조회 | 플레이어 머리 | lore에 이름·**골드 잔액**·현재 칭호·배지 수·해금 요약(읽기 전용) |
 | 10 | 내 진행도 | 조회 | 책 | `/zenonmon progress` 내용 GUI 표시(배지/해금/티켓) |
 | 11 | 배지 | 조회 | 8종 배지 아이콘 | 짐별 클리어 현황(8칸 서브 GUI 후보) |
 | 12 | 짐 가이드 | 조회 | 표지판 | 짐 순서·타입·레벨캡 안내 |
 | 13 | 리그/챔피언 정보 | 조회 | 금 사과(후보) | 정규리그·챔피언스리그 일정/규칙 |
 | 14 | 서버 가이드 | 조회 | 지도 | 서버 규칙·핵심 정책 안내 |
-| 19 | 허브 텔레포트 | 액션 | 엔더펄(후보) | `HubInteractionManager` → `hub.spawn`(core.json) |
-| 20 | 야생 귀환 | 액션 | 나침반 | 직전 위치/랜덤 야생 복귀(후보, `teleportCommandEnabled` 게이트) |
+| 20 | 홈 | 액션 | 침대 | 홈 등록/이동/해금 GUI |
+| 21 | 야생 이동 | 액션 | 잔디 블록 | 월드보더 안 임의 안전 지점으로 이동 |
+| 22 | TPA | 액션 | 나침반 | 친구에게 순간이동 요청 |
 | 28 | **매입소** | 상점(메뉴) | 모루/상자 | §4.1 매입 GUI(광물·농작물·베리 → 골드) |
 | 29 | **편의 상점** | 상점(메뉴) | 몬스터볼(후보) | §4.2 편의 GUI(볼·회복약 구매) |
 | 37 | 전설 제단 안내 | 허브 안내 | 보라 유리 | §4.3 — "허브 전설 제단으로" + 위치/TP |
@@ -113,17 +114,18 @@ row5  [▓]     [▓]     [▓]     [▓]     [ 닫기 ] [▓]     [▓]     [�
 - `core.json §menuItem`(아이템 정책) · `§hub`(텔레포트 목적지) · `§logging`.
 - (확장 후보) `core.json §menuGui`: `wildReturnEnabled`, 안내 시설 목록/좌표, 레이아웃 토글 — **0.1 필수 아님**, 필요 시 추가.
 - 가격: `economy.json`(매입/편의) 단일 출처 — 메뉴는 값을 직접 들고 있지 않고 참조.
-- 명령: `/zenonmon menu`(오픈) · `/zenonmon hub` · `/zenonmon progress` · `/zenonmon admin pass <player>`(`commands.md`).
+- 명령: `/zenonmon menu`(오픈) · `/zenonmon hub`(OP 전용) · `/zenonmon progress` · `/zenonmon title list|set|clear` · `/zenonmon admin pass <player>`(`commands.md`).
 
 ---
 
 ## 7. 구현 단계
-- **0.1 ✅ 구현 완료(2026-06-06)**: 리그 패스 지급/복원/보호 + 메인 메뉴 GUI(허브 텔레포트·진행도 조회). 헤드리스 부팅 검증(로드·core.json 생성·명령 등록·reload·mixin 적용·크래시 없음). **인게임 클릭/우클릭/드롭 검증은 클라 접속 필요(미실시).**
-  - 구현물: `config/{CoreConfig,ConfigManager}`(core.json 로드/생성/reload) · `item/MenuItemManager`(생성/식별`zenonmoncore_league_pass` NBT/`ensure` 중복회수+지급) · `menu/{LeaguePassMenuHandler,MenuGuiManager}`(6×9 읽기전용 GUI, 클릭 라우팅) · `hub/HubManager`(core.json hub.spawn TP) · `mixin/ServerPlayerEntityMixin`(`dropSelectedItem` Q-드롭 차단) · `ZenonMonCore`(JOIN 지급/복원·AFTER_RESPAWN 복원·UseItemCallback 오픈) · `command`(`menu`/`hub`/`admin pass`/`reload` 실동작).
-  - 0.1 활성 슬롯: 4(플레이어 정보) · 10(진행도 채팅) · 19(허브 TP) · 49(닫기). 나머지(배지/가이드/상점/시설 안내)는 "준비 중" placeholder.
-  - 인게임 검증 완료(2026-06-06, zenonsufu0): 우클릭 메뉴·허브 TP·진행 조회·드롭/이동 잠금.
+- **0.1 ✅ 구현 완료(2026-06-06)**: 리그 패스 지급/복원/보호 + 메인 메뉴 GUI(진행도 조회). 헤드리스 부팅 검증(로드·core.json 생성·명령 등록·reload·mixin 적용·크래시 없음). **인게임 클릭/우클릭/드롭 검증은 클라 접속 필요(미실시).**
+  - 구현물: `config/{CoreConfig,ConfigManager}`(core.json 로드/생성/reload) · `item/MenuItemManager`(생성/식별`zenonmoncore_league_pass` NBT/`ensure` 중복회수+지급) · `menu/{LeaguePassMenuHandler,MenuGuiManager}`(6×9 읽기전용 GUI, 클릭 라우팅) · `mixin/ServerPlayerEntityMixin`(`dropSelectedItem` Q-드롭 차단) · `ZenonMonCore`(JOIN 지급/복원·AFTER_RESPAWN 복원·UseItemCallback 오픈) · `command`(`menu`/`admin pass`/`reload` 실동작).
+  - 0.1 활성 슬롯: 4(플레이어 정보) · 10(진행도 채팅) · 49(닫기). 나머지(배지/가이드/상점/시설 안내)는 "준비 중" placeholder.
+  - 인게임 검증 완료(2026-06-06, zenonsufu0): 우클릭 메뉴·진행 조회·드롭/이동 잠금.
 - **0.2 ✅ 구현 완료(2026-06-06)**: 매입소(28)·편의 상점(29) GUI + `EconomyBridge`(골드) + `economy.json`(매입/구매가 단일 출처). 매입=인벤 판매가능 자동진열·클릭 전부판매·전부팔기 / 편의=볼·회복약 좌1·우8 구매(환불 안전). 범용 `ServerMenuHandler.show()`로 **메뉴 전환 커서 점프 제거**(재오픈 없이 내용 교체). `/zenonmon admin economy give|set|balance`. 인게임 검증 완료.
 - **운영자 가격 관리 ✅ 구현**: `/zenonmon admin gui` → 가격 관리. 카테고리별 상점 가격을 클릭 후 채팅 숫자 입력으로 수정하고, `economy.json`에 즉시 저장한다.
+- **칭호 표시 ✅ 구현(결정 052)**: 플레이어 정보 lore와 `/zenonmon progress`에 현재 칭호를 표시한다. 보유/선택은 `/zenonmon title list|set|clear`.
 - **특성 마개조 일시 비활성**: `economy.json → engineering.abilityMakeoverEnabled=false` 기본값. 정수·특성 구매/특성 변경 GUI/기존 특성 정수 우클릭은 차단한다.
 - **슬롯20 = 홈(결정 029, 0.1 구현 완료)**: "야생 귀환"(직전 위치) 폐기 → 홈 등록/이동. 5칸(1 무료 + 4 골드 점진 해금 10k/30k/70k/150k), 좌클릭 이동/우클릭 재등록/쉬프트 이름변경, 쿨다운30s+웜업3s 채널링(이동·피격 취소)+카운트다운. `home/{HomeManager,HomeMenu}`·`data/Home`·`util/ChatInputManager`. `/zenonmon home`.
 - **리그 패스 보호 완성**: Q-드롭(`ServerPlayerEntityMixin`)·인벤 이동/드롭(`ScreenHandlerMixin`)·매 틱 슬롯 고정(`enforce`), 취소 후 `syncState()` 재동기화. lockSlot 기본 true.

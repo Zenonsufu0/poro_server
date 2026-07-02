@@ -240,20 +240,20 @@ jar 전수 검증(`egg_pool_design.md §8`)으로 Eggs Addon(`diesse`)의 실제
 - learnset 무시는 SimpleTMs가 아닌 **PoroMonCore가 MoveSet 직접 조작**으로 처리(전역 토글 무관). `PoroMonCore` UseEntityCallback로 우클릭 감지.
 - TM 상점: 일반 TM 구매(learnset용) + 해금석 구매(마개조용) 공존.
 
-### 033-b. 기술머신 / 포로공학 분리 + 워딩
+### 033-b. 기술머신 / 제논공학 분리 + 워딩
 
-기술머신(정규)과 마개조(off-learnset)를 별도 상점으로 분리. "마개조" → **"포로공학"** 으로 사용자 대면 워딩 변경.
+기술머신(정규)과 마개조(off-learnset)를 별도 상점으로 분리. "마개조" → **"제논공학"** 으로 사용자 대면 워딩 변경.
 - **기술머신 상점**(메뉴39): 선별 40종 TM 아이템 판매(`economy.json tmShop`, CategoryShopMenu). 정규 learnset 기술용(SimpleTMs, anyMovesLearnableTMs=false).
-- **포로공학**(메뉴42, `shop/EngineeringMenu`): 해금석 구매 + off-learnset 기술 각인. 해금석 우클릭→포켓몬 영구 해제, 메뉴에서 해제된 포켓몬에 기술(타입/검색) 각인(각인마다 골드, `economy.json engineering`). 전체 632 기술 대상.
-- 해금석 표시명 "포로공학 해금석"(태그 키·내부 식별자 makeover/MakeoverService는 유지).
+- **제논공학**(메뉴42, `shop/EngineeringMenu`): 해금석 구매 + off-learnset 기술 각인. 해금석 우클릭→포켓몬 영구 해제, 메뉴에서 해제된 포켓몬에 기술(타입/검색) 각인(각인마다 골드, `economy.json engineering`). 전체 632 기술 대상.
+- 해금석 표시명 "제논공학 해금석"(태그 키·내부 식별자 makeover/MakeoverService는 유지).
 
-### 034. 포로공학 정수 2종 분리(기술머신/특성) + 특성 완전 마개조
+### 034. 제논공학 정수 2종 분리(기술머신/특성) + 특성 완전 마개조
 
-포로공학 정수를 트랙별로 분리하고, 특성 마개조(임의 특성 강제 부여)를 신설. 특성 변경은 종족값 변형급 사기성이라 기술과 **별도 정수·별도 해제 트랙**으로 격리.
-- **정수·기술머신**(기존 "포로공학 정수" 리네임, CMD 82030, 태그 `poromon_makeover_stone`): 기술 각인 트랙. lore "포로공학의 정수이다 / 모든 기술머신을 배울 수 있게 된다". 가격 30만·배지4.
+제논공학 정수를 트랙별로 분리하고, 특성 마개조(임의 특성 강제 부여)를 신설. 특성 변경은 종족값 변형급 사기성이라 기술과 **별도 정수·별도 해제 트랙**으로 격리.
+- **정수·기술머신**(기존 "제논공학 정수" 리네임, CMD 82030, 태그 `poromon_makeover_stone`): 기술 각인 트랙. lore "제논공학의 정수이다 / 모든 기술머신을 배울 수 있게 된다". 가격 30만·배지4.
 - **정수·특성**(신규, CMD 82031, 태그 `poromon_ability_stone`): 특성 마개조 트랙. 우클릭→포켓몬 영구 해제(`PlayerProgress.abilityMakeoverPokemon`) → 메뉴서 해제 포켓몬 선택 → 특성 목록/검색 → **`Pokemon.setAbility$common(new Ability(tpl, forced=true, NORMAL))`** 로 종족 무관 임의 특성 강제 부여(`Abilities.get`). 가격 50만·배지6, 변경 1회 5만(`economy.json engineering.abilityStonePrice/abilityStoneBadges/abilityChangePrice`).
 - 특성 목록·한글검색: `shop/AbilityCatalog`(Cobblemon `ko_kr.json cobblemon.ability.<name>` 로드 → `Abilities.get` 유효분만, 표시는 `Text.translatable`로 ko_kr 자동). 무제한 변경.
-- 포로공학 메뉴(42): 기술(정수 구매 29 / 각인 33) + 특성(정수 구매 38 / 변경 42) 2트랙.
+- 제논공학 메뉴(42): 기술(정수 구매 29 / 각인 33) + 특성(정수 구매 38 / 변경 42) 2트랙.
 - 특성 정수 텍스처는 임시(기술 정수 색조 변형) — 전용 원본 추후 교체(CMD 82031).
 
 ### 035. 조우 풀 2단계 가중(stage/tier) + B 고정 cap + 심해/빛/용왕 보강
@@ -495,7 +495,7 @@ jar 전수 검증(`egg_pool_design.md §8`)으로 Eggs Addon(`diesse`)의 실제
 - **scripts**: 옛 절대경로 ROOT(`/home/.../poro-server-poromon`) 하드코딩을 스크립트 위치 기준 동적 도출로 교체(`classify-fabric-mods.py`·`inspect-jars.py`), 경로/PACK_NAME/jar명 동반 전환.
 
 **보존(미전환):**
-- **`포로공학`·`포로건(=Zenon Gun 형제 프로젝트)`** 중 인게임 콘텐츠명 `포로공학`은 게임 콘텐츠 명칭이라 사용자 결정 전까지 보존(현재형 문서의 `포로건`만 형제 프로젝트 지칭이라 Zenon Gun으로 정리).
+- **인게임 공학 콘텐츠명**은 당시 사용자 결정 전까지 보존 대상으로 두었으나, 이후 결정 051에서 `제논공학`으로 전환했다. 현재형 문서의 `포로건`만 형제 프로젝트 지칭이라 Zenon Gun으로 정리.
 - **historical ledger**: `decisions.md`·`idea_inbox.md`·`task.md`의 과거 PoroMon/포로몬/PoroMonCore 표기는 기록 보존(일괄 치환 안 함).
 - **Discord-side 식별자**: `discord_auth_integration.md`의 `POROMON_*` env·`poromon_api` 모듈 참조는 디스코드 봇 소관이라 Mon 전환과 별도 동기화(보류).
 - **런타임/배포 산출물**: `porong-mon/.local/**`(옛 dev 서버·installer-pack, 2.0G, gitignored), `fancymenu_data/last_world.fmdata`(dev 머신 인스턴스 경로 캐시) 미변경.
@@ -522,6 +522,24 @@ jar 전수 검증(`egg_pool_design.md §8`)으로 Eggs Addon(`diesse`)의 실제
 
 운영자 GUI에 가격 관리 메뉴를 추가한다. `/zenonmon admin gui` → 가격 관리에서 상점 카테고리별 품목을 선택하고 채팅 숫자 입력으로 가격을 수정하며, 변경값은 `config/zenonmoncore/economy.json`에 즉시 저장한다.
 
-특성 마개조는 밸런스 영향이 커서 일단 비활성화한다. `economy.json → engineering.abilityMakeoverEnabled=false`를 기본값으로 두며, 비활성 상태에서는 정수·특성 구매 GUI, 특성 변경 GUI, 기존 특성 정수 우클릭 해제가 모두 차단된다. 기술 각인 포로공학 트랙은 유지한다.
+특성 마개조는 밸런스 영향이 커서 일단 비활성화한다. `economy.json → engineering.abilityMakeoverEnabled=false`를 기본값으로 두며, 비활성 상태에서는 정수·특성 구매 GUI, 특성 변경 GUI, 기존 특성 정수 우클릭 해제가 모두 차단된다. 기술 각인 제논공학 트랙은 유지한다.
 
 부가로 Windows 설치기 아이콘 리소스를 번들 기준에 반영한다.
+
+### 051. 제논공학 명칭 전환 (2026-07-02)
+
+기존 인게임 공학 콘텐츠명을 Zenon 브랜드 기준에 맞춰 **`제논공학`** 으로 전환한다.
+
+- 사용자 대면 메뉴명, 아이템명, lore, 채팅 안내, 가격 관리 카테고리명을 `제논공학`으로 통일한다.
+- 내부 식별자(`engineering`, `MakeoverStone`, NBT tag `zenonmoncore_makeover_stone`/`zenonmoncore_ability_stone`)는 저장 호환성과 코드 의미를 위해 유지한다.
+- 결정 048에서 “사용자 결정 전까지 기존 공학 콘텐츠명 보존”으로 둔 보류 항목은 이 결정으로 해소한다.
+
+### 052. 유저 칭호 시스템 1차 구현 (2026-07-02)
+
+서버 업적/랭킹을 플레이어 칭호로 남긴다. 1차 범위는 운영자가 바로 밸런스·동기부여에 쓸 수 있는 항목으로 제한한다.
+
+- **골드 1위**: 현재 보유 골드가 가장 많은 플레이어에게 자동 부여/회수되는 현재형 칭호.
+- **시즌 최고 부자**: 서버에서 관측된 최고 보유 골드 기록을 갱신한 플레이어에게 영구 부여되는 기록형 칭호.
+- **최초 최상위 전설**: 조우방에서 `pool.type=apex` 또는 후보 `stage=apex` 전설을 종별로 가장 먼저 포획한 플레이어에게 영구 부여.
+
+칭호 보유/활성값은 `PlayerProgress.titles`/`activeTitle`에 저장하고, 최고 부자 기록 및 최상위 전설 최초 포획자는 전역 PersistentState에 저장한다. 플레이어는 `/zenonmon title list|set|clear`로 보유 칭호와 표시 칭호를 관리한다. 채팅 접두사 적용은 다른 채팅 포맷 모드와 충돌 가능성이 있어 1차 범위에서 제외하고, 메인 메뉴 플레이어 정보와 `/zenonmon progress`에만 표시한다.

@@ -30,6 +30,25 @@
   - `401 {"ok":false,"error":"unauthorized"}` — API 키 불일치
   - `400` — 바디 누락 / `405` — POST 아님
 
+## 경제 모니터 HTTP API / 웹 대시보드
+
+인증 HTTP 서버는 경제 운영 모니터도 같은 포트에서 제공한다. 모든 경제 엔드포인트는 `X-API-Key` 헤더 또는 `?key=<apiKey>` 쿼리로 인증한다.
+
+- `GET /economy/summary`
+  - 전체 보유 골드, 누적 생산/소모, 유저별 랭킹, 판매 품목별 생산량, 소모처별 소비량, 최근 거래, 경고 목록을 JSON으로 반환.
+  - 디스코드 봇은 이 엔드포인트를 주기 polling해서 운영 채널에 요약을 올릴 수 있다.
+- `GET /economy/alerts`
+  - `core.json → economyMonitor.suspicious*Threshold` 기준으로 의심 잔액/순생산/대형 거래 경고만 반환.
+- `GET /economy/dashboard?key=<apiKey>`
+  - 브라우저용 간단 대시보드. 같은 `bindAddress/httpPort`에서 제공.
+
+추가로 MC 서버 자체에서 디스코드 웹훅으로 자동 알림을 보낼 수 있다.
+
+- `core.json → economyMonitor.discordWebhookEnabled=true`
+- `core.json → economyMonitor.discordWebhookUrl=<Discord webhook URL>`
+- `discordIntervalMinutes` 주기로 경제 요약과 상위/경고 항목을 전송.
+- 웹훅 URL은 시크릿이므로 Git에 커밋하지 않는다.
+
 ## 봇 측 구현 계획 (porong-discord, TODO — ⚠️ 이 워크트리에서 수정 금지)
 
 > 봇 코드는 **별도 워크트리 `porong-work-discord`(브랜치 `feature/discord-dev`)** 에 있다. 아래는 그 워크트리에서 진행할 **구현 체크리스트**(이 문서가 계약·MC측은 완료).

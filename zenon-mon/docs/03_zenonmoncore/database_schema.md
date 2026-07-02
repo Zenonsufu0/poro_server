@@ -30,6 +30,7 @@
   "schemaVersion": 1,
   "uuid": "…",
   "firstJoinEpoch": 0,
+  "lastKnownName": "PlayerName",    // 경제/운영 모니터 표시용 캐시
   "leaguePassGiven": true,        // 아이템 최초 지급 여부
   "badges": [],                    // 향후 gym: ["rock","water",...]
   "unlocks": {                     // 향후 mega: 해금 플래그
@@ -39,6 +40,8 @@
     // 아래 3-2 참조
   ],
   "balance": 0,                    // 골드 잔액 (단일 화폐, economy_design.md)
+  "titles": ["wealth_record"],      // 보유 칭호 id
+  "activeTitle": "wealth_record",   // 현재 표시 칭호 id(없으면 "")
   "battleTower": { "highestClearedFloor": 0, "rewardedFloors": [] },
   "rankedLeague": { "score": 1000, "wins": 0, "losses": 0, "recentOpponents": [] },
   "stats": { "legendaryCaught": 0, "gymCleared": 0 },
@@ -86,12 +89,55 @@
   "periodStartEpoch": 0,
   "goldFaucet": { "sell": 0, "gym": 0, "battleTower": 0, "wildPokemon": 0, "event": 0 },
   "goldSink":   { "ticket": 0, "megaStone": 0, "unlock": 0, "pokeball": 0, "heal": 0 },
-  "itemSellCount": { "minecraft:iron_ingot": 0 },   // 판매 빈도
-  "itemBuyCount":  { "cobblemon:poke_ball": 0 }     // 사용/구매 빈도
+  "goldInBySource": { "sell:minecraft:iron_ingot": 0 },
+  "goldOutBySource": { "ticket:basic": 0 },
+  "playerGoldIn": { "<uuid>": 0 },
+  "playerGoldOut": { "<uuid>": 0 },
+  "itemSellCount": { "minecraft:iron_ingot": 0 },   // 판매 수량
+  "itemSellGold": { "minecraft:iron_ingot": 0 },    // 품목별 골드 생산량
+  "itemBuyCount":  { "cobblemon:poke_ball": 0 },    // 구매/사용 수량
+  "itemBuyGold":  { "cobblemon:poke_ball": 0 },     // 품목별 골드 소모량
+  "economyTransactions": [
+    {
+      "epochMillis": 0,
+      "playerUuid": "<uuid>",
+      "playerName": "PlayerName",
+      "delta": 0,
+      "balanceAfter": 0,
+      "source": "sell:minecraft:iron_ingot",
+      "itemId": "minecraft:iron_ingot",
+      "count": 0
+    }
+  ]
 }
 ```
 - 모든 골드 in/out은 `EconomyBridge`에서 **출처 태그**와 함께 카운트 → 위 집계 갱신.
-- 상세 거래 이벤트는 `AuditLog`(append). 정교한 분석 필요 시 SQLite로 승격(선택).
+- 최근 거래 이벤트는 PersistentState에 ring buffer로 보관(구현 기본 500건). 장기 상세 분석이 필요하면 SQLite로 승격(선택).
+- 운영자 GUI `경제 모니터`는 총계/유저별/판매 품목별/소모처별/최근 거래 탭으로 위 집계를 표시한다.
+
+### 3-5. TitleState  (전역 칭호 기록 + PlayerProgress 보유 칭호)
+> 결정 052. 플레이어별 보유/활성 칭호는 `PlayerProgress`에, 전역 최초/최고 기록은 PersistentState 루트에 저장한다.
+```jsonc
+{
+  "wealthRecord": {
+    "uuid": "<uuid>",
+    "name": "PlayerName",
+    "balance": 0
+  },
+  "firstApexCatch": {
+    "rayquaza": {
+      "playerUuid": "<uuid>",
+      "playerName": "PlayerName",
+      "displayName": "레쿠쟈",
+      "epochMillis": 0
+    }
+  }
+}
+```
+- `wealth_current`: 현재 보유 골드 1위. 잔액 변화/접속 시 재계산하며 1위가 바뀌면 기존 보유자에게서 회수한다.
+- `wealth_record`: 관측 최고 보유 골드 기록 갱신자에게 영구 지급한다.
+- `first_apex:<species>`: 조우방에서 최상위 전설(`pool.type=apex` 또는 후보 `stage=apex`)을 종별로 최초 포획한 플레이어에게 영구 지급한다.
+- 채팅 접두사는 1차 범위에서 제외. 표시 위치는 메인 메뉴 플레이어 정보와 `/zenonmon progress`, 선택 명령은 `/zenonmon title list|set|clear`.
 
 ## 4. 마이그레이션 / 호환
 - 모든 루트 객체에 `schemaVersion`. 로드 시 버전 < 현재 → 업그레이드 함수 체인 적용.

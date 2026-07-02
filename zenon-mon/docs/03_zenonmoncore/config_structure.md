@@ -48,6 +48,24 @@
     "spawn": { "x": 0.5, "y": 64.0, "z": 0.5, "yaw": 0.0, "pitch": 0.0 },
     "teleportCommandEnabled": true
   },
+  "economyMonitor": {
+    "httpEnabled": true,
+    "discordWebhookEnabled": false,
+    "discordWebhookUrl": "",
+    "discordIntervalMinutes": 30,
+    "suspiciousBalanceThreshold": 1000000,
+    "suspiciousBalanceAverageMultiplier": 5.0,
+    "suspiciousBalanceMinPlayers": 3,
+    "suspiciousNetGainThreshold": 300000,
+    "suspiciousSingleTransactionThreshold": 100000,
+    "suspiciousSellItemGoldThreshold": 200000,
+    "suspiciousSellItemSharePercent": 45.0,
+    "suspiciousSellItemAverageMultiplier": 4.0,
+    "suspiciousTicketWindowHours": 24,
+    "suspiciousTicketPurchaseCount": 5,
+    "suspiciousTicketPurchaseGold": 200000,
+    "topLimit": 10
+  },
   "logging": {
     "auditEnabled": true,
     "logTicketUse": true,
@@ -57,6 +75,9 @@
   }
 }
 ```
+
+> `economyMonitor.discordWebhookUrl`은 시크릿이다. 런타임 `core.json`에만 입력하고 Git에 커밋하지 않는다.
+> 경제 웹/API는 디스코드 인증 API와 같은 `discordAuth.bindAddress/httpPort/apiKey`를 사용한다.
 
 ## 4. tickets.json (0.1 — 데이터 모델 우선)
 ```jsonc

@@ -73,10 +73,49 @@
 모든 골드 거래가 `EconomyBridge`를 통과하므로 가볍게 추적 가능.
 - **골드 흐름**: faucet/sink를 **출처 태그별 집계**(판매소/관장/배틀타워/야생포켓몬 ↔ 티켓/스톤/해금/TM/알/육성/볼·회복약). 시즌·일자별 유입·유출 총량.
 - **판매 빈도 / 사용 빈도**: 상점 거래가 핸들러를 거치므로 **아이템별 카운터** 누적(많이 팔리는/사는 품목 파악).
+- **운영 분석 필수 지표(확정)**:
+  - 유저별 현재 골드 보유량 랭킹.
+  - 유저별 누적 골드 생산량/소모량.
+  - 전체 유저 현재 골드 총량, 누적 생산량, 누적 소모량, 순증량.
+  - 판매 품목별 판매 수량과 골드 생산량.
+  - 소모처별 상세 source 집계(예: `ticket:*`, `altar_unlock:*`, `engineering:*`, `buy:*`, `home_unlock`).
+  - 최근 거래 이벤트 로그(시간, UUID/닉네임, 증감액, 잔액, source, itemId, count) — 부정 사용자 조사와 급격한 이상치 확인용.
 - **저장(단계적)**:
-  1. 집계 카운터 = `PersistentState`(`EconomyStats`, `database_schema.md`) + 거래 이벤트 = `AuditLog`. → **무거운 DB 없이 가격 조정 근거 확보(권장 1차).**
+  1. 집계 카운터 = `PersistentState`(`EconomyStats`, `database_schema.md`) + 최근 거래 이벤트 ring buffer. → **무거운 DB 없이 가격 조정 근거 확보(권장 1차).**
   2. 정교한 쿼리/대시보드 필요 시 **SQLite**(번들 JDBC) 선택 도입. 외부 DB(Mongo 등) 불필요.
 - 운영 루프: 지표 확인 → 가격 과다/과소 판단 → `economy.json` 조정 → `/zenonmon admin reload`.
+- 구현 현황(2026-07-02): `EconomyBridge`가 `source`/`itemId`/`count` 메타데이터를 받아 `ZenonMonState`에 유저별·품목별·소모처별 집계를 저장한다.
+  - 인게임: `/zenonmon admin gui` → **경제 모니터**에서 총계/유저/판매 품목/소모처/최근 거래 탭으로 확인.
+  - 웹: `GET /economy/dashboard?key=<apiKey>` 로컬 대시보드.
+  - 봇/API: `GET /economy/summary`, `GET /economy/alerts` (`X-API-Key` 또는 `?key=`).
+  - 디스코드 알림: `core.json → economyMonitor.discordWebhookEnabled=true` + `discordWebhookUrl` 설정 시 주기적으로 경제 요약 전송.
+
+### 6-1. 경제 경고 산식 (초기 운영)
+
+`/economy/alerts`와 디스코드 경제 요약의 경고는 `core.json → economyMonitor` 임계값으로 판단한다.
+
+| 경고 | 기본 산식 | 기본값 |
+|---|---|---|
+| `high_balance` | `현재 잔액 >= suspiciousBalanceThreshold` | 1,000,000 |
+| `balance_outlier` | `플레이어 수 >= suspiciousBalanceMinPlayers` 이고 `현재 잔액 >= 전체 평균 잔액 × suspiciousBalanceAverageMultiplier` | 3명 이상, 5.0배 |
+| `high_net_gain` | `(유저 누적 생산량 - 유저 누적 소모량) >= suspiciousNetGainThreshold` | 300,000 |
+| `sell_item_outlier` | `품목 판매 생산골드 >= suspiciousSellItemGoldThreshold` 이고 (`전체 판매 생산골드 점유율 >= suspiciousSellItemSharePercent` 또는 `품목 평균 대비 >= suspiciousSellItemAverageMultiplier`) | 200,000, 45%, 4.0배 |
+| `ticket_purchase_spike` | 최근 `suspiciousTicketWindowHours` 동안 `ticket:*` 소모 거래가 `suspiciousTicketPurchaseCount`회 이상 또는 `suspiciousTicketPurchaseGold` 이상 | 24시간, 5회, 200,000 |
+| `large_transaction` | `abs(단일 거래 delta) >= suspiciousSingleTransactionThreshold` | 100,000 |
+
+해석 원칙:
+- `high_balance`는 부자/장기 플레이어도 잡히므로 단독 제재 근거가 아니라 관찰 신호다.
+- `balance_outlier`는 다른 유저에 비해 잔액이 과하게 튄 유저를 찾는 상대 지표다. 플레이어 수가 적을 때는 오탐을 막기 위해 비활성된다.
+- `high_net_gain`은 “쓴 돈보다 새로 만든 돈이 비정상적으로 많은 유저”를 찾는 1차 신호다.
+- `sell_item_outlier`는 특정 판매 품목이 다른 품목보다 과도하게 골드를 생산하는지 찾는다. 특정 광물/작물 가격 오류나 자동화 가능성을 점검한다.
+- `ticket_purchase_spike`는 전설 조우권 과다 구매를 찾는다. 조우권 가격 오류, 중복 구매, 우회 획득을 점검한다.
+- `large_transaction`은 관리자 지급, 고가 구매, 환불, 버그 악용을 빠르게 찾는 신호다.
+- 실제 부정 판정은 최근 거래 source, 판매 품목, 플레이 시간, 관리자 지급 여부를 같이 확인한다.
+
+후속 보강 후보:
+- 일/시즌 단위 window 집계(`최근 1시간`, `최근 24시간`)를 PersistentState 카운터로 별도 보존해 서버 재시작/거래 500건 초과에도 급증률 유지.
+- 관리자 지급/설정 이벤트 별도 분리: `admin_give`, `admin_set`은 경제 생산과 구분 표시.
+- 경고 레벨: `watch`/`warn`/`critical` 3단계.
 
 ## 7. 유저 거래 / 경매장 — **경매장 도입 안 함 (확정)**
 - 경매장은 **만들지 않는다.** 올릴 물건은 직접 제작하거나 상점에서 사고팔면 되므로 불필요(어뷰징·시세조작 관리 부담도 회피).
@@ -158,7 +197,7 @@
 - **밸런싱 기준: 골드 유통량 자체는 비중요(거래 없음) → "메가진화에 적당한 노력" 기준으로 가격/보상 책정**
 - **제작 가능 아이템(볼·회복약)은 편의 판매(저비중), 가격 책정은 제작 불가/진행 아이템 위주**
 - 상점 고정가 + 운영자 지표 기반 수동 조정(자동 시세 X)
-- 골드 흐름·판매/사용 빈도 텔레메트리 추적(너프/버프 근거; 카운터+로그 1차, SQLite 선택)
+- 골드 흐름·판매/사용 빈도 텔레메트리 추적(너프/버프·부정 사용자 탐지 근거; 유저별/품목별/소모처별 카운터+최근 거래 로그 1차, SQLite 선택)
 - 메가팔찌/테라 해금에 골드 비용 — 골드를 게이트(cap)로 활용
 - 경매장 도입 안 함
 - **상점 구현 = 하이브리드(결정 024)**: 매입·편의 = 9번 메뉴 GUI(어디서나) / 핵심 sink = 허브 NPC 우클릭
