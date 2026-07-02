@@ -52,9 +52,16 @@ cd zenon-server/zenon-discord
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 
-# 4) 비밀값 — .env 는 gitignored 라 clone 에 없음. 직접 채운다(§3).
-cp .env.example .env && nano .env
+# 4) 비밀값 — .env 는 gitignored 라 clone 에 안 옴. 둘 중 하나:
+#    (A·권장) 로컬 .env 를 그대로 복사 — 로컬 PC 에서 실행:
+#       scp zenon-discord/.env <user>@<vm-ip>:~/zenon-server/zenon-discord/.env
+#    (B) VM 에서 새로 작성:
+cp .env.example .env && nano .env            # (B 를 택했을 때만)
 ```
+
+> `.env` 는 배포에서 git 이 못 가져오는 **유일한 파일**이다. 방법 A(scp)면 토큰·역할/채널 ID·
+> `INBOUND_*`·`ZENON_MON_*` 가 통째로 넘어가 재입력이 없다. 같은 VM 이면 `127.0.0.1` 값들이
+> 그대로 유효하다. 비밀은 오직 `.env` 에만 두므로 **이 런북·서비스 파일엔 비밀이 없다**(gitignore 불필요).
 
 **systemd 서비스**(템플릿 = [`../deploy/yuki-bot.service`](../deploy/yuki-bot.service)):
 
@@ -74,7 +81,10 @@ cd ~/zenon-server && git pull
 sudo systemctl restart yuki-bot
 ```
 
-- 같은 VM이면 봇 `.env` 의 `ZENON_MON_AUTH_URL` = `http://127.0.0.1:<포트>`(외부 노출·지연 없이).
+- 배포 후 `.env` 에서 확인할 값: `DISCORD_TOKEN`·`GUILD_ID`(필수), `INBOUND_SECRET`+`INBOUND_PORT`
+  (게임서버와 동일 시크릿 — 마크→디코 자동제재 인바운드), `ZENON_MON_AUTH_URL`/`ZENON_MON_API_URL`.
+- 같은 VM이면 봇 `.env` 의 `ZENON_MON_AUTH_URL` = `http://127.0.0.1:<포트>`, `INBOUND_HOST=127.0.0.1`.
+  게임서버가 **다른 호스트**면 `INBOUND_HOST=0.0.0.0` + `INBOUND_ALLOW_IPS=<게임서버IP>` + 방화벽에서 그 IP만 허용.
 - 봇 자원은 가벼움(~50–100MB RAM). VM 사이징은 Zenon Mon(Java) 기준으로 잡고 봇은 얹으면 됨.
 - Zenon Mon 의 **빌드 산출물(jar·모드팩)이 git 에 있는지**는 zenon-mon 소관 — 소스만 clone 되고
   서버 구동물은 별도 빌드/전송이 필요할 수 있다(zenon-work-mon 에서 확인).
