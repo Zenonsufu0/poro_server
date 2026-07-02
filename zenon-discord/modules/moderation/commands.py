@@ -35,7 +35,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from core import config, mod_log, permissions, servers, warnings
+from core import config, mod_log, notifier, permissions, servers, warnings
 from core.permissions import requires_permission
 from integrations.zenon_mon_api import ZenonMonAdminError, ZenonMonApiClient
 
@@ -328,6 +328,39 @@ class ModerationCog(commands.Cog):
             log.warning("자동 제재 처리 오류 target=%s", target.id, exc_info=True)
             return "\n⚠ 자동 제재 처리 중 오류(수동 조치 필요)."
         return ""
+
+    async def on_mark_sanction_event(self, bot, data: dict) -> None:
+        """인바운드 마크 제재 이벤트(`poromon.minecraft_sanction`) → 마크 경고면 통합
+        카운트를 즉시 재평가하고 임계 자동 제재. notifier.register_handler 로 배선.
+
+        게임서버(ZenonMonCore) 계약: 자동 제재가 동작하려면 이벤트 data 에 대상의 연동
+        Discord ID(`discordId` 또는 `discord_id`)가 포함돼야 한다. 없으면 매핑 불가 →
+        스킵(마크 제재 로그 게시만 되고 디코 자동 제재는 다음 디코 경고/조회 때 반영).
+        """
+        if str(data.get("action")) != "warn":
+            return
+        raw_id = data.get("discordId") or data.get("discord_id")
+        try:
+            discord_id = int(raw_id)
+        except (TypeError, ValueError):
+            log.info("마크 경고 이벤트에 연동 Discord ID 없음 — 자동 제재 스킵")
+            return
+        guild = bot.get_guild(config.GUILD_ID)
+        if guild is None:
+            return
+        member = guild.get_member(discord_id)
+        if member is None:
+            return
+        # 대상 보호: 운영 권한자·봇은 자동 제재 제외(수동 warn 경로와 동일 기준).
+        if member.bot or permissions.permission_rank(member) > 0:
+            return
+        _d, _m, total, _note = await self._combined_warn_count(discord_id)
+        auto_note = await self._auto_escalate(guild, member, total)
+        if auto_note:
+            log.info(
+                "마크 경고 인바운드 자동 제재: member=%s total=%s%s",
+                discord_id, total, auto_note.strip(),
+            )
 
     async def _process_warning(
         self, interaction: discord.Interaction, target: discord.Member, reason: str
@@ -808,4 +841,7 @@ class ModerationCog(commands.Cog):
 
 
 async def setup(bot: commands.Bot) -> None:
-    await bot.add_cog(ModerationCog(bot))
+    cog = ModerationCog(bot)
+    await bot.add_cog(cog)
+    # 인바운드 마크 경고 이벤트 → 통합 카운트 자동 제재(도메인 격리: notifier 레지스트리 경유).
+    notifier.register_handler("poromon", "minecraft_sanction", cog.on_mark_sanction_event)

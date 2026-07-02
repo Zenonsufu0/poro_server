@@ -52,8 +52,13 @@ Discord ID 기준·베스트에포트). 마크 API 미설정/미연동/실패 �
 **자동 에스컬레이션** = 통합 누적 경고가 임계 도달 시 봇이 자동 조치(`_auto_escalate()`):
 - 기본값: **WARN_TIMEOUT_THRESHOLD=3 → 타임아웃(WARN_TIMEOUT_MINUTES=60분)**,
   **WARN_BAN_THRESHOLD=5 → 차단**. 각 값 `0` = 해당 조치 비활성(`config`/`.env`).
-- 판정·실행 시점 = **디스코드 경고 부여 시**(`/경고`·패널). 마크 경고만 쌓인 경우는 다음 디코
-  경고나 조회(`_combined_warn_count`) 시 반영된다(마크 측 이벤트 콜백은 미도입).
+- 판정·실행 시점 = **디스코드 경고 부여 시**(`/경고`·패널) **및 마크 경고 인바운드 수신 시**.
+  - 인바운드: 게임서버가 `poromon.minecraft_sanction` 이벤트(`core/inbound.py`→`notifier.dispatch`)를
+    push 하면, moderation 이 등록한 핸들러(`on_mark_sanction_event`, `notifier.register_handler`)가
+    `action="warn"` + `discordId`(연동 Discord ID) 포함 시 통합 카운트 재평가 + 자동 제재.
+  - ⚠ **게임서버 계약:** 이벤트 data 에 `discordId` 가 있어야 즉시 자동 제재가 동작한다(integration_contract B-1).
+    없으면 마크 로그 게시만 되고, 자동 제재는 다음 디코 경고/조회 때 반영된다.
+  - 인바운드 리스너는 `INBOUND_SECRET`+`INBOUND_PORT` 설정 시에만 기동(미설정 시 이 경로 비활성).
 - 조치 주체 = 봇(operator=bot). 봇 권한/위계 부족 시 실행 실패를 안내만 하고 수동 조치에 맡긴다.
   이미 타임아웃 중이면 중복 적용하지 않는다. 자동 조치도 `mod_log`+`#운영로그`+제재내역에 기록.
 
@@ -71,7 +76,8 @@ Discord ID 기준·베스트에포트). 마크 API 미설정/미연동/실패 �
 
 ## 5. 미확정
 - ~~경고 임계·자동 에스컬레이션~~ → 🟢 확정·구현(§2, 2026-07-03: 3=타임아웃 1h·5=차단, 통합 카운트).
-- 마크 경고 발생 시 **즉시** 자동제재(마크→디코 이벤트 콜백/인바운드) 도입 여부 — 현재는 디코 경고 시점 판정.
+- ~~마크 경고 즉시 자동제재(인바운드)~~ → 🟢 봇 측 구현(§2). **게임서버가 `minecraft_sanction`
+  이벤트에 `discordId` 를 실어 push** 하도록 ZenonMonCore 측 배선 필요(zenon-work-mon 소관).
 - 제재 권한 세분(경고=support 허용 / 차단=admin 전용) 최종 확정.
 - 디스코드 차단과 게임 화이트리스트 연동 여부(현재 별개 — 게임 제재는 A-3).
 - DM 문구 템플릿.

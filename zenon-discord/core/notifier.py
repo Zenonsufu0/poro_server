@@ -37,10 +37,21 @@ _ROUTES: dict[tuple[str, str], tuple[str, str | None]] = {
 # (domain, kind) → builder(data: dict) -> discord.Embed
 _BUILDERS: dict[tuple[str, str], Callable[[dict], discord.Embed]] = {}
 
+# (domain, kind) → [async handler(bot, data)] — 알림 임베드와 별개의 부수효과 핸들러
+# (예: 마크 경고 이벤트 → 통합 경고 카운트 재평가 + 자동 제재). 도메인 모듈이 등록.
+_HANDLERS: dict[tuple[str, str], list[Callable]] = {}
+
 
 def register_builder(domain: str, kind: str, builder: Callable[[dict], discord.Embed]) -> None:
     """도메인 모듈이 로드 시 embed 빌더를 등록(도메인 격리 유지)."""
     _BUILDERS[(domain, kind)] = builder
+
+
+def register_handler(domain: str, kind: str, handler: Callable) -> None:
+    """(domain, kind) 이벤트의 부수효과 핸들러 등록. dispatch 시 알림 전송과 별개로
+    `await handler(bot, data)` 호출(best-effort). 도메인 격리 유지 — notifier 는 도메인
+    코드를 import 하지 않고 등록분만 호출한다."""
+    _HANDLERS.setdefault((domain, kind), []).append(handler)
 
 
 def has_route(domain: str, kind: str) -> bool:
@@ -87,9 +98,19 @@ async def dispatch(bot, domain: str, kind: str, data: dict) -> bool:
 
     반환값은 운영자 트리거 명령(T5)의 피드백용 — 인바운드 push 경로는 무시해도 무방.
     """
+    # 부수효과 핸들러(자동 제재 등) — 알림 전송과 독립. best-effort.
+    handlers = _HANDLERS.get((domain, kind))
+    if handlers:
+        for handler in handlers:
+            try:
+                await handler(bot, data)
+            except Exception:
+                log.exception("이벤트 핸들러 실패 (%s.%s)", domain, kind)
+
     route = _ROUTES.get((domain, kind))
     if route is None:
-        log.info("미등록 알림 (%s.%s) — 무시", domain, kind)
+        if not handlers:
+            log.info("미등록 알림 (%s.%s) — 무시", domain, kind)
         return False
     channel_attr, mention_key = route
 

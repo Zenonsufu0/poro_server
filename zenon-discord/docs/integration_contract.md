@@ -135,7 +135,7 @@ Zenon Mon 온보딩 인증은 RPG와 동일한 `/auth/verify` 계약으로 봇 �
 | `common.event_start` / `event_end` | `@이벤트알림` | `{event_name, info}` | 이벤트 시작/종료 |
 | `poromon.event` | `@포로몬알림` | `{title, info}` | Zenon Mon 이벤트/공지 |
 | `poromon.anomaly` | 없음 | `{severity, category, metric, player, value, baseline, window, summary}` | Zenon Mon 경제/아이템 등 이상징후 → active 서버 `로그/경고` |
-| `poromon.minecraft_sanction` | 없음 | `{action, target, player, uuid, operator, reason, source, sanction_id}` | 마크 서버 제재 기록 → active 서버 `로그/제재내역` |
+| `poromon.minecraft_sanction` | 없음 | `{action, target, player, uuid, operator, reason, source, sanction_id, discordId?}` | 마크 서버 제재 기록 → active 서버 `로그/제재내역`. **`action="warn"` + `discordId`(연동 Discord ID) 포함 시** 봇이 통합 경고 카운트 재평가 + 임계 자동 제재(moderation.md §2). `discordId` 없으면 로그 게시만(자동 제재는 다음 디코 경고/조회 때 반영). |
 
 > **현행 RPG 필드보스는 폴링**(`A-2 /field-boss/status`)으로 구현돼 있다. push 구조 완성 후
 > `rpg.field_boss_*` 이벤트로 점진 이관(DL-133). 그때까지 폴링·push 병행 가능.
