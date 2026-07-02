@@ -72,15 +72,17 @@ Debian 12 · 고정 IP · 방화벽 tcp 25565. JVM 힙은 ~16–20GB(나머지 O
 gcloud config set project <PROJECT_ID>
 gcloud config set compute/zone asia-northeast3-a
 gcloud compute addresses create zenon-ip --region=asia-northeast3
-gcloud compute instances create zenon-server \
+gcloud compute instances create zenon-mon \
   --machine-type=c2-standard-8 \
   --image-family=debian-12 --image-project=debian-cloud \
   --boot-disk-size=80GB --boot-disk-type=pd-ssd \
   --address=zenon-ip --tags=minecraft
 gcloud compute firewall-rules create allow-minecraft \
   --allow=tcp:25565 --target-tags=minecraft --source-ranges=0.0.0.0/0
-gcloud compute ssh zenon-server
+gcloud compute ssh zenon-mon
 ```
+
+> 인스턴스명 `zenon-mon` = 포로몬(마크서버) + 봇 공용 호스트. clone 폴더 `~/zenon-server/`(repo명)와는 별개.
 
 > c2 가 존에 없으면 `n2-standard-8` 폴백 또는 존을 `asia-northeast3-b/c` 로. 봇 인바운드(8787)는
 > localhost 라 방화벽 오픈 불필요(같은 VM). 게임서버가 다른 호스트면 §1.1 하단 참고.
