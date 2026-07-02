@@ -4,7 +4,6 @@ import kr.zenon.moncore.data.PlayerProgress;
 import kr.zenon.moncore.data.ZenonMonState;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.text.Text;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -13,18 +12,24 @@ import java.util.Map;
 import java.util.UUID;
 
 /**
- * 서버 칭호 1차: 골드 1위(현재), 시즌 최고 부자(최고 기록), 최상위 전설 종별 최초 포획.
+ * 서버 칭호 1차: 큰손(누적 소비), 부자(현재 보유 1위), 최상위 전설 종별 최초 포획.
  */
 public final class TitleService {
     public static final String WEALTH_CURRENT = "wealth_current";
     public static final String WEALTH_RECORD = "wealth_record";
+    public static final String MILLION_SPENDER = "million_spender";
     private static final String FIRST_APEX_PREFIX = "first_apex:";
+    private static final long WEALTH_THRESHOLD = 1_000_000L;
+    private static final long SPEND_THRESHOLD = 1_000_000L;
+    private static final long RICHEST_REFRESH_TICKS = 60L * 60L * 20L;
+
+    private static long nextRichestRefreshTick = 0L;
 
     private TitleService() {}
 
     public static void onJoin(ServerPlayerEntity player) {
         updateKnownName(player);
-        refreshCurrentRichest(player.getServer());
+        updateSpending(player);
     }
 
     public static void updateWealth(ServerPlayerEntity player) {
@@ -32,22 +37,24 @@ public final class TitleService {
         PlayerProgress progress = state.getOrCreate(player.getUuid());
         progress.lastKnownName = player.getGameProfile().getName();
         boolean changed = false;
-        if (progress.balance > state.wealthRecordBalance) {
+        if (progress.balance >= WEALTH_THRESHOLD && progress.balance > state.wealthRecordBalance) {
             state.wealthRecordUuid = player.getUuid();
             state.wealthRecordBalance = progress.balance;
             state.wealthRecordName = progress.lastKnownName;
-            changed |= grant(progress, WEALTH_RECORD);
-            if (progress.activeTitle == null || progress.activeTitle.isBlank()) progress.activeTitle = WEALTH_RECORD;
-            player.getServer().getPlayerManager().broadcast(Text.literal("§6[칭호] §e"
-                    + progress.lastKnownName + "§f 님이 §6시즌 최고 부자§f 기록을 갱신했습니다. §7("
-                    + progress.balance + " 골드)"), false);
             changed = true;
         }
-        changed |= refreshCurrentRichest(state);
+        changed |= updateSpending(state, player, progress);
         if (changed) state.markDirty();
     }
 
-    public static void refreshCurrentRichest(MinecraftServer server) {
+    public static void tick(MinecraftServer server) {
+        long now = server.getTicks();
+        if (now < nextRichestRefreshTick) return;
+        nextRichestRefreshTick = now + RICHEST_REFRESH_TICKS;
+        refreshCurrentRichest(server);
+    }
+
+    private static void refreshCurrentRichest(MinecraftServer server) {
         ZenonMonState state = ZenonMonState.get(server);
         if (refreshCurrentRichest(state)) state.markDirty();
     }
@@ -115,12 +122,13 @@ public final class TitleService {
     }
 
     public static String displayName(MinecraftServer server, String titleId) {
-        if (WEALTH_CURRENT.equals(titleId)) return "골드 1위";
-        if (WEALTH_RECORD.equals(titleId)) return "시즌 최고 부자";
+        if (WEALTH_CURRENT.equals(titleId)) return "부자";
+        if (WEALTH_RECORD.equals(titleId)) return "부자";
+        if (MILLION_SPENDER.equals(titleId)) return "큰손";
         if (titleId != null && titleId.startsWith(FIRST_APEX_PREFIX)) {
             String species = titleId.substring(FIRST_APEX_PREFIX.length());
-            String display = ZenonMonState.get(server).firstApexCatchDisplayName.getOrDefault(species, species);
-            return "최초 최상위: " + display;
+            return apexTitleName(species,
+                    ZenonMonState.get(server).firstApexCatchDisplayName.getOrDefault(species, species));
         }
         return titleId == null || titleId.isBlank() ? "없음" : titleId;
     }
@@ -139,19 +147,26 @@ public final class TitleService {
         UUID richest = null;
         long richestBalance = 0L;
         for (Map.Entry<UUID, PlayerProgress> e : state.all().entrySet()) {
-            if (e.getValue().balance > richestBalance) {
+            long balance = e.getValue().balance;
+            if (balance < WEALTH_THRESHOLD) continue;
+            if (balance > richestBalance || (balance == richestBalance && prefer(e.getKey(), richest))) {
                 richest = e.getKey();
-                richestBalance = e.getValue().balance;
+                richestBalance = balance;
             }
         }
 
         boolean changed = false;
         for (Map.Entry<UUID, PlayerProgress> e : state.all().entrySet()) {
             PlayerProgress progress = e.getValue();
-            boolean shouldHave = richest != null && richest.equals(e.getKey()) && richestBalance > 0L;
+            if (progress.titles.remove(WEALTH_RECORD)) {
+                if (WEALTH_RECORD.equals(progress.activeTitle)) progress.activeTitle = "";
+                changed = true;
+            }
+            boolean shouldHave = richest != null && richest.equals(e.getKey());
             if (shouldHave) {
-                changed |= grant(progress, WEALTH_CURRENT);
-                if (progress.activeTitle == null || progress.activeTitle.isBlank()) {
+                boolean granted = grant(progress, WEALTH_CURRENT);
+                changed |= granted;
+                if (granted && (progress.activeTitle == null || progress.activeTitle.isBlank())) {
                     progress.activeTitle = WEALTH_CURRENT;
                     changed = true;
                 }
@@ -161,6 +176,30 @@ public final class TitleService {
             }
         }
         return changed;
+    }
+
+    private static boolean updateSpending(ServerPlayerEntity player) {
+        ZenonMonState state = ZenonMonState.get(player.getServer());
+        PlayerProgress progress = state.getOrCreate(player.getUuid());
+        if (updateSpending(state, player, progress)) {
+            state.markDirty();
+            return true;
+        }
+        return false;
+    }
+
+    private static boolean updateSpending(ZenonMonState state, ServerPlayerEntity player, PlayerProgress progress) {
+        long spent = state.playerGoldOut.getOrDefault(player.getUuid(), 0L);
+        if (spent < SPEND_THRESHOLD) return false;
+        boolean granted = grant(progress, MILLION_SPENDER);
+        if (granted && (progress.activeTitle == null || progress.activeTitle.isBlank())) {
+            progress.activeTitle = MILLION_SPENDER;
+        }
+        return granted;
+    }
+
+    private static boolean prefer(UUID candidate, UUID current) {
+        return current == null || candidate.toString().compareTo(current.toString()) < 0;
     }
 
     private static boolean grant(PlayerProgress progress, String titleId) {
@@ -176,5 +215,36 @@ public final class TitleService {
 
     private static String safeDisplay(String displayNameKo, String fallback) {
         return displayNameKo == null || displayNameKo.isBlank() ? fallback : displayNameKo;
+    }
+
+    private static String apexTitleName(String species, String fallbackDisplay) {
+        return switch (species) {
+            case "rayquaza" -> "하늘의 개척자";
+            case "kyogre" -> "심해의 지배자";
+            case "groudon" -> "대지의 지배자";
+            case "dialga" -> "시간의 주인";
+            case "palkia" -> "공간의 주인";
+            case "giratina" -> "반전세계의 목격자";
+            case "reshiram" -> "진실의 용왕";
+            case "zekrom" -> "이상의 용왕";
+            case "kyurem" -> "경계의 용왕";
+            case "koraidon" -> "고대의 용왕";
+            case "miraidon" -> "미래의 용왕";
+            case "zygarde" -> "균형의 감시자";
+            case "xerneas" -> "생명의 수호자";
+            case "yveltal" -> "파멸의 목격자";
+            case "solgaleo" -> "태양의 사자";
+            case "lunala" -> "달의 사자";
+            case "necrozma" -> "빛을 삼킨 자";
+            case "terapagos" -> "테라의 증인";
+            case "zacian" -> "검의 수호자";
+            case "zamazenta" -> "방패의 수호자";
+            case "calyrex" -> "왕관의 계승자";
+            case "eternatus" -> "무한의 목격자";
+            case "mew" -> "태초의 목격자";
+            case "mewtwo" -> "유전자의 초월자";
+            case "arceus" -> "영원의 목격자";
+            default -> "최초 최상위: " + fallbackDisplay;
+        };
     }
 }

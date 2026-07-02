@@ -40,8 +40,8 @@
     // 아래 3-2 참조
   ],
   "balance": 0,                    // 골드 잔액 (단일 화폐, economy_design.md)
-  "titles": ["wealth_record"],      // 보유 칭호 id
-  "activeTitle": "wealth_record",   // 현재 표시 칭호 id(없으면 "")
+  "titles": ["million_spender"],     // 보유 칭호 id
+  "activeTitle": "million_spender",  // 현재 표시 칭호 id(없으면 "")
   "battleTower": { "highestClearedFloor": 0, "rewardedFloors": [] },
   "rankedLeague": { "score": 1000, "wins": 0, "losses": 0, "recentOpponents": [] },
   "stats": { "legendaryCaught": 0, "gymCleared": 0 },
@@ -134,9 +134,9 @@
   }
 }
 ```
-- `wealth_current`: 현재 보유 골드 1위. 잔액 변화/접속 시 재계산하며 1위가 바뀌면 기존 보유자에게서 회수한다.
-- `wealth_record`: 관측 최고 보유 골드 기록 갱신자에게 영구 지급한다.
-- `first_apex:<species>`: 조우방에서 최상위 전설(`pool.type=apex` 또는 후보 `stage=apex`)을 종별로 최초 포획한 플레이어에게 영구 지급한다.
+- `million_spender`: 누적 골드 소비 1,000,000 이상 달성 시 `큰손` 칭호로 영구 지급한다.
+- `wealth_current`: 현재 보유 골드 1,000,000 이상인 플레이어 중 1위에게 `부자` 칭호로 지급한다. 1시간마다 재계산하며 1위가 바뀌면 기존 보유자에게서 회수한다.
+- `first_apex:<species>`: 조우방에서 최상위 전설(`pool.type=apex` 또는 후보 `stage=apex`)을 종별로 최초 포획한 플레이어에게 영구 지급한다. 표시명은 종별 컨셉 칭호명으로 해석한다.
 - 채팅 접두사는 1차 범위에서 제외. 표시 위치는 메인 메뉴 플레이어 정보와 `/zenonmon progress`, 선택 명령은 `/zenonmon title list|set|clear`.
 
 ## 4. 마이그레이션 / 호환

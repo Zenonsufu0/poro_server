@@ -172,6 +172,7 @@ public class ZenonMonCore implements ModInitializer {
                 kr.zenon.moncore.dimension.NetherManager.trackOverworld(server);
                 kr.zenon.moncore.auth.AuthManager.tickConfine(server);
                 kr.zenon.moncore.economy.EconomyDiscordNotifier.tick(server);
+                kr.zenon.moncore.title.TitleService.tick(server);
             }
         });
     }
