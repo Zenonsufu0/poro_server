@@ -20,6 +20,9 @@ from core.permissions import requires_permission
 
 log = logging.getLogger(__name__)
 
+# 티켓을 묶을 카테고리 이름(자동 탐색/생성용). env CATEGORY_티켓_ID 가 있으면 그게 우선.
+_TICKET_CATEGORY_NAME = "문의"
+
 
 class TicketCloseView(discord.ui.View):
     """티켓 채널 [종료] 버튼 (영구 뷰 — custom_id 고정)."""
@@ -125,6 +128,44 @@ class TicketCog(commands.Cog):
                 ow[role] = allow
         return ow
 
+    async def _ticket_category(
+        self, guild: discord.Guild
+    ) -> discord.CategoryChannel | None:
+        """티켓을 묶을 카테고리를 찾거나 만든다(모든 티켓 = 단일 카테고리).
+
+        우선순위: ① env `CATEGORY_티켓_ID` → ② 이름이 "문의"인 카테고리 →
+        ③ 없으면 자동 생성(@everyone 숨김 + 운영/봇 가시). 실패 시 None(폴백=카테고리 없음).
+        열린 티켓·종료([종료] 프리픽스) 모두 이 카테고리에 함께 모인다.
+        """
+        if config.CATEGORY_티켓_ID:
+            cat = guild.get_channel(config.CATEGORY_티켓_ID)
+            if isinstance(cat, discord.CategoryChannel):
+                return cat
+        for cat in guild.categories:
+            if cat.name == _TICKET_CATEGORY_NAME:
+                return cat
+        # 자동 생성: 카테고리 자체는 @everyone 에게 숨김(개별 티켓 채널이 개설자에게만 공개).
+        overwrites: dict = {
+            guild.default_role: discord.PermissionOverwrite(view_channel=False)
+        }
+        if guild.me is not None:
+            overwrites[guild.me] = discord.PermissionOverwrite(
+                view_channel=True, manage_channels=True
+            )
+        for key in ("admin", "support"):
+            role = guild.get_role(config.PERMISSION_ROLE_IDS.get(key, 0))
+            if role is not None:
+                overwrites[role] = discord.PermissionOverwrite(
+                    view_channel=True, send_messages=True
+                )
+        try:
+            return await guild.create_category(
+                _TICKET_CATEGORY_NAME, overwrites=overwrites, reason="문의 카테고리 자동 생성"
+            )
+        except discord.Forbidden:
+            log.warning("문의 카테고리 자동 생성 권한 부족(Manage Channels)")
+            return None
+
     async def _active_support_channel(
         self, guild: discord.Guild
     ) -> discord.TextChannel | None:
@@ -215,8 +256,7 @@ class TicketCog(commands.Cog):
             return
 
         await interaction.response.defer(ephemeral=True)
-        category = guild.get_channel(config.CATEGORY_티켓_ID) if config.CATEGORY_티켓_ID else None
-        category = category if isinstance(category, discord.CategoryChannel) else None
+        category = await self._ticket_category(guild)
         try:
             channel = await guild.create_text_channel(
                 f"문의-{member.name}"[:100],
