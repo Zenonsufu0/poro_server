@@ -16,6 +16,7 @@ Zenon Mon 연동은 이 모듈이 담당한다.
 from __future__ import annotations
 
 import logging
+from urllib.parse import quote
 
 import aiohttp
 
@@ -35,6 +36,10 @@ class ZenonMonAuthError(VerifyError):
     """
 
 
+class ZenonMonAdminError(RuntimeError):
+    """Zenon Mon 운영 API 호출 실패."""
+
+
 class ZenonMonApiClient:
     """Zenon Mon 서버 조회/인증용 클라이언트.
 
@@ -49,6 +54,13 @@ class ZenonMonApiClient:
         if self._session is None or self._session.closed:
             self._session = aiohttp.ClientSession()
         return self._session
+
+    @staticmethod
+    def _headers(api_key: str) -> dict[str, str]:
+        return {
+            "X-Api-Key": api_key,
+            "Content-Type": "application/json",
+        }
 
     async def close(self) -> None:
         if self._session and not self._session.closed:
@@ -75,10 +87,7 @@ class ZenonMonApiClient:
             raise ZenonMonAuthError("ZENON_MON_AUTH_KEY 미설정 — Zenon Mon 인증 비활성")
 
         url = f"{config.ZENON_MON_AUTH_URL}/auth/verify"
-        headers = {
-            "X-Api-Key": config.ZENON_MON_AUTH_KEY,  # HTTP 헤더는 대소문자 무관, 코드베이스 통일
-            "Content-Type": "application/json",
-        }
+        headers = self._headers(config.ZENON_MON_AUTH_KEY)
         payload = {"code": code, "discordId": str(discord_id)}
 
         try:
@@ -97,6 +106,78 @@ class ZenonMonApiClient:
         except aiohttp.ClientError as e:
             raise ZenonMonAuthError(f"Zenon Mon 인증 API 네트워크 오류: {e}") from e
 
+    # ─── 운영 제재 API ────────────────────────────────────────────
+
+    async def minecraft_sanction(
+        self,
+        *,
+        action: str,
+        target: str,
+        reason: str | None,
+        operator_discord_id: int | str,
+    ) -> dict:
+        """POST /admin/sanctions/{action} — 마크 서버 제재 요청.
+
+        action: warn|kick|ban|unban.
+        대상 식별은 ZenonMonCore 권위다. 봇은 Discord 계정과 MC 계정 매핑을 저장하지 않고,
+        target 문자열(닉/UUID/연동키)을 그대로 서버에 전달한다.
+        """
+        if action not in {"warn", "kick", "ban", "unban"}:
+            raise ValueError(f"unsupported minecraft sanction action: {action}")
+        if not config.ZENON_MON_API_KEY:
+            raise ZenonMonAdminError("ZENON_MON_API_KEY 미설정 — Zenon Mon 운영 API 비활성")
+
+        url = f"{config.ZENON_MON_API_URL}/admin/sanctions/{action}"
+        payload = {
+            "target": target,
+            "reason": reason or "",
+            "operatorDiscordId": str(operator_discord_id),
+        }
+        try:
+            async with self._get_session().post(
+                url, json=payload, headers=self._headers(config.ZENON_MON_API_KEY)
+            ) as resp:
+                if resp.status in (200, 201, 204):
+                    data = await _safe_json(resp)
+                    return {"ok": True, **data}
+                if resp.status == 404:
+                    data = await _safe_json(resp)
+                    return {"ok": False, "reason": data.get("reason") or "not_found"}
+                if resp.status == 409:
+                    data = await _safe_json(resp)
+                    return {"ok": False, "reason": data.get("reason") or "conflict"}
+                if resp.status == 501:
+                    return {"ok": False, "reason": "not_implemented"}
+                if resp.status == 401:
+                    raise ZenonMonAdminError("Zenon Mon 운영 API 키 불일치(401)")
+                text = await resp.text()
+                raise ZenonMonAdminError(f"예상치 못한 응답 {resp.status}: {text[:200]}")
+        except aiohttp.ClientError as e:
+            raise ZenonMonAdminError(f"Zenon Mon 운영 API 네트워크 오류: {e}") from e
+
+    async def list_minecraft_sanctions(self, target: str) -> dict:
+        """GET /admin/sanctions?target=... — 마크 제재 이력 조회."""
+        if not config.ZENON_MON_API_KEY:
+            raise ZenonMonAdminError("ZENON_MON_API_KEY 미설정 — Zenon Mon 운영 API 비활성")
+        url = f"{config.ZENON_MON_API_URL}/admin/sanctions?target={quote(target)}"
+        try:
+            async with self._get_session().get(
+                url, headers=self._headers(config.ZENON_MON_API_KEY)
+            ) as resp:
+                if resp.status == 200:
+                    data = await _safe_json(resp)
+                    return {"ok": True, **data}
+                if resp.status == 404:
+                    return {"ok": False, "reason": "not_found"}
+                if resp.status == 501:
+                    return {"ok": False, "reason": "not_implemented"}
+                if resp.status == 401:
+                    raise ZenonMonAdminError("Zenon Mon 운영 API 키 불일치(401)")
+                text = await resp.text()
+                raise ZenonMonAdminError(f"예상치 못한 응답 {resp.status}: {text[:200]}")
+        except aiohttp.ClientError as e:
+            raise ZenonMonAdminError(f"Zenon Mon 운영 API 네트워크 오류: {e}") from e
+
     # ─── 조회 (스텁 — 엔드포인트 미확정) ──────────────────────────────
 
     async def get_server_status(self) -> dict:
@@ -106,3 +187,13 @@ class ZenonMonApiClient:
     async def get_player_summary(self, nick: str) -> dict:
         """Zenon Mon 플레이어 요약 정보 조회."""
         raise NotImplementedError("zenon_mon_api: get_player_summary 미구현")
+
+
+async def _safe_json(resp: aiohttp.ClientResponse) -> dict:
+    if resp.status == 204:
+        return {}
+    try:
+        data = await resp.json()
+    except (aiohttp.ContentTypeError, ValueError):
+        return {}
+    return data if isinstance(data, dict) else {}
