@@ -134,7 +134,11 @@ class SanctionPanelView(discord.ui.View):
         if not self.cog._can_moderate(interaction):
             await interaction.response.send_message("경고 권한이 없습니다.", ephemeral=True)
             return
-        await interaction.response.send_modal(SanctionWarnModal(self.cog))
+        await interaction.response.send_message(
+            "경고할 유저를 선택하세요.",
+            view=SanctionWarnSelectView(self.cog),
+            ephemeral=True,
+        )
 
     async def _on_revoke(self, interaction: discord.Interaction) -> None:
         if not self.cog._can_moderate(interaction):
@@ -165,12 +169,7 @@ class SanctionLookupModal(discord.ui.Modal, title="유저 제재 조회"):
 
 
 class SanctionWarnModal(discord.ui.Modal, title="경고 부여"):
-    user_id = discord.ui.TextInput(
-        label="Discord 유저 ID",
-        placeholder="경고 대상 숫자 ID",
-        min_length=17,
-        max_length=20,
-    )
+    """사유 입력 모달. 대상은 SanctionWarnSelectView 에서 이름으로 고른 뒤 넘어온다."""
     reason = discord.ui.TextInput(
         label="사유",
         style=discord.TextStyle.paragraph,
@@ -178,17 +177,31 @@ class SanctionWarnModal(discord.ui.Modal, title="경고 부여"):
         max_length=1000,
     )
 
-    def __init__(self, cog: "ModerationCog") -> None:
+    def __init__(self, cog: "ModerationCog", target_id: int) -> None:
         super().__init__()
         self.cog = cog
+        self.target_id = target_id
 
     async def on_submit(self, interaction: discord.Interaction) -> None:
-        try:
-            target_id = int(str(self.user_id.value).strip())
-        except ValueError:
-            await interaction.response.send_message("유저 ID는 숫자여야 합니다.", ephemeral=True)
-            return
-        await self.cog.issue_warning_by_id(interaction, target_id, str(self.reason.value))
+        await self.cog.issue_warning_by_id(interaction, self.target_id, str(self.reason.value))
+
+
+class SanctionWarnSelectView(discord.ui.View):
+    """경고 대상 유저를 이름으로 선택. 모달엔 멤버 선택기를 못 넣어 UserSelect 로 고른 뒤
+    사유 모달을 띄운다(패널에서 숫자 ID 입력 없이 이름으로 경고)."""
+
+    def __init__(self, cog: "ModerationCog") -> None:
+        super().__init__(timeout=120)
+        self.cog = cog
+        self.select = discord.ui.UserSelect(
+            placeholder="경고할 유저를 선택하세요", min_values=1, max_values=1
+        )
+        self.select.callback = self._on_select
+        self.add_item(self.select)
+
+    async def _on_select(self, interaction: discord.Interaction) -> None:
+        member = self.select.values[0]
+        await interaction.response.send_modal(SanctionWarnModal(self.cog, member.id))
 
 
 class SanctionRevokeModal(discord.ui.Modal, title="경고 취소"):
