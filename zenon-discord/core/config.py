@@ -63,6 +63,12 @@ CATEGORY_티켓_ID: int = int(os.getenv("CATEGORY_티켓_ID", "0") or "0")
 # 버그제보 게시 채널 (T16). 미설정(0)이면 /버그제보 비활성(안내). 봇 DB 미저장 — 채널 임베드만.
 CHANNEL_BUGREPORT_ID: int = int(os.getenv("CHANNEL_BUGREPORT_ID", "0") or "0")
 
+# ─── 모더레이션 자동 제재 (누적 경고 임계, moderation.md §2) ───────────────
+# 누적(디코+마크) 활성 경고가 임계 도달 시 봇이 자동 조치. 각 값 0 = 해당 조치 비활성.
+WARN_TIMEOUT_THRESHOLD: int = int(os.getenv("WARN_TIMEOUT_THRESHOLD", "3") or "0")  # N회 → 타임아웃
+WARN_TIMEOUT_MINUTES:   int = int(os.getenv("WARN_TIMEOUT_MINUTES", "60") or "0")   # 자동 타임아웃 길이(분)
+WARN_BAN_THRESHOLD:     int = int(os.getenv("WARN_BAN_THRESHOLD", "5") or "0")      # N회 → 차단
+
 # ─── 인바운드 알림 수신 (T1, notifications.md / DL-133) ─────────────────
 # 게임서버 → 봇 push 리스너. 보안: SECRET·PORT 둘 다 설정될 때만 기동(미설정 시 비활성 —
 # 무인증 엔드포인트를 절대 열지 않는다). HMAC-SHA256(body) + X-Timestamp 신선도 + IP 허용.

@@ -2,9 +2,15 @@
 모더레이션 (T15) — moderation.md §1 구현.
 
 기록계(경고):
-  - 🟢 /경고        (유저, 사유)  — warnings 추가 + DM(베스트에포트) + 누적 활성 경고수 안내
+  - 🟢 /경고        (유저, 사유)  — warnings 추가 + DM + **통합 누적 경고수**(디코+마크) 안내
+    + **자동 제재**(누적 임계: WARN_TIMEOUT_THRESHOLD→타임아웃, WARN_BAN_THRESHOLD→차단, §2).
   - 🟢 /경고목록    (유저)        — 경고 이력(활성/철회) 조회
   - 🟢 /경고취소    (경고_id)     — warnings.active=0(철회, 이력 보존)
+
+통합 카운트(§2): 누적 경고 = 디코 경고(봇 DB) + 마크 경고(ZenonMonCore 조회, 연동 Discord ID
+기준·베스트에포트). 마크 API 미설정/미연동/실패 시 디코 기준만. 자동 제재는 이 통합 카운트로
+판정하며, **디스코드 경고 시점**(/경고·패널)에 계산·실행된다(마크 경고만 쌓인 경우는 다음 디코
+경고나 조회 때 반영). 자동 제재 주체 = 봇(operator=bot), 봇 권한/위계 부족 시 안내만.
 
 상태변경 제재(디스코드 멤버 상태 변경 — 사용자 명시 승인하 구현, 2026-06-09):
   - 🟢 /타임아웃     (유저, 기간, 단위, 사유) — 디스코드 timeout(최대 28일) + 사전 DM
@@ -31,6 +37,7 @@ from discord.ext import commands
 
 from core import config, mod_log, permissions, servers, warnings
 from core.permissions import requires_permission
+from integrations.zenon_mon_api import ZenonMonAdminError, ZenonMonApiClient
 
 # 타임아웃 단위 → 분 환산. 디스코드 timeout 상한 = 28일.
 _UNIT_MINUTES = {"m": 1, "h": 60, "d": 1440}
@@ -228,6 +235,11 @@ class SanctionRevokeModal(discord.ui.Modal, title="경고 취소"):
 class ModerationCog(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
+        # 통합 경고 카운트용 마크 제재 조회 클라이언트(세션은 지연 생성).
+        self._mon_api = ZenonMonApiClient()
+
+    async def cog_unload(self) -> None:
+        await self._mon_api.close()
 
     @property
     def db(self):
@@ -236,6 +248,127 @@ class ModerationCog(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self) -> None:
         self.bot.add_view(SanctionPanelView(self))
+
+    # ─── 통합 경고 카운트 / 자동 제재 (moderation.md §2) ──────────────
+    async def _combined_warn_count(self, target_id: int) -> tuple[int, int, int, str]:
+        """(디코 활성 경고, 마크 경고, 합계, 안내주석) 반환.
+
+        마크 경고는 ZenonMonCore 조회(연동 Discord ID 기준, 베스트에포트). API 미설정·
+        실패·미연동이면 마크 0 으로 폴백(합계=디코만). 통합 카운트 = 디코 + 마크.
+        """
+        dcount = await warnings.count_active(self.db, target_id)
+        mcount = 0
+        note = ""
+        if config.ZENON_MON_API_URL and config.ZENON_MON_API_KEY:
+            try:
+                result = await self._mon_api.list_minecraft_sanctions(str(target_id))
+                if result.get("ok"):
+                    items = result.get("sanctions") or result.get("items") or []
+                    if isinstance(items, list):
+                        mcount = sum(
+                            1 for it in items
+                            if isinstance(it, dict) and it.get("action") == "warn"
+                            and it.get("active", True)
+                        )
+            except ZenonMonAdminError:
+                note = " (마크 경고 조회 실패 — 디코 기준만)"
+                log.warning("통합 경고 카운트: 마크 조회 실패 target=%s", target_id, exc_info=True)
+        return dcount, mcount, dcount + mcount, note
+
+    async def _auto_escalate(
+        self, guild: discord.Guild, target: discord.Member, total: int
+    ) -> str:
+        """누적 경고 임계 자동 제재. 취한 조치 안내문(없으면 "")을 반환.
+
+        임계는 config(WARN_BAN_THRESHOLD > WARN_TIMEOUT_THRESHOLD). 각 0 = 비활성.
+        조치 주체 = 봇(operator_id = bot). 봇 권한/위계 부족 시 안내만.
+        """
+        ban_at = config.WARN_BAN_THRESHOLD
+        to_at = config.WARN_TIMEOUT_THRESHOLD
+        to_min = config.WARN_TIMEOUT_MINUTES
+        bot_id = self.bot.user.id if self.bot.user else 0
+        try:
+            if ban_at and total >= ban_at:
+                await self._dm(target, f"🔨 누적 경고 {total}회로 자동 차단되었습니다.")
+                await guild.ban(
+                    target, reason=f"자동 제재: 누적 경고 {total}회(임계 {ban_at})",
+                    delete_message_seconds=0,
+                )
+                log_id = await mod_log.record(
+                    self.bot, action="ban", operator_id=bot_id, target_id=target.id,
+                    reason=f"자동 제재(누적 경고 {total}회)", detail={"auto": True, "total": total},
+                )
+                await self._post_public_sanction(
+                    "ban", log_id, bot_id, target.id, f"자동 제재(누적 {total}회)"
+                )
+                return f"\n🔨 **자동 차단** 실행(누적 {total}회 ≥ {ban_at})."
+            if to_at and total >= to_at:
+                if target.is_timed_out():
+                    return ""  # 이미 타임아웃 중 — 중복 적용 안 함
+                await self._dm(
+                    target, f"⏲ 누적 경고 {total}회로 {to_min}분 자동 타임아웃되었습니다."
+                )
+                await target.timeout(
+                    timedelta(minutes=to_min),
+                    reason=f"자동 제재: 누적 경고 {total}회(임계 {to_at})",
+                )
+                log_id = await mod_log.record(
+                    self.bot, action="timeout", operator_id=bot_id, target_id=target.id,
+                    reason=f"자동 제재(누적 경고 {total}회)",
+                    detail={"auto": True, "total": total, "minutes": to_min},
+                )
+                await self._post_public_sanction(
+                    "timeout", log_id, bot_id, target.id, f"자동 제재(누적 {total}회)",
+                    {"minutes": to_min},
+                )
+                return f"\n⏲ **자동 타임아웃 {to_min}분** 실행(누적 {total}회 ≥ {to_at})."
+        except discord.Forbidden:
+            return "\n⚠ 자동 제재 실패(봇 권한/위계 부족 — 수동 조치 필요)."
+        except discord.HTTPException:
+            log.warning("자동 제재 처리 오류 target=%s", target.id, exc_info=True)
+            return "\n⚠ 자동 제재 처리 중 오류(수동 조치 필요)."
+        return ""
+
+    async def _process_warning(
+        self, interaction: discord.Interaction, target: discord.Member, reason: str
+    ) -> None:
+        """경고 부여 공용 처리(슬래시 /경고 · 패널 공용). 대상 보호는 호출부에서 선검증.
+
+        통합 카운트(디코+마크) 산출에 외부 조회가 있어 먼저 defer 한다.
+        """
+        operator = interaction.user
+        await interaction.response.defer(ephemeral=True)
+
+        wid = await warnings.add_warning(
+            self.db, user_id=target.id, reason=reason, operator_id=operator.id
+        )
+        dcount, mcount, total, mark_note = await self._combined_warn_count(target.id)
+        breakdown = f"(디코 {dcount}" + (f" + 마크 {mcount}" if mcount else "") + ")"
+
+        dm_ok = await self._dm(
+            target,
+            f"⚠ 경고를 받았습니다.\n**사유:** {reason}\n현재 누적 경고: **{total}회** {breakdown}",
+        )
+        log_id = await mod_log.record(
+            self.bot, action="warn", operator_id=operator.id, target_id=target.id, reason=reason,
+            detail={"warning_id": wid, "discord_active": dcount, "mark_warns": mcount, "total": total},
+        )
+        await self._post_public_sanction(
+            "warn", log_id, operator.id, target.id, reason,
+            {"warning_id": wid, "active_count": total},
+        )
+
+        auto_note = ""
+        if interaction.guild is not None:
+            auto_note = await self._auto_escalate(interaction.guild, target, total)
+
+        dm_note = "" if dm_ok else " (DM 전송 실패)"
+        await interaction.followup.send(
+            f"✅ {target.mention} 경고 등록(`#{wid}`). 누적 경고 **{total}회** {breakdown}."
+            f"{mark_note}{dm_note}{auto_note}",
+            ephemeral=True,
+            allowed_mentions=discord.AllowedMentions.none(),
+        )
 
     def _can_moderate(self, interaction: discord.Interaction) -> bool:
         member = interaction.guild.get_member(interaction.user.id) if interaction.guild else None
@@ -250,42 +383,11 @@ class ModerationCog(commands.Cog):
     async def warn(
         self, interaction: discord.Interaction, 유저: discord.Member, 사유: str
     ) -> None:
-        operator = interaction.user
-        reject = _target_reject_reason(operator, 유저, self.bot.user)  # type: ignore[arg-type]
+        reject = _target_reject_reason(interaction.user, 유저, self.bot.user)  # type: ignore[arg-type]
         if reject:
             await interaction.response.send_message(reject, ephemeral=True)
             return
-
-        wid = await warnings.add_warning(
-            self.db, user_id=유저.id, reason=사유, operator_id=operator.id
-        )
-        active = await warnings.count_active(self.db, 유저.id)
-
-        # DM 통보(베스트에포트 — 차단 시 무시)
-        dm_ok = await self._dm(
-            유저,
-            f"⚠ 경고를 받았습니다.\n**사유:** {사유}\n현재 활성 경고: **{active}회**",
-        )
-
-        log_id = await mod_log.record(
-            self.bot,
-            action="warn",
-            operator_id=operator.id,
-            target_id=유저.id,
-            reason=사유,
-            detail={"warning_id": wid, "active_count": active},
-        )
-        await self._post_public_sanction(
-            "warn", log_id, operator.id, 유저.id, 사유,
-            {"warning_id": wid, "active_count": active},
-        )
-
-        dm_note = "" if dm_ok else " (DM 전송 실패 — 유저가 DM 차단)"
-        await interaction.response.send_message(
-            f"✅ {유저.mention} 경고 등록(`#{wid}`). 활성 경고 **{active}회**.{dm_note}",
-            ephemeral=True,
-            allowed_mentions=discord.AllowedMentions.none(),
-        )
+        await self._process_warning(interaction, 유저, 사유)
 
     # ─── /경고목록 ────────────────────────────────────────────────
     @app_commands.command(name="경고목록", description="유저의 경고 이력(활성/철회)을 조회합니다.")
@@ -626,10 +728,15 @@ class ModerationCog(commands.Cog):
     async def send_sanction_summary(
         self, interaction: discord.Interaction, target_id: int
     ) -> None:
+        await interaction.response.defer(ephemeral=True)
         warn_rows = await warnings.list_warnings(self.db, target_id)
         log_rows = await mod_log.list_for_target(self.db, target_id, limit=10)
+        dcount, mcount, total, mark_note = await self._combined_warn_count(target_id)
         embed = discord.Embed(
             title=f"제재 조회 - {target_id}",
+            description=f"누적 활성 경고 **{total}회** (디코 {dcount}"
+                       + (f" + 마크 {mcount}" if mcount else "")
+                       + f").{mark_note}",
             color=discord.Color.orange(),
         )
         if warn_rows:
@@ -653,7 +760,7 @@ class ModerationCog(commands.Cog):
             embed.add_field(name="최근 제재 로그", value="\n".join(lines)[:1024], inline=False)
         else:
             embed.add_field(name="최근 제재 로그", value="기록 없음", inline=False)
-        await interaction.response.send_message(
+        await interaction.followup.send(
             embed=embed, ephemeral=True, allowed_mentions=discord.AllowedMentions.none()
         )
 
@@ -678,33 +785,7 @@ class ModerationCog(commands.Cog):
         if reject:
             await interaction.response.send_message(reject, ephemeral=True)
             return
-
-        wid = await warnings.add_warning(
-            self.db, user_id=target.id, reason=reason, operator_id=operator.id
-        )
-        active = await warnings.count_active(self.db, target.id)
-        dm_ok = await self._dm(
-            target,
-            f"⚠ 경고를 받았습니다.\n**사유:** {reason}\n현재 활성 경고: **{active}회**",
-        )
-        log_id = await mod_log.record(
-            self.bot,
-            action="warn",
-            operator_id=operator.id,
-            target_id=target.id,
-            reason=reason,
-            detail={"warning_id": wid, "active_count": active, "source": "sanction_panel"},
-        )
-        await self._post_public_sanction(
-            "warn", log_id, operator.id, target.id, reason,
-            {"warning_id": wid, "active_count": active},
-        )
-        dm_note = "" if dm_ok else " (DM 전송 실패)"
-        await interaction.response.send_message(
-            f"{target.mention} 경고 등록(`#{wid}`). 활성 경고 {active}회.{dm_note}",
-            ephemeral=True,
-            allowed_mentions=discord.AllowedMentions.none(),
-        )
+        await self._process_warning(interaction, target, reason)
 
     async def revoke_warning_by_id(self, interaction: discord.Interaction, warning_id: int) -> None:
         row = await warnings.get_warning(self.db, warning_id)
