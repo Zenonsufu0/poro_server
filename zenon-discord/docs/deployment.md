@@ -64,16 +64,23 @@ VM 사이징은 **Zenon Mon(모드 마크서버, Java) 기준** — 봇은 가�
 렉(TPS)은 코어 **개수**가 아니라 **단일코어 클럭**이 좌우한다(메인 틱 ≈ 단일 스레드) → no-lag 목표면
 저클럭·공유코어(e2) 대신 **컴퓨트 최적화 고클럭(c2)** 을 쓴다.
 
-**권장(동접 ~30, no-lag):** `c2-standard-8`(8 vCPU / 32GB) · `80GB pd-ssd` · 서울(asia-northeast3) ·
+**권장(동접 ~30, no-lag):** `n2-standard-8`(8 vCPU / 32GB) · `80GB pd-ssd` · 서울(asia-northeast3) ·
 Debian 12 · 고정 IP · 방화벽 tcp 25565. JVM 힙은 ~16–20GB(나머지 OS/봇/오프힙). 예산형은
 `e2-standard-8`(32GB). 머신타입은 stop→변경→start 로 언제든 조정(락인 아님).
+> **서울 존엔 컴퓨트최적화 c2 가 없다.** n2 도 단일코어 터보(~4.5GHz)가 높아 모드 MC 틱엔 충분.
+> 존에 `c2d-standard-8`/`c3-standard-8` 이 있으면 per-core 가 더 좋으니 그걸 써도 됨(아래로 가용 확인):
+> ```bash
+> gcloud compute machine-types list \
+>   --filter="zone:asia-northeast3-a AND (name~'^c2d' OR name~'^c3-standard' OR name~'^n2-standard')" \
+>   --format="table(name, guestCpus, memoryMb)"
+> ```
 
 ```bash
 gcloud config set project <PROJECT_ID>
 gcloud config set compute/zone asia-northeast3-a
 gcloud compute addresses create zenon-ip --region=asia-northeast3
 gcloud compute instances create zenon-mon \
-  --machine-type=c2-standard-8 \
+  --machine-type=n2-standard-8 \
   --image-family=debian-12 --image-project=debian-cloud \
   --boot-disk-size=80GB --boot-disk-type=pd-ssd \
   --address=zenon-ip --tags=minecraft
@@ -83,9 +90,7 @@ gcloud compute ssh zenon-mon
 ```
 
 > 인스턴스명 `zenon-mon` = 포로몬(마크서버) + 봇 공용 호스트. clone 폴더 `~/zenon-server/`(repo명)와는 별개.
-
-> c2 가 존에 없으면 `n2-standard-8` 폴백 또는 존을 `asia-northeast3-b/c` 로. 봇 인바운드(8787)는
-> localhost 라 방화벽 오픈 불필요(같은 VM). 게임서버가 다른 호스트면 §1.1 하단 참고.
+> 봇 인바운드(8787)는 localhost 라 방화벽 오픈 불필요(같은 VM). 게임서버가 다른 호스트면 §1.1 하단 참고.
 
 ### 1.1 GCE VM 배포 (git clone + systemd, 권장)
 
