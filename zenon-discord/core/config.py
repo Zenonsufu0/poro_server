@@ -18,12 +18,9 @@ ZENON_RPG_API_URL: str = (
     or "http://localhost:8765"
 )
 _zenon_rpg_api_key = os.getenv("ZENON_RPG_API_KEY") or os.getenv("PORONG_API_KEY")
-if not _zenon_rpg_api_key:
-    raise RuntimeError(
-        "ZENON_RPG_API_KEY 가 .env 에 설정되지 않았습니다 "
-        "(구 PORONG_API_KEY 폴백도 비어 있음)."
-    )
-ZENON_RPG_API_KEY: str = _zenon_rpg_api_key
+# Zenon Mon 단독 오픈처럼 RPG 모듈을 로드하지 않는 운영도 가능해야 하므로
+# import 시점에는 강제하지 않는다. RPG API 호출 시 클라이언트가 오류로 처리한다.
+ZENON_RPG_API_KEY: str = _zenon_rpg_api_key or ""
 
 # ─── Zenon Mon 인증 API (RPG 와 분리된 별도 연동) ──────────────────────
 # 봇·MC 동일 호스트 전제 → 루프백(127.0.0.1) 바인드. 키는 secret 으로만 로드.
@@ -37,6 +34,11 @@ ZENON_MON_AUTH_URL: str = (
 )
 ZENON_MON_AUTH_KEY: str = os.getenv("ZENON_MON_AUTH_KEY") or os.getenv("POROMON_AUTH_KEY") or ""
 
+# ─── Zenon Mon 운영 API (조회/마크 제재 등, 인증 API 와 분리) ─────────────
+# 미설정 시 인증 API URL/KEY 를 폴백으로 사용하되, 운영 API 호출부에서 키 누락을 오류 처리한다.
+ZENON_MON_API_URL: str = os.getenv("ZENON_MON_API_URL") or ZENON_MON_AUTH_URL
+ZENON_MON_API_KEY: str = os.getenv("ZENON_MON_API_KEY") or ZENON_MON_AUTH_KEY
+
 GUILD_ID: int = int(os.environ["GUILD_ID"])
 
 # ─── 봇 SQLite (T12, 인스턴스 로컬 — gitignored) ─────────────────────
@@ -45,7 +47,7 @@ BOT_DB_PATH: str = os.getenv("BOT_DB_PATH", "yuki_bot.sqlite3")
 # [DEPRECATED] CHANNEL_AUTH_ID — 구 RPG 단일서버 약관 채널(modules/rpg/auth.py 폐기, DL-138).
 # 신 온보딩은 active 서버의 온보딩 카테고리 채널을 사용(panels.py). optional 로 완화.
 CHANNEL_AUTH_ID: int = int(os.getenv("CHANNEL_AUTH_ID", "0") or "0")
-CHANNEL_FIELD_BOSS_ID: int = int(os.environ["CHANNEL_FIELD_BOSS_ID"])
+CHANNEL_FIELD_BOSS_ID: int = int(os.getenv("CHANNEL_FIELD_BOSS_ID", "0") or "0")
 # 운영/감사 로그 채널 (mod_log 게시 대상). 미설정(0)이면 DB 적재만, 게시 생략.
 CHANNEL_MODLOG_ID: int = int(os.getenv("CHANNEL_MODLOG_ID", "0") or "0")
 

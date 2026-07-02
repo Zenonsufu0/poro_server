@@ -39,9 +39,9 @@ EXTENSIONS: list[str] = [
     "modules.support.tickets",
     "modules.support.faq",
     "modules.support.bug_report",
-    # RPG (auth·role_poll = 구방향 폐기, DL-138 — 온보딩은 modules.onboarding 으로 통일)
-    "modules.rpg.player_commands",
-    "modules.rpg.field_boss",
+    # RPG 비활성화 — Zenon Mon 단독 오픈 중.
+    # "modules.rpg.player_commands",
+    # "modules.rpg.field_boss",
     # 역할(권한·알림 분리)
     "modules.roles.role_commands",
     # 공통 온보딩(약관 게이트 + 인증 버튼/모달 패널)
@@ -60,13 +60,23 @@ intents = discord.Intents.default()
 intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
+_COMMANDS_SYNCED = False
 
 
 @bot.event
 async def on_ready() -> None:
+    global _COMMANDS_SYNCED
     print(f"YukiBot ready: {bot.user}")
-    await bot.tree.sync()
-    print("Slash commands synced.")
+    if _COMMANDS_SYNCED:
+        return
+    guild = discord.Object(id=config.GUILD_ID)
+    bot.tree.copy_global_to(guild=guild)
+    guild_commands = await bot.tree.sync(guild=guild)
+    global_commands = await bot.tree.sync()
+    _COMMANDS_SYNCED = True
+    print(
+        f"Slash commands synced. guild={len(guild_commands)} global={len(global_commands)}"
+    )
 
 
 @bot.tree.error

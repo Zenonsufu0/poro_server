@@ -7,7 +7,7 @@
   - 유저 식별 = `discord_user_id`(정수). 길드 1개 전제 → guild_id 컬럼 생략.
 
 런타임(§1):
-  - aiosqlite(비동기) 단일 커넥션. 동기 sqlite3 금지(이벤트 루프 블로킹).
+  - sqlite3 단일 커넥션을 asyncio.to_thread 로 실행해 이벤트 루프 블로킹을 피한다.
   - 쓰기는 lock 으로 직렬화(§12.2 — on_message XP·voice tick·명령 동시 쓰기 방어).
   - 도메인 모듈은 이 계층 경유로만 접근(raw SQL 분산 금지).
 
@@ -19,8 +19,8 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import sqlite3
 
-import aiosqlite
 
 log = logging.getLogger(__name__)
 
@@ -125,7 +125,7 @@ _MIGRATIONS: list[str] = [
     CREATE INDEX IF NOT EXISTS idx_community_xp_xp ON community_xp(xp DESC);
     """,
     # v9 — titles / user_titles 칭호 (data_model.md §2.3·2.3b, T13)
-    # 칭호 = 디스코드 역할 아님(순수 표시 데이터). 레벨 임계 도달 시 보유 추가, 장착 1개.
+    # 칭호 = 디스코드 역할 아님(순수 표시 데이터). 운영자가 생성/부여/회수, 장착 1개.
     """
     CREATE TABLE IF NOT EXISTS titles (
         id             INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -140,12 +140,6 @@ _MIGRATIONS: list[str] = [
         equipped        INTEGER NOT NULL DEFAULT 0,
         PRIMARY KEY (discord_user_id, title_id)
     );
-    INSERT OR IGNORE INTO titles(key, display_name, required_level) VALUES
-        ('newbie',  '🌱 새내기',     5),
-        ('regular', '💬 단골',      10),
-        ('veteran', '🔥 터줏대감',   20),
-        ('elder',   '⭐ 유키 원로',  30),
-        ('legend',  '👑 유키 레전드', 50);
     """,
     # v10 — tickets 1:1 문의 (data_model.md §2.6, T16)
     """
@@ -201,46 +195,57 @@ _MIGRATIONS: list[str] = [
 
 
 class Database:
-    """aiosqlite 단일 커넥션 래퍼 + 증분 마이그레이션 러너."""
+    """sqlite3 단일 커넥션 래퍼 + 증분 마이그레이션 러너."""
 
     def __init__(self, path: str) -> None:
         self._path = path
-        self._conn: aiosqlite.Connection | None = None
-        self._write_lock = asyncio.Lock()
+        self._conn: sqlite3.Connection | None = None
+        self._lock = asyncio.Lock()
 
     # ─── 수명주기 ─────────────────────────────────────────────────
 
     async def connect(self) -> None:
-        self._conn = await aiosqlite.connect(self._path)
-        self._conn.row_factory = aiosqlite.Row
-        await self._conn.execute("PRAGMA journal_mode=WAL;")
-        await self._conn.execute("PRAGMA foreign_keys=ON;")
-        await self._conn.commit()
+        def open_conn() -> sqlite3.Connection:
+            conn = sqlite3.connect(self._path, check_same_thread=False)
+            conn.row_factory = sqlite3.Row
+            conn.execute("PRAGMA journal_mode=WAL;")
+            conn.execute("PRAGMA foreign_keys=ON;")
+            conn.commit()
+            return conn
+
+        self._conn = await asyncio.to_thread(open_conn)
         await self._migrate()
         log.info("DB 연결: %s", self._path)
 
     async def close(self) -> None:
         if self._conn is not None:
-            await self._conn.close()
+            conn = self._conn
             self._conn = None
+            await asyncio.to_thread(conn.close)
 
     @property
-    def conn(self) -> aiosqlite.Connection:
+    def conn(self) -> sqlite3.Connection:
         if self._conn is None:
             raise RuntimeError("Database.connect() 가 선행되어야 합니다")
         return self._conn
 
+    async def _run(self, fn):
+        async with self._lock:
+            return await asyncio.to_thread(fn, self.conn)
+
     # ─── 마이그레이션 ─────────────────────────────────────────────
 
     async def _current_version(self) -> int:
-        await self.conn.execute(
-            "CREATE TABLE IF NOT EXISTS schema_meta (key TEXT PRIMARY KEY, value TEXT);"
-        )
-        await self.conn.commit()
-        async with self.conn.execute(
-            "SELECT value FROM schema_meta WHERE key = 'version'"
-        ) as cur:
-            row = await cur.fetchone()
+        def query(conn: sqlite3.Connection) -> sqlite3.Row | None:
+            conn.execute(
+                "CREATE TABLE IF NOT EXISTS schema_meta (key TEXT PRIMARY KEY, value TEXT);"
+            )
+            conn.commit()
+            return conn.execute(
+                "SELECT value FROM schema_meta WHERE key = 'version'"
+            ).fetchone()
+
+        row = await self._run(query)
         return int(row["value"]) if row else 0
 
     async def _migrate(self) -> None:
@@ -249,29 +254,38 @@ class Database:
         if current >= target:
             return
         for v in range(current, target):
-            await self.conn.executescript(_MIGRATIONS[v])
-            await self.conn.execute(
-                "INSERT INTO schema_meta(key, value) VALUES('version', ?) "
-                "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
-                (str(v + 1),),
-            )
-            await self.conn.commit()
+            def migrate(conn: sqlite3.Connection, version: int = v) -> None:
+                conn.executescript(_MIGRATIONS[version])
+                conn.execute(
+                    "INSERT INTO schema_meta(key, value) VALUES('version', ?) "
+                    "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+                    (str(version + 1),),
+                )
+                conn.commit()
+
+            await self._run(migrate)
             log.info("DB 마이그레이션 적용: v%d", v + 1)
 
     # ─── 쿼리 헬퍼 ────────────────────────────────────────────────
-    # 쓰기는 lock 으로 직렬화. 읽기는 lock 불필요(단일 커넥션 순차).
+    # sqlite3 단일 커넥션은 모든 작업을 lock 으로 직렬화한다.
 
     async def execute(self, sql: str, params: tuple = ()) -> int:
         """쓰기 쿼리 실행 + commit. lastrowid 반환."""
-        async with self._write_lock:
-            cur = await self.conn.execute(sql, params)
-            await self.conn.commit()
+        def write(conn: sqlite3.Connection) -> int:
+            cur = conn.execute(sql, params)
+            conn.commit()
             return cur.lastrowid
 
-    async def fetchone(self, sql: str, params: tuple = ()) -> aiosqlite.Row | None:
-        async with self.conn.execute(sql, params) as cur:
-            return await cur.fetchone()
+        return await self._run(write)
 
-    async def fetchall(self, sql: str, params: tuple = ()) -> list[aiosqlite.Row]:
-        async with self.conn.execute(sql, params) as cur:
-            return list(await cur.fetchall())
+    async def fetchone(self, sql: str, params: tuple = ()) -> sqlite3.Row | None:
+        def read(conn: sqlite3.Connection) -> sqlite3.Row | None:
+            return conn.execute(sql, params).fetchone()
+
+        return await self._run(read)
+
+    async def fetchall(self, sql: str, params: tuple = ()) -> list[sqlite3.Row]:
+        def read(conn: sqlite3.Connection) -> list[sqlite3.Row]:
+            return list(conn.execute(sql, params).fetchall())
+
+        return await self._run(read)

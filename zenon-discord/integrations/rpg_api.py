@@ -44,6 +44,9 @@ class ZenonRpgApiClient:
         ⚠ 필드명(`discordId` camelCase)은 DL-138 레퍼런스 기준. RPG AuthApiHandler
           실제 계약과 다르면(예: snake_case) 맞춰야 함 — RPG worktree 확인 필요.
         """
+        if not ZENON_RPG_API_KEY:
+            raise RpgAuthError("ZENON_RPG_API_KEY 미설정 — RPG 인증 비활성")
+
         url = f"{ZENON_RPG_API_URL}/auth/verify"
         payload = {"code": code, "discordId": str(discord_id)}
         try:
@@ -69,6 +72,8 @@ class ZenonRpgApiClient:
 
     async def get_field_boss_status(self) -> list:
         """GET /field-boss/status → [{field_id, status, respawn_minutes, player_count}, ...]"""
+        if not ZENON_RPG_API_KEY:
+            raise RpgAuthError("ZENON_RPG_API_KEY 미설정 — RPG API 비활성")
         url = f"{ZENON_RPG_API_URL}/field-boss/status"
         async with self._get_session().get(url, headers=self._headers) as resp:
             resp.raise_for_status()
@@ -78,6 +83,8 @@ class ZenonRpgApiClient:
 
     async def get_player_by_nick(self, nick: str) -> dict:
         """GET /player/by-nick/{nick} → DiscordCardResponse"""
+        if not ZENON_RPG_API_KEY:
+            raise RpgAuthError("ZENON_RPG_API_KEY 미설정 — RPG API 비활성")
         url = f"{ZENON_RPG_API_URL}/player/by-nick/{nick}"
         async with self._get_session().get(url, headers=self._headers) as resp:
             resp.raise_for_status()
@@ -85,6 +92,8 @@ class ZenonRpgApiClient:
 
     async def get_island_by_nick(self, nick: str) -> dict:
         """GET /island/by-nick/{nick} → DiscordCardResponse"""
+        if not ZENON_RPG_API_KEY:
+            raise RpgAuthError("ZENON_RPG_API_KEY 미설정 — RPG API 비활성")
         url = f"{ZENON_RPG_API_URL}/island/by-nick/{nick}"
         async with self._get_session().get(url, headers=self._headers) as resp:
             resp.raise_for_status()
@@ -92,6 +101,8 @@ class ZenonRpgApiClient:
 
     async def get_boss_by_nick(self, nick: str) -> dict:
         """GET /boss-history/by-nick/{nick} → DiscordCardResponse"""
+        if not ZENON_RPG_API_KEY:
+            raise RpgAuthError("ZENON_RPG_API_KEY 미설정 — RPG API 비활성")
         url = f"{ZENON_RPG_API_URL}/boss-history/by-nick/{nick}"
         async with self._get_session().get(url, headers=self._headers) as resp:
             resp.raise_for_status()
