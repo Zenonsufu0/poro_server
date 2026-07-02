@@ -4,6 +4,41 @@
 > 어디든). 봇은 호스팅 비종속이며, 위치에 따라 달라지는 건 코드가 아니라 `.env` 값뿐이다.
 > 코드 사실 기준(2026-07-01): discord.py 2.3.2 / Python 3.12 / aiohttp·mcstatus.
 
+## 빠른 배포 (복붙)
+
+`<user>`=VM 리눅스 유저, `<vm-ip>`=VM 외부 IP 만 바꾸면 됨. 상세·근거는 §1.1.
+
+**① VM — 준비 + deploy key** (실행 후 나온 공개키를 GitHub repo → Settings → Deploy keys 에 Read-only 등록)
+```bash
+sudo apt update && sudo apt install -y git python3-venv
+ssh-keygen -t ed25519 -f ~/.ssh/zenon_deploy -N ""
+printf 'Host github.com\n  IdentityFile ~/.ssh/zenon_deploy\n  IdentitiesOnly yes\n' >> ~/.ssh/config
+cat ~/.ssh/zenon_deploy.pub
+```
+
+**② VM — clone + 설치**
+```bash
+git clone git@github.com:Zenonsufu0/zenon-server.git
+cd ~/zenon-server/zenon-discord && python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+```
+
+**③ 로컬 PC — .env 복사**
+```bash
+scp zenon-discord/.env <user>@<vm-ip>:~/zenon-server/zenon-discord/.env
+```
+
+**④ VM — 서비스 등록·기동**
+```bash
+sudo sed "s/<USER>/$USER/g" ~/zenon-server/zenon-discord/deploy/yuki-bot.service | sudo tee /etc/systemd/system/yuki-bot.service >/dev/null
+sudo systemctl daemon-reload && sudo systemctl enable --now yuki-bot
+journalctl -u yuki-bot -f
+```
+
+**업데이트**
+```bash
+cd ~/zenon-server && git pull && sudo systemctl restart yuki-bot
+```
+
 ## 0. 전제
 
 - 게임 호스팅과 **분리**된 상시 프로세스(봇은 디스코드 측 운영 허브, 게임 로직 아님 — DL-133).
