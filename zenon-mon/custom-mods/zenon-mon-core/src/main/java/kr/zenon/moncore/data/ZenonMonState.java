@@ -56,6 +56,10 @@ public class ZenonMonState extends PersistentState {
     public final Map<String, String> firstApexCatchDisplayName = new java.util.LinkedHashMap<>();
     public final Map<String, Long> firstApexCatchEpochMillis = new java.util.LinkedHashMap<>();
 
+    // 디스코드 운영 API 연동용 마크 제재 이력(디스코드 제재와 별개)
+    public long nextSanctionId = 1L;
+    public final List<SanctionRecord> sanctions = new ArrayList<>();
+
     public static final PersistentState.Type<ZenonMonState> TYPE = new PersistentState.Type<>(
             ZenonMonState::new,
             ZenonMonState::readNbt,
@@ -167,6 +171,10 @@ public class ZenonMonState extends PersistentState {
         wealthRecord.putString("name", wealthRecordName == null ? "" : wealthRecordName);
         nbt.put("wealthRecord", wealthRecord);
         nbt.put("firstApexCatch", firstApexCatchToNbt());
+        nbt.putLong("nextSanctionId", nextSanctionId);
+        NbtList sanctionsNbt = new NbtList();
+        for (SanctionRecord sanction : sanctions) sanctionsNbt.add(sanction.writeNbt());
+        nbt.put("sanctions", sanctionsNbt);
         NbtList champs = new NbtList();
         for (String c : championHistory) champs.add(net.minecraft.nbt.NbtString.of(c));
         nbt.put("championHistory", champs);
@@ -272,6 +280,19 @@ public class ZenonMonState extends PersistentState {
         if (nbt.contains("firstApexCatch", NbtElement.COMPOUND_TYPE)) {
             nbtToFirstApexCatch(nbt.getCompound("firstApexCatch"), state);
         }
+        if (nbt.contains("nextSanctionId", NbtElement.LONG_TYPE)) {
+            state.nextSanctionId = Math.max(1L, nbt.getLong("nextSanctionId"));
+        }
+        if (nbt.contains("sanctions", NbtElement.LIST_TYPE)) {
+            NbtList sanctionsNbt = nbt.getList("sanctions", NbtElement.COMPOUND_TYPE);
+            long maxId = 0L;
+            for (int i = 0; i < sanctionsNbt.size(); i++) {
+                SanctionRecord sanction = SanctionRecord.readNbt(sanctionsNbt.getCompound(i));
+                state.sanctions.add(sanction);
+                maxId = Math.max(maxId, sanction.id());
+            }
+            state.nextSanctionId = Math.max(state.nextSanctionId, maxId + 1L);
+        }
         if (nbt.contains("championHistory", NbtElement.LIST_TYPE)) {
             NbtList champs = nbt.getList("championHistory", NbtElement.STRING_TYPE);
             for (int i = 0; i < champs.size(); i++) state.championHistory.add(champs.getString(i));
@@ -310,6 +331,43 @@ public class ZenonMonState extends PersistentState {
                     nbt.getString("source"),
                     nbt.getString("itemId"),
                     nbt.getInt("count"));
+        }
+    }
+
+    public record SanctionRecord(long id, long epochMillis, String action, UUID playerUuid, String playerName,
+                                 String target, String operatorDiscordId, String reason, String source) {
+        private NbtCompound writeNbt() {
+            NbtCompound nbt = new NbtCompound();
+            nbt.putLong("id", id);
+            nbt.putLong("epochMillis", epochMillis);
+            nbt.putString("action", action);
+            nbt.putString("playerUuid", playerUuid == null ? "" : playerUuid.toString());
+            nbt.putString("playerName", playerName == null ? "" : playerName);
+            nbt.putString("target", target == null ? "" : target);
+            nbt.putString("operatorDiscordId", operatorDiscordId == null ? "" : operatorDiscordId);
+            nbt.putString("reason", reason == null ? "" : reason);
+            nbt.putString("source", source == null ? "" : source);
+            return nbt;
+        }
+
+        private static SanctionRecord readNbt(NbtCompound nbt) {
+            UUID uuid = null;
+            try {
+                String raw = nbt.getString("playerUuid");
+                if (!raw.isBlank()) uuid = UUID.fromString(raw);
+            } catch (IllegalArgumentException ignored) {
+                uuid = null;
+            }
+            return new SanctionRecord(
+                    nbt.getLong("id"),
+                    nbt.getLong("epochMillis"),
+                    nbt.getString("action"),
+                    uuid,
+                    nbt.getString("playerName"),
+                    nbt.getString("target"),
+                    nbt.getString("operatorDiscordId"),
+                    nbt.getString("reason"),
+                    nbt.getString("source"));
         }
     }
 }

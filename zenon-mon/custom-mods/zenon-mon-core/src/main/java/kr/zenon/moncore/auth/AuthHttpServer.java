@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpServer;
 import kr.zenon.moncore.ZenonMonCore;
+import kr.zenon.moncore.admin.SanctionService;
 import kr.zenon.moncore.config.ConfigManager;
 import kr.zenon.moncore.config.CoreConfig;
 import kr.zenon.moncore.economy.EconomyReportService;
@@ -50,6 +51,7 @@ public final class AuthHttpServer {
             http.createContext("/economy/summary", AuthHttpServer::handleEconomySummary);
             http.createContext("/economy/alerts", AuthHttpServer::handleEconomyAlerts);
             http.createContext("/economy/dashboard", AuthHttpServer::handleEconomyDashboard);
+            http.createContext("/admin/sanctions", AuthHttpServer::handleSanctions);
             http.start();
             ZenonMonCore.LOGGER.info("[Auth] 인증 HTTP API 시작: {}:{}", cfg.bindAddress, cfg.httpPort);
             if ("CHANGE_ME".equals(cfg.apiKey)) {
@@ -128,10 +130,47 @@ public final class AuthHttpServer {
         respondHtml(ex, 200, dashboardHtml());
     }
 
+    private static void handleSanctions(HttpExchange ex) throws IOException {
+        if (!adminHttpAllowed(ex)) return;
+        try {
+            if ("GET".equalsIgnoreCase(ex.getRequestMethod())) {
+                String target = queryParam(ex, "target");
+                if (target == null || target.isBlank()) { respond(ex, 400, err("missing target")); return; }
+                JsonObject json = onServerThread(() -> SanctionService.list(server, target));
+                respond(ex, statusFor(json), GSON.toJson(json));
+                return;
+            }
+            if ("POST".equalsIgnoreCase(ex.getRequestMethod())) {
+                String action = sanctionAction(ex);
+                if (action.isBlank()) { respond(ex, 404, err("not found")); return; }
+                String body = new String(ex.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
+                JsonObject req = GSON.fromJson(body, JsonObject.class);
+                String target = stringProp(req, "target");
+                String reason = stringProp(req, "reason");
+                String operatorDiscordId = stringProp(req, "operatorDiscordId");
+                JsonObject json = onServerThread(() ->
+                        SanctionService.apply(server, action, target, reason, operatorDiscordId));
+                respond(ex, statusFor(json), GSON.toJson(json));
+                return;
+            }
+            respond(ex, 405, err("method"));
+        } catch (Exception e) {
+            ZenonMonCore.LOGGER.error("[SanctionHTTP] 처리 오류", e);
+            respond(ex, 500, err("server error"));
+        }
+    }
+
     private static boolean economyHttpAllowed(HttpExchange ex) throws IOException {
         if (!"GET".equalsIgnoreCase(ex.getRequestMethod())) { respond(ex, 405, err("method")); return false; }
         CoreConfig cfg = ConfigManager.core();
         if (!cfg.economyMonitor.httpEnabled) { respond(ex, 404, err("disabled")); return false; }
+        if (!authorized(ex, cfg.discordAuth)) { respond(ex, 401, err("unauthorized")); return false; }
+        if (server == null) { respond(ex, 503, err("server unavailable")); return false; }
+        return true;
+    }
+
+    private static boolean adminHttpAllowed(HttpExchange ex) throws IOException {
+        CoreConfig cfg = ConfigManager.core();
         if (!authorized(ex, cfg.discordAuth)) { respond(ex, 401, err("unauthorized")); return false; }
         if (server == null) { respond(ex, 503, err("server unavailable")); return false; }
         return true;
@@ -157,6 +196,31 @@ public final class AuthHttpServer {
 
     private static String urlDecode(String raw) {
         return URLDecoder.decode(raw, StandardCharsets.UTF_8);
+    }
+
+    private static String sanctionAction(HttpExchange ex) {
+        String path = ex.getRequestURI().getPath();
+        String prefix = "/admin/sanctions/";
+        if (!path.startsWith(prefix)) return "";
+        String action = path.substring(prefix.length());
+        int slash = action.indexOf('/');
+        return slash >= 0 ? action.substring(0, slash) : action;
+    }
+
+    private static String stringProp(JsonObject json, String key) {
+        return json != null && json.has(key) && !json.get(key).isJsonNull()
+                ? json.get(key).getAsString() : "";
+    }
+
+    private static int statusFor(JsonObject json) {
+        if (json.has("ok") && json.get("ok").getAsBoolean()) return 200;
+        String reason = json.has("reason") ? json.get("reason").getAsString() : "";
+        return switch (reason) {
+            case "not_found" -> 404;
+            case "conflict" -> 409;
+            case "unsupported_action", "missing_target" -> 400;
+            default -> 500;
+        };
     }
 
     private interface ServerTask<T> { T run(); }

@@ -139,6 +139,32 @@
 - `first_apex:<species>`: 조우방에서 최상위 전설(`pool.type=apex` 또는 후보 `stage=apex`)을 종별로 최초 포획한 플레이어에게 영구 지급한다. 표시명은 종별 컨셉 칭호명으로 해석한다.
 - 채팅 접두사는 1차 범위에서 제외. 표시 위치는 메인 메뉴 플레이어 정보와 `/zenonmon progress`, 선택 명령은 `/zenonmon title list|set|clear`.
 
+### 3-6. SanctionState  (전역 MC 제재 이력)
+> 결정 053. 디스코드 봇의 마크 제재 명령은 ZenonMonCore HTTP API가 처리하고, Minecraft 제재 이력은 PersistentState 루트에 저장한다. Discord 서버 자체 제재와 별개다.
+```jsonc
+{
+  "nextSanctionId": 1,
+  "sanctions": [
+    {
+      "id": 1,
+      "epochMillis": 0,
+      "action": "warn",              // warn|kick|ban|unban
+      "playerUuid": "<uuid>",
+      "playerName": "PlayerName",
+      "target": "입력 대상 문자열",
+      "operatorDiscordId": "<discord-id>",
+      "reason": "사유",
+      "source": "discord"
+    }
+  ]
+}
+```
+- 대상 식별자는 MC 닉네임, MC UUID, 저장된 연동 Discord ID를 지원한다.
+- `warn`은 온라인이면 인게임 메시지를 보내고 이력을 남긴다. 오프라인 대상도 식별 가능하면 이력 기록은 허용한다.
+- `kick`은 온라인 대상만 처리한다. 오프라인이면 상태 충돌로 실패한다.
+- `ban`/`unban`은 Minecraft `banned-players.json`과 PersistentState 이력을 함께 갱신한다.
+- 조회 API는 대상 플레이어 기준 이력만 반환한다. `operatorDiscordId`는 집행자 기록용이며 대상 조회 키로 쓰지 않는다.
+
 ## 4. 마이그레이션 / 호환
 - 모든 루트 객체에 `schemaVersion`. 로드 시 버전 < 현재 → 업그레이드 함수 체인 적용.
 - 알 수 없는 키는 보존(전방호환) 또는 `flags`로 흡수.

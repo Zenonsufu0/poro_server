@@ -543,3 +543,14 @@ jar 전수 검증(`egg_pool_design.md §8`)으로 Eggs Addon(`diesse`)의 실제
 - **최상위 전설 최초 포획자**: 조우방에서 `pool.type=apex` 또는 후보 `stage=apex` 전설을 종별로 가장 먼저 포획한 플레이어에게 영구 부여. 표시명은 전설 컨셉별 칭호명(예: 레쿠쟈=하늘의 개척자, 디아루가=시간의 주인)으로 둔다.
 
 칭호 보유/활성값은 `PlayerProgress.titles`/`activeTitle`에 저장하고, 최고 보유 기록 및 최상위 전설 최초 포획자는 전역 PersistentState에 저장한다. 플레이어는 `/zenonmon title list|set|clear`로 보유 칭호와 표시 칭호를 관리한다. 채팅 접두사 적용은 다른 채팅 포맷 모드와 충돌 가능성이 있어 1차 범위에서 제외하고, 메인 메뉴 플레이어 정보와 `/zenonmon progress`에만 표시한다.
+
+### 053. Discord 마크 제재 API 연동 (2026-07-02)
+
+디스코드 봇의 `/마크경고`, `/마크킥`, `/마크밴`, `/마크밴해제`, `/마크제재조회` 명령이 ZenonMonCore를 호출해 Minecraft 서버 조치까지 반영되도록 한다. 봇 쪽 계약은 `zenon-discord/docs/integration_contract.md` 및 `docs/domains/poromon.md` 기준이며, Mon 측 공식 계약은 `docs/05_operations/discord_auth_integration.md`에 기록한다.
+
+- HTTP 엔드포인트: `POST /admin/sanctions/{warn|kick|ban|unban}`, `GET /admin/sanctions?target=...`.
+- 인증: 기존 `discordAuth` HTTP 서버와 `X-API-Key`를 공유한다.
+- 대상: MC 닉네임, MC UUID, 저장된 연동 Discord ID를 지원한다.
+- 조치: `warn`은 인게임 경고 메시지와 이력 기록, `kick`은 온라인 대상 접속 종료, `ban`/`unban`은 Minecraft ban list 갱신.
+- 이력: `ZenonMonState.nextSanctionId`와 `sanctions[]`에 MC 제재 이력을 남긴다. Discord 서버 자체 제재와 별개이며, `operatorDiscordId`는 집행자 추적용이다.
+- 조회: 대상 플레이어 기준 이력만 반환한다. 운영자 Discord ID로 집행 이력을 조회하는 기능은 1차 범위에서 제외한다.

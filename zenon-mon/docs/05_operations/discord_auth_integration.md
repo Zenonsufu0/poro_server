@@ -30,6 +30,36 @@
   - `401 {"ok":false,"error":"unauthorized"}` — API 키 불일치
   - `400` — 바디 누락 / `405` — POST 아님
 
+## 운영 제재 HTTP API (ZenonMonCore 제공)
+
+디스코드 봇의 `/마크경고`, `/마크킥`, `/마크밴`, `/마크밴해제`, `/마크제재조회` 명령이 호출하는 MC 서버 제재 API다. 디스코드 서버 자체 제재(디스코드 경고/킥/밴)와 별개이며, 여기서는 Minecraft 플레이어 대상 조치만 수행한다.
+
+- 설정/인증: `discordAuth` HTTP 서버를 공유한다.
+- 인증 헤더: `X-API-Key: <apiKey>` (또는 운영용 쿼리 `?key=<apiKey>`).
+- 대상 식별자: MC 닉네임, MC UUID, ZenonMonCore에 저장된 연동 Discord ID.
+
+### `POST /admin/sanctions/{warn|kick|ban|unban}`
+- 헤더: `X-API-Key`, `Content-Type: application/json`
+- 바디: `{"target":"<nick-or-uuid-or-discord-id>","reason":"<사유>","operatorDiscordId":"<운영자 디스코드 ID>"}`
+- 동작:
+  - `warn`: 온라인이면 인게임 경고 메시지를 보내고, 온라인/오프라인 모두 제재 이력을 기록한다.
+  - `kick`: 대상이 온라인일 때 접속을 종료하고 이력을 기록한다. 오프라인이면 `409 conflict`.
+  - `ban`: Minecraft ban list에 추가하고, 온라인이면 접속을 종료한 뒤 이력을 기록한다.
+  - `unban`: Minecraft ban list에서 제거하고 이력을 기록한다.
+- 응답:
+  - `200 {"ok":true,"id":1,"player":"PlayerName","uuid":"<MC UUID>",...}` — 조치 성공
+  - `404 {"ok":false,"reason":"not_found"}` — 대상 식별 실패
+  - `409 {"ok":false,"reason":"conflict"}` — 이미 밴됨, 밴 상태가 아님, 킥 대상 오프라인 등 현재 상태와 충돌
+  - `401 {"ok":false,"error":"unauthorized"}` — API 키 불일치
+  - `400` — 액션/대상 누락 등 요청 오류
+
+### `GET /admin/sanctions?target=<nick-or-uuid-or-discord-id>`
+- 헤더: `X-API-Key`
+- 응답:
+  - `200 {"ok":true,"player":"PlayerName","uuid":"<MC UUID>","sanctions":[...]}` — 대상의 MC 제재 이력
+  - `404 {"ok":false,"reason":"not_found"}` — 대상 식별 실패 및 기존 이력 없음
+  - `401 {"ok":false,"error":"unauthorized"}` — API 키 불일치
+
 ## 경제 모니터 HTTP API / 웹 대시보드
 
 인증 HTTP 서버는 경제 운영 모니터도 같은 포트에서 제공한다. 모든 경제 엔드포인트는 `X-API-Key` 헤더 또는 `?key=<apiKey>` 쿼리로 인증한다.
@@ -64,6 +94,11 @@
 - [ ] `async verify_code(code: str, discord_id: str) -> dict`:
   - aiohttp `POST {base}/auth/verify`, 헤더 `X-API-Key`, `Content-Type: application/json`, 바디 `{"code","discordId"}`.
   - 응답 매핑: `200`→성공(`uuid` 포함), `404`→코드 무효/만료, `401`→키 불일치(운영 알림), `400/405`→요청 오류. 네트워크/타임아웃→사용자엔 "서버 점검 중" + 로그.
+- [ ] `async minecraft_sanction(action, target, reason, operator_discord_id) -> dict`:
+  - aiohttp `POST {base}/admin/sanctions/{action}`, 헤더 `X-API-Key`, 바디 `{"target","reason","operatorDiscordId"}`.
+  - 응답 매핑: `200`→성공, `404`→대상 없음, `409`→현재 상태 충돌, `401`→키 불일치, `400/500`→요청/서버 오류.
+- [ ] `async list_minecraft_sanctions(target) -> dict`:
+  - aiohttp `GET {base}/admin/sanctions?target=<target>`, 헤더 `X-API-Key`.
 - [ ] (선택) `async ping() -> bool`: `GET /auth/ping` 헬스체크(봇 기동 시 1회 점검).
 - [ ] base URL/키는 `core.config`/`.env`에서 로드.
 
@@ -84,11 +119,16 @@
 - [ ] 올바른 코드 → 200 + 역할 부여 + MC 플레이어 "인증 완료"·Survival 전환·야생 이동(MC측 자동)
 - [ ] 만료/오타 코드 → 404 안내
 - [ ] 잘못된 키 → 401(운영 알림 동작)
+- [ ] `/마크경고` → `POST /admin/sanctions/warn` 200 + MC 제재 이력 기록
+- [ ] `/마크킥` → 온라인 대상 200, 오프라인 대상 409
+- [ ] `/마크밴`·`/마크밴해제` → Minecraft ban list 반영 + 중복/미밴 상태 409
+- [ ] `/마크제재조회` → `GET /admin/sanctions?target=...` 200/404 매핑
 - [ ] 전체 흐름 1회: MC `/인증` 코드 발급 → 디스코드 `/인증코드` → 접속 해제까지(알파)
 
-> MC측 현황(이 저장소, ✅ 헤드리스): ping·401·404·config 생성·에러0. **남은 건 봇측 구현 + 2자 연결 실증(알파).**
+> MC측 현황(이 저장소, ✅ 헤드리스): 인증 ping·401·404·config 생성, 마크 제재 API 컴파일 검증. **남은 건 봇측 실호출 + 2자 연결 실증(알파).**
 
 ## MC 측 구현 현황(이 저장소, ✅)
 - `auth/AuthManager`(코드 발급·검증·허브 감금), `auth/AuthHttpServer`(JDK HttpServer, 무의존), `auth/AuthMenu`(인증하기 GUI).
 - `PlayerProgress.discordVerified/discordId`(영속). `/인증`·`/auth` 명령. 미인증 = 메뉴→AuthMenu, 텔레포트 명령 차단, 인증 대기 허브 반경 감금+Adventure. 인증 완료 = Survival+야생 이동, 인증자는 야생 이동 기능 활성화 시 허브 반경 재진입 차단.
+- `admin/SanctionService` + `auth/AuthHttpServer /admin/sanctions/*`: Discord 봇의 마크 제재 명령을 Minecraft 경고/킥/밴/밴해제 및 제재 이력 조회로 반영.
 - 검증: 헤드리스 — ping·401·404·config 생성·에러0. ⚠️ 알파(플레이어): `/인증` 코드 발급·실제 verify 연결·감금·메뉴 잠금.

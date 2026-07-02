@@ -4,6 +4,7 @@ import kr.zenon.moncore.data.PlayerProgress;
 import kr.zenon.moncore.data.ZenonMonState;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.text.Text;
 
 import java.util.ArrayList;
 import java.util.Comparator;
