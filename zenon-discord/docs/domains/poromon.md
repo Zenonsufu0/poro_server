@@ -1,8 +1,8 @@
 # Zenon Mon 도메인 — 명세
 
-> **[도메인: Zenon Mon]** **[STATUS: PARTIAL]** — 온보딩 인증은 봇 측 구현 완료.
-> 조회 명령어·운영 API·게임서버 push 알림은 아직 스텁/TODO.
-> 코드: `modules/zenon_mon/commands.py`(빈 Cog), `integrations/zenon_mon_api.py`(인증 구현 + 조회 스텁).
+> **[도메인: Zenon Mon]** **[STATUS: PARTIAL]** — 온보딩 인증과 마크 제재 API는 구현 완료.
+> 조회 명령어·게임서버 push 알림은 아직 스텁/TODO.
+> 코드: `modules/zenon_mon/commands.py`, `integrations/zenon_mon_api.py`(인증/마크 제재 구현 + 조회 스텁).
 
 ## 원칙
 
@@ -25,7 +25,7 @@
 | 봇 측 인증 클라이언트 | 🟢 구현 | `integrations/zenon_mon_api.py` `verify_code` |
 | 공통 온보딩 라우팅 | 🟢 구현 | `modules/onboarding/panels.py` `_verifiers["poromon"]` |
 | 인증 URL/키 | 🟢 구현 | `ZENON_MON_AUTH_URL`, `ZENON_MON_AUTH_KEY` |
-| 마크 제재 API 클라이언트 | 🟡 봇 측 구현 | `/마크경고`·`/마크킥`·`/마크밴`·`/마크밴해제`·`/마크제재조회`, 서버측 API 필요 |
+| 마크 제재 API 클라이언트 | 🟢 구현 | `/마크경고`·`/마크킥`·`/마크밴`·`/마크밴해제`·`/마크제재조회`, ZenonMonCore `/admin/sanctions/*` |
 | 조회/도감 API | 🟡 스텁 | `get_server_status`, `get_player_summary` |
 
 ## 명령어 후보 (TODO)
@@ -34,8 +34,8 @@
 |---|---|---|
 | `/포로몬현황` | 모드 서버 상태(접속 인원·TPS) | `zenon_mon_api.get_server_status` 구현 |
 | `/포로몬도감` | 도감/보유 현황 조회 | `zenon_mon_api` + Zenon Mon DB/API 확정 |
-| `/마크경고`·`/마크킥`·`/마크밴`·`/마크밴해제` | 디스코드 제재와 분리된 마크 서버 제재 | ZenonMonCore `/admin/sanctions/*` API 구현 |
-| `/마크제재조회`·`/마크제재패널` | 마크 제재 이력 조회/패널 게시 | ZenonMonCore 제재 조회 API 구현 |
+| `/마크경고`·`/마크킥`·`/마크밴`·`/마크밴해제` | 디스코드 제재와 분리된 마크 서버 제재 | 구현 완료, 실서버 e2e 필요 |
+| `/마크제재조회`·`/마크제재패널` | 마크 제재 이력 조회/패널 게시 | 구현 완료, 실서버 e2e 필요 |
 
 ## 알림 후보 (TODO)
 
@@ -48,7 +48,6 @@
 
 ## 미확정
 
-- 연결 방식은 HTTP API로 확정(DL-135). 남은 것: **API 포트·인증 시크릿·엔드포인트 계약**
-  (인증/조회/이벤트 push 스키마)과 조회 가능 데이터 범위.
+- 연결 방식은 HTTP API로 확정(DL-135). 남은 것: 조회 API/이벤트 push 스키마와 조회 가능 데이터 범위.
   ZenonMonCore(`../../zenon-mon/docs/03_zenonmoncore/`) 설계 확정과 함께 결정.
-- 마크 제재 API의 대상 식별 정책(닉네임/UUID/연동 Discord ID)과 오프라인 유저 처리.
+- 마크 제재 API는 닉네임/UUID/연동 Discord ID를 지원한다. 남은 것은 실서버 e2e 검증이다.

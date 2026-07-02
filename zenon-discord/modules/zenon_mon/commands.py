@@ -56,7 +56,7 @@ class MinecraftSanctionPanelView(discord.ui.View):
 
 class MinecraftSanctionLookupModal(discord.ui.Modal, title="마크 제재 조회"):
     target = discord.ui.TextInput(
-        label="마크 닉네임 또는 UUID",
+        label="마크 닉네임, UUID 또는 연동 Discord ID",
         min_length=1,
         max_length=80,
     )
@@ -71,7 +71,7 @@ class MinecraftSanctionLookupModal(discord.ui.Modal, title="마크 제재 조회
 
 class MinecraftSanctionModal(discord.ui.Modal):
     target = discord.ui.TextInput(
-        label="마크 닉네임 또는 UUID",
+        label="마크 닉네임, UUID 또는 연동 Discord ID",
         min_length=1,
         max_length=80,
     )
@@ -132,25 +132,25 @@ class ZenonMonCog(commands.Cog):
         )
 
     @app_commands.command(name="마크경고", description="마크 서버 유저에게 경고를 부여합니다.")
-    @app_commands.describe(대상="마크 닉네임 또는 UUID", 사유="경고 사유")
+    @app_commands.describe(대상="마크 닉네임, UUID 또는 연동 Discord ID", 사유="경고 사유")
     @requires_permission("admin", "zenon_mon_manager")
     async def minecraft_warn(self, interaction: discord.Interaction, 대상: str, 사유: str) -> None:
         await self.apply_minecraft_sanction(interaction, "warn", 대상, 사유)
 
     @app_commands.command(name="마크킥", description="마크 서버 유저를 킥합니다.")
-    @app_commands.describe(대상="마크 닉네임 또는 UUID", 사유="킥 사유")
+    @app_commands.describe(대상="마크 닉네임, UUID 또는 연동 Discord ID", 사유="킥 사유")
     @requires_permission("admin", "zenon_mon_manager")
     async def minecraft_kick(self, interaction: discord.Interaction, 대상: str, 사유: str) -> None:
         await self.apply_minecraft_sanction(interaction, "kick", 대상, 사유)
 
     @app_commands.command(name="마크밴", description="마크 서버 유저를 밴합니다.")
-    @app_commands.describe(대상="마크 닉네임 또는 UUID", 사유="밴 사유")
+    @app_commands.describe(대상="마크 닉네임, UUID 또는 연동 Discord ID", 사유="밴 사유")
     @requires_permission("admin", "zenon_mon_manager")
     async def minecraft_ban(self, interaction: discord.Interaction, 대상: str, 사유: str) -> None:
         await self.apply_minecraft_sanction(interaction, "ban", 대상, 사유)
 
     @app_commands.command(name="마크밴해제", description="마크 서버 유저의 밴을 해제합니다.")
-    @app_commands.describe(대상="마크 닉네임 또는 UUID", 사유="해제 사유")
+    @app_commands.describe(대상="마크 닉네임, UUID 또는 연동 Discord ID", 사유="해제 사유")
     @requires_permission("admin", "zenon_mon_manager")
     async def minecraft_unban(
         self, interaction: discord.Interaction, 대상: str, 사유: str = ""
@@ -158,7 +158,7 @@ class ZenonMonCog(commands.Cog):
         await self.apply_minecraft_sanction(interaction, "unban", 대상, 사유)
 
     @app_commands.command(name="마크제재조회", description="마크 서버 제재 이력을 조회합니다.")
-    @app_commands.describe(대상="마크 닉네임 또는 UUID")
+    @app_commands.describe(대상="마크 닉네임, UUID 또는 연동 Discord ID")
     @requires_permission("admin", "zenon_mon_manager", "support")
     async def minecraft_sanction_lookup(
         self, interaction: discord.Interaction, 대상: str
@@ -277,6 +277,9 @@ class ZenonMonCog(commands.Cog):
             "not_found": "대상을 찾지 못했습니다.",
             "conflict": "현재 상태와 충돌합니다.",
             "not_implemented": "ZenonMonCore 운영 API가 아직 구현되지 않았습니다.",
+            "bad_request": "요청 형식이 올바르지 않습니다.",
+            "missing_target": "대상이 비어 있습니다.",
+            "unsupported_action": "지원하지 않는 마크 제재 동작입니다.",
         }.get(str(reason), str(reason or "알 수 없는 오류"))
 
     @staticmethod
@@ -289,7 +292,7 @@ class ZenonMonCog(commands.Cog):
             ),
             color=discord.Color.orange(),
         )
-        embed.add_field(name="조회", value="마크 닉네임 또는 UUID 기준", inline=True)
+        embed.add_field(name="조회", value="마크 닉네임 · UUID · 연동 Discord ID 기준", inline=True)
         embed.add_field(name="조치", value="경고 · 킥 · 밴 · 밴해제", inline=True)
         return embed
 

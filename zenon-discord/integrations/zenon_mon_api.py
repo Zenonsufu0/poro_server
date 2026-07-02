@@ -9,9 +9,7 @@ Zenon Mon 연동은 이 모듈이 담당한다.
   - verify_code: 디스코드 인증 코드 검증 (ZenonMonCore /auth/verify 계약).
     봇·MC 동일 호스트 전제 → 베이스 URL 은 127.0.0.1 루프백(ZENON_MON_AUTH_URL),
     API 키는 secret(ZENON_MON_AUTH_KEY) 으로만 로드한다.
-
-스텁(미구현 — 엔드포인트 미확정):
-  - get_server_status / get_player_summary
+  - minecraft_sanction / list_minecraft_sanctions: 마크 서버 제재 요청/조회.
 """
 from __future__ import annotations
 
@@ -154,6 +152,9 @@ class ZenonMonApiClient:
                 if resp.status == 409:
                     data = await _safe_json(resp)
                     return {"ok": False, "reason": data.get("reason") or "conflict"}
+                if resp.status == 400:
+                    data = await _safe_json(resp)
+                    return {"ok": False, "reason": data.get("reason") or data.get("error") or "bad_request"}
                 if resp.status == 501:
                     return {"ok": False, "reason": "not_implemented"}
                 if resp.status == 401:
@@ -181,6 +182,9 @@ class ZenonMonApiClient:
                     return {"ok": True, **data}
                 if resp.status == 404:
                     return {"ok": False, "reason": "not_found"}
+                if resp.status == 400:
+                    data = await _safe_json(resp)
+                    return {"ok": False, "reason": data.get("reason") or data.get("error") or "bad_request"}
                 if resp.status == 501:
                     return {"ok": False, "reason": "not_implemented"}
                 if resp.status == 401:

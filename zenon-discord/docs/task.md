@@ -12,7 +12,7 @@
 | T1 | 알림 인바운드 수신(push) + `core/notifier.py` 디스패처 | core | — | 🟢 (inbound 리스너+notifier+빌더 9종 / 게임서버 push e2e 스테이징) |
 | T2 | `rpg.md §8` Node.js 표기 → Python 정합 | docs | — | ⬜ |
 | T3 | `modules/admin` 명령어 설계 확정 | admin | 권한정책 | 🟡 |
-| T4 | `integrations/zenon_mon_api.py` 인증 구현 + 조회 인터페이스 확정 | poromon | 포로몬 설계 | 🟡 |
+| T4 | `integrations/zenon_mon_api.py` 인증/마크 제재 구현 + 조회 인터페이스 확정 | poromon | 포로몬 설계 | 🟡 |
 | T5 | 알림 후보(시즌/월드보스·점검·업데이트) 배선 | notify | T1 | 🟢 (운영 명령 6종 배선 / 게임서버 push 트리거만 대기) |
 | T6 | `modules/event` 실구현 설계 | event | — | 🟡 |
 | T7 | 공통 디스코드 인증을 `core/`로 분리 (멀티서버 온보딩) | core/onboarding | — | 🟡 |
@@ -57,11 +57,12 @@
 ## 2. integrations (외부 서버 연동)
 
 - 🟢 `rpg_api.py` — PorongRPG HTTP API 클라이언트(구현됨). 신규 엔드포인트는 RPG API 확정 시 추가.
-- 🟡 **T4. `zenon_mon_api.py`** — 인증은 구현, 조회/운영은 인터페이스 스텁. 연동 방식 = HTTP API(ZenonMonCore, RPG와 동일 패턴, DL-133).
+- 🟡 **T4. `zenon_mon_api.py`** — 인증과 마크 제재는 구현, 조회는 인터페이스 스텁. 연동 방식 = HTTP API(ZenonMonCore, RPG와 동일 패턴, DL-133).
   - ✅ 인증 API 포트·시크릿·엔드포인트 계약 반영 — `ZENON_MON_AUTH_URL`/`ZENON_MON_AUTH_KEY`, `POST /auth/verify`.
+  - ✅ 마크 제재 API 계약 반영 — `ZENON_MON_API_URL`/`ZENON_MON_API_KEY`, `/admin/sanctions/*`(warn/kick/ban/unban/list).
   - ⬜ `get_server_status`(접속/TPS), 도감 조회 인터페이스 확정.
   - ⬜ 이벤트 알림 = 포로몬 서버 → 봇 push(T1 인바운드 수신 공용).
-  - ⚠ 실 API 연동은 사용자 명시 요청 시에만(DL-130 ⑤).
+  - ⬜ 마크 제재 실서버 e2e(`/마크경고`·`/마크킥`·`/마크밴`·`/마크밴해제`·`/마크제재조회`).
 
 ## 3. modules (도메인 Cog)
 
@@ -81,7 +82,7 @@
   - ⬜ 운영 명령어 전용 채널(`#운영로그`) 제한 검토.
   - ⚠ 상태 변경 명령은 게임 서버 API 경유 + 사용자 명시 요청 시에만 실구현.
 
-### poromon/ 🟡 (인증 구현, 조회 스텁)
+### poromon/ 🟡 (인증/마크 제재 구현, 조회 스텁)
 - ⬜ `/포로몬현황` `/포로몬도감` — `zenon_mon_api` 조회 API 실구현(T4) 선행.
 
 ### event/ 🟡 (이벤트 알림 구현 / 일정 영속은 스텁)
@@ -213,13 +214,13 @@
 - **전역 active 서버 1개**(RPG·포로몬 동시 미운영) — "domain당 active 1" SUPERSEDE. → 서버선택(T10) 폐기.
 - 임시음성 허브 = 카테고리별 다중. 티켓 종료 = 아카이브(삭제 X). 칭호 = 코스메틱(역할 아님).
 
-**스테이징 필요(실길드 e2e):** ✅ 봇 기동·슬래시 동기화(2026-07-02), ✅ 역할/카테고리 생성·온보딩 버튼/모달(2026-07-01). 남은 항목 = 일괄 역할전이·접속정보 SLP·임시음성·티켓 채널·Zenon Mon 운영 API. 봇 길드권한(Manage Channels/Roles·Moderate/Kick/Ban Members·Move Members)·mcstatus 설치 = 배포 T8.
+**스테이징 필요(실길드 e2e):** ✅ 봇 기동·슬래시 동기화(2026-07-02), ✅ 역할/카테고리 생성·온보딩 버튼/모달(2026-07-01). 남은 항목 = 일괄 역할전이·접속정보 SLP·임시음성·티켓 채널·Zenon Mon 운영 API 실호출. 봇 길드권한(Manage Channels/Roles·Moderate/Kick/Ban Members·Move Members)·mcstatus 설치 = 배포 T8.
 
 **다음 세션 착수 후보:**
 1. **FAQ(T16)** — faq 테이블(v11) + `/faq`·CRUD + 미매칭 시 티켓 폴백(방금 만든 티켓 연결) → FAQ 채널 활성화.
 2. **버그제보(T16)** — 기타·봇 경로(채널 게시)는 봇 단독 가능 / RPG·포로몬 경로는 게임 API(`create_bug_report`) 선행.
 3. **출석·임시역할만료(T14)** + 닉 `[LV.nn]` prefix(보류 중) — community 확장.
-4. **Zenon Mon 운영 API e2e**(`/admin/sanctions/*`) / **master 동기화(B)**(합본 원본에서) / RPG verify 필드명(`discordId`) 실계약 확인.
+4. **Zenon Mon 운영 API e2e**(`/admin/sanctions/*` 실서버 호출) / **master 동기화(B)**(합본 원본에서) / RPG verify 필드명(`discordId`) 실계약 확인.
 5. **DL 동기화**(RPG worktree): 전역 active 1·다중허브·티켓아카이브·칭호 결정 → decision_log 번호 부여.
 
 ---
