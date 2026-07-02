@@ -15,6 +15,7 @@ Zenon Mon 연동은 이 모듈이 담당한다.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 from urllib.parse import quote
 
@@ -24,6 +25,8 @@ from core import config
 from integrations.common import VerifyError
 
 log = logging.getLogger(__name__)
+
+_REQUEST_TIMEOUT_SEC = 8
 
 
 class ZenonMonAuthError(VerifyError):
@@ -52,7 +55,8 @@ class ZenonMonApiClient:
 
     def _get_session(self) -> aiohttp.ClientSession:
         if self._session is None or self._session.closed:
-            self._session = aiohttp.ClientSession()
+            timeout = aiohttp.ClientTimeout(total=_REQUEST_TIMEOUT_SEC)
+            self._session = aiohttp.ClientSession(timeout=timeout)
         return self._session
 
     @staticmethod
@@ -103,6 +107,10 @@ class ZenonMonApiClient:
                     raise ZenonMonAuthError("Zenon Mon 인증 API 키 불일치(401)")
                 text = await resp.text()
                 raise ZenonMonAuthError(f"예상치 못한 응답 {resp.status}: {text[:200]}")
+        except asyncio.TimeoutError as e:
+            raise ZenonMonAuthError(
+                f"Zenon Mon 인증 API 응답 시간 초과({_REQUEST_TIMEOUT_SEC}s)"
+            ) from e
         except aiohttp.ClientError as e:
             raise ZenonMonAuthError(f"Zenon Mon 인증 API 네트워크 오류: {e}") from e
 
@@ -152,6 +160,10 @@ class ZenonMonApiClient:
                     raise ZenonMonAdminError("Zenon Mon 운영 API 키 불일치(401)")
                 text = await resp.text()
                 raise ZenonMonAdminError(f"예상치 못한 응답 {resp.status}: {text[:200]}")
+        except asyncio.TimeoutError as e:
+            raise ZenonMonAdminError(
+                f"Zenon Mon 운영 API 응답 시간 초과({_REQUEST_TIMEOUT_SEC}s)"
+            ) from e
         except aiohttp.ClientError as e:
             raise ZenonMonAdminError(f"Zenon Mon 운영 API 네트워크 오류: {e}") from e
 
@@ -175,6 +187,10 @@ class ZenonMonApiClient:
                     raise ZenonMonAdminError("Zenon Mon 운영 API 키 불일치(401)")
                 text = await resp.text()
                 raise ZenonMonAdminError(f"예상치 못한 응답 {resp.status}: {text[:200]}")
+        except asyncio.TimeoutError as e:
+            raise ZenonMonAdminError(
+                f"Zenon Mon 운영 API 응답 시간 초과({_REQUEST_TIMEOUT_SEC}s)"
+            ) from e
         except aiohttp.ClientError as e:
             raise ZenonMonAdminError(f"Zenon Mon 운영 API 네트워크 오류: {e}") from e
 

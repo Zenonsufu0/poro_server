@@ -213,13 +213,13 @@
 - **전역 active 서버 1개**(RPG·포로몬 동시 미운영) — "domain당 active 1" SUPERSEDE. → 서버선택(T10) 폐기.
 - 임시음성 허브 = 카테고리별 다중. 티켓 종료 = 아카이브(삭제 X). 칭호 = 코스메틱(역할 아님).
 
-**스테이징 필요(실길드 e2e — 이 환경에선 미검증):** 역할/카테고리 생성·일괄 역할전이·온보딩 버튼/모달·접속정보 SLP·임시음성·레벨업 알림·티켓 채널. 봇 길드권한(Manage Channels/Roles·Moderate/Kick/Ban Members·Move Members)·mcstatus 설치 = 배포 T8.
+**스테이징 필요(실길드 e2e):** ✅ 봇 기동·슬래시 동기화(2026-07-02), ✅ 역할/카테고리 생성·온보딩 버튼/모달(2026-07-01). 남은 항목 = 일괄 역할전이·접속정보 SLP·임시음성·티켓 채널·Zenon Mon 운영 API. 봇 길드권한(Manage Channels/Roles·Moderate/Kick/Ban Members·Move Members)·mcstatus 설치 = 배포 T8.
 
 **다음 세션 착수 후보:**
 1. **FAQ(T16)** — faq 테이블(v11) + `/faq`·CRUD + 미매칭 시 티켓 폴백(방금 만든 티켓 연결) → FAQ 채널 활성화.
 2. **버그제보(T16)** — 기타·봇 경로(채널 게시)는 봇 단독 가능 / RPG·포로몬 경로는 게임 API(`create_bug_report`) 선행.
 3. **출석·임시역할만료(T14)** + 닉 `[LV.nn]` prefix(보류 중) — community 확장.
-4. **Zenon Mon verify 스테이징 e2e** / **master 동기화(B)**(합본 원본에서) / RPG verify 필드명(`discordId`) 실계약 확인.
+4. **Zenon Mon 운영 API e2e**(`/admin/sanctions/*`) / **master 동기화(B)**(합본 원본에서) / RPG verify 필드명(`discordId`) 실계약 확인.
 5. **DL 동기화**(RPG worktree): 전역 active 1·다중허브·티켓아카이브·칭호 결정 → decision_log 번호 부여.
 
 ---
