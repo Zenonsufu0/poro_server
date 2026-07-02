@@ -132,7 +132,7 @@ public final class SellShopMenu {
         }
         if (count <= 0) return 0;
         long gold = Math.round(count * unitPrice * kr.zenon.moncore.event.EventManager.goldMultiplier());
-        EconomyBridge.deposit(player, gold, "sell:" + itemId);
+        EconomyBridge.deposit(player, gold, "sell:" + itemId, itemId, count);
         return gold;
     }
 

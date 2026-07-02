@@ -5,6 +5,7 @@ import com.cobblemon.mod.common.entity.pokemon.PokemonEntity;
 import kr.zenon.moncore.ZenonMonCore;
 import kr.zenon.moncore.config.ConfigManager;
 import kr.zenon.moncore.config.EncounterConfig;
+import kr.zenon.moncore.title.TitleService;
 import net.minecraft.entity.Entity;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
@@ -29,7 +30,9 @@ public final class EncounterService {
     private static final long DURATION_TICKS = 600L * 20L; // 10분
 
     private record Session(int cell, BlockPos corner, String returnDim,
-                           double rx, double ry, double rz, UUID pokemonUuid, long expireTick) {}
+                           double rx, double ry, double rz, UUID entityUuid, UUID pokemonUuid,
+                           String poolId, String poolType, String stage, String species,
+                           String displayNameKo, long expireTick) {}
 
     private static final Map<UUID, Session> ACTIVE = new ConcurrentHashMap<>();
 
@@ -43,7 +46,7 @@ public final class EncounterService {
         if (s == null) return false;
         MinecraftServer server = player.getServer();
         ServerWorld arena = server.getOverworld();
-        Entity mon = arena.getEntity(s.pokemonUuid);
+        Entity mon = arena.getEntity(s.entityUuid);
         if (mon != null) mon.discard();
         ArenaManager.clear(arena, s.corner);
         ArenaManager.free(s.cell);
@@ -96,7 +99,9 @@ public final class EncounterService {
             arena.spawnEntity(entity);
 
             long expire = server.getTicks() + DURATION_TICKS;
-            ACTIVE.put(player.getUuid(), new Session(cell, corner, returnDim, rx, ry, rz, entity.getUuid(), expire));
+            ACTIVE.put(player.getUuid(), new Session(cell, corner, returnDim, rx, ry, rz,
+                    entity.getUuid(), entity.getPokemon().getUuid(), poolId, pool.type, pick.stage,
+                    species, pick.displayNameKo, expire));
 
             player.sendMessage(Text.literal("§d[조우] 야생 " + (shiny ? "§b✦이로치 " : "") + "§d"
                     + pick.displayNameKo + " §d출현! 잡아보세요. §7(10분 제한)"), false);
@@ -112,6 +117,15 @@ public final class EncounterService {
         }
     }
 
+    /** 조우방 포켓몬 포획 성공 시 최상위 전설 최초 포획 칭호를 지급한다. */
+    public static void onCaptured(ServerPlayerEntity player, UUID pokemonUuid) {
+        if (player == null || pokemonUuid == null) return;
+        Session s = ACTIVE.get(player.getUuid());
+        if (s == null || !pokemonUuid.equals(s.pokemonUuid)) return;
+        boolean apex = "apex".equals(s.poolType) || "apex".equals(s.stage);
+        if (apex) TitleService.awardFirstApex(player, s.species, s.displayNameKo);
+    }
+
     /** 매 틱(20틱): 제한시간 경과/포켓몬 사라짐(포획·도주) 시 정리·복귀. */
     public static void tick(MinecraftServer server) {
         if (ACTIVE.isEmpty()) return;
@@ -121,7 +135,7 @@ public final class EncounterService {
             UUID id = e.getKey();
             Session s = e.getValue();
             ServerPlayerEntity player = server.getPlayerManager().getPlayer(id);
-            Entity mon = arena.getEntity(s.pokemonUuid);
+            Entity mon = arena.getEntity(s.entityUuid);
             boolean timedOut = now >= s.expireTick;
             boolean gone = mon == null;          // 포획/도주/디스폰
             if (!timedOut && !gone && player != null) return false; // 진행 중

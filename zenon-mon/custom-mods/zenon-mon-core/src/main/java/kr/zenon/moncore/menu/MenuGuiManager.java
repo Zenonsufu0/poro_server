@@ -6,9 +6,9 @@ import kr.zenon.moncore.data.ZenonMonState;
 import kr.zenon.moncore.gym.BadgeMenu;
 import kr.zenon.moncore.gym.GymBoardMenu;
 import kr.zenon.moncore.home.HomeMenu;
-import kr.zenon.moncore.hub.HubManager;
 import kr.zenon.moncore.shop.BuyShopMenu;
 import kr.zenon.moncore.shop.SellShopMenu;
+import kr.zenon.moncore.title.TitleService;
 import kr.zenon.moncore.tpa.TpaManager;
 import kr.zenon.moncore.util.ChatInputManager;
 import kr.zenon.moncore.wild.WildManager;
@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  * 메인 메뉴 GUI 구성·오픈·액션 처리 (menu_design.md §3, MenuGuiManager).
- * 0.1 활성: 허브 TP(19) · 진행도(10) · 매입소(28) · 편의 상점(29) · 닫기(49) · 플레이어 정보(4).
+ * 활성: 진행도(10) · 홈(20) · 야생 이동(21) · 매입소(28) · 편의 상점(29) · 닫기(49) · 플레이어 정보(4).
  * 나머지(배지/가이드/허브 시설 안내)는 "준비 중" placeholder.
  */
 public final class MenuGuiManager {
@@ -34,7 +34,6 @@ public final class MenuGuiManager {
     private static final int SLOT_GYM_GUIDE = 12;
     private static final int SLOT_LEAGUE = 13;
     private static final int SLOT_SERVER_GUIDE = 14;
-    private static final int SLOT_HUB_TP = 19;
     private static final int SLOT_HOME = 20;
     private static final int SLOT_WILD = 21;
     private static final int SLOT_TPA = 22;
@@ -68,6 +67,7 @@ public final class MenuGuiManager {
         inv.setStack(SLOT_PLAYER_INFO, MenuIcons.icon(Items.PLAYER_HEAD,
                 "§e" + player.getGameProfile().getName(),
                 List.of("§7" + unit + ": §6" + p.balance,
+                        "§7칭호: §f" + TitleService.activeTitleName(player),
                         "§7배틀타워 최고층: §f" + p.battleTowerHighestClearedFloor,
                         "§7리그 패스: " + (p.leaguePassGiven ? "§a보유" : "§c없음"))));
 
@@ -82,8 +82,6 @@ public final class MenuGuiManager {
         inv.setStack(SLOT_SERVER_GUIDE, MenuIcons.icon(Items.MAP, "§a서버 가이드",
                 List.of("§7서버 규칙·핵심 정책", "§7클릭 — 채팅 안내")));
 
-        inv.setStack(SLOT_HUB_TP, MenuIcons.icon(Items.ENDER_PEARL, "§b허브로 이동",
-                List.of("§7클릭 — 허브로 텔레포트")));
         inv.setStack(SLOT_HOME, MenuIcons.icon(Items.RED_BED, "§a홈",
                 List.of("§7홈 등록/이동 (최대 5칸)", "§7클릭 — 홈 메뉴 열기")));
         inv.setStack(SLOT_WILD, MenuIcons.icon(Items.GRASS_BLOCK, "§2야생 이동",
@@ -114,10 +112,6 @@ public final class MenuGuiManager {
 
     public static void handleClick(ServerPlayerEntity player, int slot, int button, boolean shift) {
         switch (slot) {
-            case SLOT_HUB_TP -> {
-                player.closeHandledScreen();
-                HubManager.teleportToHub(player);
-            }
             case SLOT_PROGRESS -> sendProgress(player);
             case SLOT_HOME -> HomeMenu.open(player);
             case SLOT_WILD -> {
@@ -157,6 +151,7 @@ public final class MenuGuiManager {
         String unit = ConfigManager.economy().currencyDisplay;
         player.sendMessage(Text.literal(
                 "§e[Zenon Mon] 내 진행도§r — " + unit + ": §6" + p.balance
+                        + " §r/ 칭호: §f" + TitleService.activeTitleName(player)
                         + " §r/ 배틀타워 최고층: §f" + p.battleTowerHighestClearedFloor
                         + " §r/ 리그패스: " + (p.leaguePassGiven ? "§a보유" : "§c없음")), false);
     }

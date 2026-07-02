@@ -16,6 +16,7 @@ import kr.zenon.moncore.gym.GymInfo;
 import kr.zenon.moncore.hub.HubManager;
 import kr.zenon.moncore.item.MenuItemManager;
 import kr.zenon.moncore.menu.MenuGuiManager;
+import kr.zenon.moncore.title.TitleService;
 import net.minecraft.command.argument.EntityArgumentType;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.command.CommandManager;
@@ -38,8 +39,25 @@ public final class ZenonMonCommand {
         dispatcher.register(CommandManager.literal("zenonmon")
                 .executes(ZenonMonCommand::root)
                 .then(CommandManager.literal("progress").executes(ZenonMonCommand::ownProgress))
+                .then(CommandManager.literal("title")
+                        .executes(ZenonMonCommand::titleList)
+                        .then(CommandManager.literal("list").executes(ZenonMonCommand::titleList))
+                        .then(CommandManager.literal("clear").executes(ZenonMonCommand::titleClear))
+                        .then(CommandManager.literal("set")
+                                .then(CommandManager.argument("id", StringArgumentType.word())
+                                        .suggests((c, b) -> {
+                                            try {
+                                                TitleService.titleIds(c.getSource().getPlayerOrThrow()).forEach(b::suggest);
+                                            } catch (CommandSyntaxException ignored) {
+                                                // 콘솔은 플레이어 칭호 제안 없음
+                                            }
+                                            return b.buildFuture();
+                                        })
+                                        .executes(ZenonMonCommand::titleSet))))
                 .then(CommandManager.literal("menu").executes(ZenonMonCommand::openMenu))
-                .then(CommandManager.literal("hub").executes(ZenonMonCommand::hub))
+                .then(CommandManager.literal("hub")
+                        .requires(src -> src.hasPermissionLevel(2))
+                        .executes(ZenonMonCommand::hub))
                 .then(CommandManager.literal("home").executes(ZenonMonCommand::home))
                 .then(CommandManager.literal("wild").executes(ZenonMonCommand::wild))
                 .then(CommandManager.literal("league")
@@ -128,6 +146,30 @@ public final class ZenonMonCommand {
         ZenonMonState state = ZenonMonState.get(ctx.getSource().getServer());
         PlayerProgress p = state.getOrCreate(target.getUuid());
         sendProgress(ctx.getSource(), target.getGameProfile().getName(), p);
+        return 1;
+    }
+
+    private static int titleList(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        ServerPlayerEntity player = ctx.getSource().getPlayerOrThrow();
+        ctx.getSource().sendFeedback(() -> Text.literal("§e[칭호]§r 현재: §f"
+                + TitleService.activeTitleName(player) + " §7/ 보유: §f" + TitleService.summary(player)), false);
+        return 1;
+    }
+
+    private static int titleSet(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        ServerPlayerEntity player = ctx.getSource().getPlayerOrThrow();
+        String id = StringArgumentType.getString(ctx, "id");
+        boolean ok = TitleService.setActive(player, id);
+        ctx.getSource().sendFeedback(() -> Text.literal(ok
+                ? "§a[칭호]§r 현재 칭호: §f" + TitleService.activeTitleName(player)
+                : "§c[칭호]§r 보유하지 않은 칭호입니다: " + id), false);
+        return ok ? 1 : 0;
+    }
+
+    private static int titleClear(CommandContext<ServerCommandSource> ctx) throws CommandSyntaxException {
+        ServerPlayerEntity player = ctx.getSource().getPlayerOrThrow();
+        TitleService.setActive(player, "");
+        ctx.getSource().sendFeedback(() -> Text.literal("§7[칭호] 표시 칭호를 해제했습니다."), false);
         return 1;
     }
 
@@ -345,6 +387,7 @@ public final class ZenonMonCommand {
         src.sendFeedback(() -> Text.literal(
                 "§e[Zenon Mon] " + name + "§r — 골드: " + p.balance
                         + " / 배틀타워 최고층: " + p.battleTowerHighestClearedFloor
+                        + " / 칭호: " + TitleService.activeTitleName(src.getServer(), p)
                         + " / 리그패스: " + (p.leaguePassGiven ? "O" : "X")
                         + " / 첫접속: " + p.firstJoinEpoch), false);
     }

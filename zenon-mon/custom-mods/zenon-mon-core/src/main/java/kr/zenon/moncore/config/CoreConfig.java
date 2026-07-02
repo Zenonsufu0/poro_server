@@ -15,6 +15,7 @@ public class CoreConfig {
     public Nether nether = new Nether();
     public End end = new End();
     public DiscordAuth discordAuth = new DiscordAuth();
+    public EconomyMonitor economyMonitor = new EconomyMonitor();
     public Logging logging = new Logging();
 
     /** 9번 슬롯 리그 패스 아이템 정책 (menu_design.md §2). */
@@ -125,6 +126,26 @@ public class CoreConfig {
         public boolean survivalModeAfterVerify = true;   // 인증 완료 시 Survival 전환
         public boolean teleportWildAfterVerify = true;   // 인증 완료 시 즉시 야생 랜덤 이동
         public boolean blockVerifiedHubEntry = true;     // 인증자는 인증 대기 허브 반경 재진입 차단
+    }
+
+    /** 경제 웹 모니터/API/디스코드 알림. 같은 HTTP 서버/포트와 X-API-Key를 사용한다. */
+    public static class EconomyMonitor {
+        public boolean httpEnabled = true;          // /economy/summary, /economy/dashboard
+        public boolean discordWebhookEnabled = false;
+        public String discordWebhookUrl = "";      // 런타임 시크릿. Git 커밋 금지.
+        public int discordIntervalMinutes = 30;    // 요약 알림 주기
+        public long suspiciousBalanceThreshold = 1_000_000L;
+        public double suspiciousBalanceAverageMultiplier = 5.0;
+        public int suspiciousBalanceMinPlayers = 3;
+        public long suspiciousNetGainThreshold = 300_000L;
+        public long suspiciousSingleTransactionThreshold = 100_000L;
+        public long suspiciousSellItemGoldThreshold = 200_000L;
+        public double suspiciousSellItemSharePercent = 45.0;
+        public double suspiciousSellItemAverageMultiplier = 4.0;
+        public int suspiciousTicketWindowHours = 24;
+        public int suspiciousTicketPurchaseCount = 5;
+        public long suspiciousTicketPurchaseGold = 200_000L;
+        public int topLimit = 10;
     }
 
     /** 감사 로깅 토글 (0.1 일부만 사용). */

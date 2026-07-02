@@ -31,9 +31,10 @@ public final class WildRewardService {
     private static void onCapture(PokemonCapturedEvent e) {
         try {
             PokemonRewards cfg = ConfigManager.economy().pokemonRewards;
-            if (!cfg.enabled) return;
             ServerPlayerEntity player = e.getPlayer();
             if (player == null) return;
+            kr.zenon.moncore.encounter.EncounterService.onCaptured(player, e.getPokemon().getUuid());
+            if (!cfg.enabled) return;
             long gold = Math.round((long) e.getPokemon().getLevel() * cfg.capturePerLevel * EventManager.goldMultiplier());
             if (gold > 0) {
                 EconomyBridge.deposit(player, gold, "wild_capture");

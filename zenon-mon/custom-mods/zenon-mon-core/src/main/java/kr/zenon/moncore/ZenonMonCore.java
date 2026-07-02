@@ -91,7 +91,7 @@ public class ZenonMonCore implements ModInitializer {
             kr.zenon.moncore.event.EventManager.setServer(server);
             kr.zenon.moncore.dimension.NetherManager.applyBorder(server);
             kr.zenon.moncore.auth.AuthManager.setServer(server);
-            kr.zenon.moncore.auth.AuthHttpServer.start();
+            kr.zenon.moncore.auth.AuthHttpServer.start(server);
         });
         // 디스코드 인증 HTTP API 정리
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STOPPING.register(server ->
@@ -171,6 +171,7 @@ public class ZenonMonCore implements ModInitializer {
                 kr.zenon.moncore.league.ChampionsManager.tick(server);
                 kr.zenon.moncore.dimension.NetherManager.trackOverworld(server);
                 kr.zenon.moncore.auth.AuthManager.tickConfine(server);
+                kr.zenon.moncore.economy.EconomyDiscordNotifier.tick(server);
             }
         });
     }
@@ -184,6 +185,11 @@ public class ZenonMonCore implements ModInitializer {
             progress.firstJoinEpoch = System.currentTimeMillis() / 1000L;
             changed = true;
             LOGGER.info("[ZenonMonCore] 신규 플레이어 진행 생성: {}", player.getGameProfile().getName());
+        }
+        String currentName = player.getGameProfile().getName();
+        if (!currentName.equals(progress.lastKnownName)) {
+            progress.lastKnownName = currentName;
+            changed = true;
         }
 
         CoreConfig.MenuItem mi = ConfigManager.core().menuItem;
@@ -199,6 +205,7 @@ public class ZenonMonCore implements ModInitializer {
             }
         }
         if (changed) state.markDirty();
+        kr.zenon.moncore.title.TitleService.onJoin(player);
 
         // 정규리그 대전 중 끊겼던 경우 원위치 복귀(허공 로그인 방지)
         kr.zenon.moncore.league.LeagueManager.checkPendingReturn(player);

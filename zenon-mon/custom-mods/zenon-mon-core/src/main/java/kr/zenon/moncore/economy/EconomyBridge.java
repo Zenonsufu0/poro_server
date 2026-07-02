@@ -4,6 +4,7 @@ import kr.zenon.moncore.ZenonMonCore;
 import kr.zenon.moncore.config.ConfigManager;
 import kr.zenon.moncore.data.PlayerProgress;
 import kr.zenon.moncore.data.ZenonMonState;
+import kr.zenon.moncore.title.TitleService;
 import net.minecraft.server.network.ServerPlayerEntity;
 
 /**
@@ -24,24 +25,36 @@ public final class EconomyBridge {
 
     /** 입금(보상·매입). 음수/0은 무시. */
     public static void deposit(ServerPlayerEntity player, long amount, String source) {
+        deposit(player, amount, source, null, 0);
+    }
+
+    /** 입금(보상·매입). 품목/수량은 운영 통계용 선택 메타데이터. */
+    public static void deposit(ServerPlayerEntity player, long amount, String source, String itemId, int count) {
         if (amount <= 0) return;
         ZenonMonState state = ZenonMonState.get(player.getServer());
         PlayerProgress p = state.getOrCreate(player.getUuid());
+        p.lastKnownName = player.getGameProfile().getName();
         p.balance += amount;
-        state.goldIn.merge(group(source), amount, Long::sum); // 텔레메트리
-        state.markDirty();
+        state.recordEconomyFlow(player.getUuid(), p.lastKnownName, amount, p.balance, source, itemId, count);
+        TitleService.updateWealth(player);
         audit(player, "+" + amount, p.balance, source);
     }
 
     /** 출금(구매·해금). 잔액 부족 시 false(차감 안 함). */
     public static boolean withdraw(ServerPlayerEntity player, long amount, String source) {
+        return withdraw(player, amount, source, null, 0);
+    }
+
+    /** 출금(구매·해금). 품목/수량은 운영 통계용 선택 메타데이터. */
+    public static boolean withdraw(ServerPlayerEntity player, long amount, String source, String itemId, int count) {
         if (amount <= 0) return true;
         ZenonMonState state = ZenonMonState.get(player.getServer());
         PlayerProgress p = state.getOrCreate(player.getUuid());
         if (p.balance < amount) return false;
+        p.lastKnownName = player.getGameProfile().getName();
         p.balance -= amount;
-        state.goldOut.merge(group(source), amount, Long::sum); // 텔레메트리
-        state.markDirty();
+        state.recordEconomyFlow(player.getUuid(), p.lastKnownName, -amount, p.balance, source, itemId, count);
+        TitleService.updateWealth(player);
         audit(player, "-" + amount, p.balance, source);
         return true;
     }
@@ -50,16 +63,12 @@ public final class EconomyBridge {
     public static void set(ServerPlayerEntity player, long amount, String source) {
         ZenonMonState state = ZenonMonState.get(player.getServer());
         PlayerProgress p = state.getOrCreate(player.getUuid());
+        p.lastKnownName = player.getGameProfile().getName();
+        long before = p.balance;
         p.balance = Math.max(0, amount);
-        state.markDirty();
+        state.recordEconomyAdjustment(player.getUuid(), p.lastKnownName, p.balance - before, p.balance, source);
+        TitleService.updateWealth(player);
         audit(player, "=" + p.balance, p.balance, source);
-    }
-
-    /** 출처 태그를 그룹키로(콜론 앞). 예 sell:minecraft:diamond → sell. */
-    private static String group(String source) {
-        if (source == null) return "기타";
-        int i = source.indexOf(':');
-        return i > 0 ? source.substring(0, i) : source;
     }
 
     private static void audit(ServerPlayerEntity player, String delta, long balance, String source) {

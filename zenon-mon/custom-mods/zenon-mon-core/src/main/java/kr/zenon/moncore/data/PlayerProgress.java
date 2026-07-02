@@ -15,6 +15,7 @@ public class PlayerProgress {
     public static final int SCHEMA_VERSION = 1;
 
     public long firstJoinEpoch = 0L;
+    public String lastKnownName = "";
     public boolean leaguePassGiven = false;
     public long balance = 0L;                 // 골드 단일 화폐 (economy_design.md)
 
@@ -54,9 +55,14 @@ public class PlayerProgress {
     // 특성 마개조 해제 포켓몬 (결정 034): 정수·특성 사용한 포켓몬 UUID — 임의 특성 강제 부여 허용
     public final java.util.Set<String> abilityMakeoverPokemon = new java.util.HashSet<>();
 
+    // 칭호: 보유 칭호 id 집합 + 현재 표시 칭호(id). 표시명은 TitleService가 해석한다.
+    public final java.util.Set<String> titles = new java.util.HashSet<>();
+    public String activeTitle = "";
+
     public NbtCompound writeNbt(NbtCompound nbt) {
         nbt.putInt("schemaVersion", SCHEMA_VERSION);
         nbt.putLong("firstJoinEpoch", firstJoinEpoch);
+        nbt.putString("lastKnownName", lastKnownName);
         nbt.putBoolean("leaguePassGiven", leaguePassGiven);
         nbt.putLong("balance", balance);
         nbt.putBoolean("discordVerified", discordVerified);
@@ -108,12 +114,18 @@ public class PlayerProgress {
         NbtList aboNbt = new NbtList();
         for (String u : abilityMakeoverPokemon) aboNbt.add(net.minecraft.nbt.NbtString.of(u));
         nbt.put("abilityMakeoverPokemon", aboNbt);
+
+        NbtList titlesNbt = new NbtList();
+        for (String t : titles) titlesNbt.add(net.minecraft.nbt.NbtString.of(t));
+        nbt.put("titles", titlesNbt);
+        nbt.putString("activeTitle", activeTitle == null ? "" : activeTitle);
         return nbt;
     }
 
     public static PlayerProgress readNbt(NbtCompound nbt) {
         PlayerProgress p = new PlayerProgress();
         p.firstJoinEpoch = nbt.getLong("firstJoinEpoch");
+        p.lastKnownName = nbt.getString("lastKnownName");
         p.leaguePassGiven = nbt.getBoolean("leaguePassGiven");
         p.balance = nbt.getLong("balance");
         p.discordVerified = nbt.getBoolean("discordVerified");
@@ -173,6 +185,11 @@ public class PlayerProgress {
             NbtList aboNbt = nbt.getList("abilityMakeoverPokemon", NbtElement.STRING_TYPE);
             for (int i = 0; i < aboNbt.size(); i++) p.abilityMakeoverPokemon.add(aboNbt.getString(i));
         }
+        if (nbt.contains("titles", NbtElement.LIST_TYPE)) {
+            NbtList titlesNbt = nbt.getList("titles", NbtElement.STRING_TYPE);
+            for (int i = 0; i < titlesNbt.size(); i++) p.titles.add(titlesNbt.getString(i));
+        }
+        p.activeTitle = nbt.getString("activeTitle");
         return p;
     }
 }

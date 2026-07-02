@@ -5,6 +5,7 @@ import kr.zenon.moncore.economy.EconomyBridge;
 import kr.zenon.moncore.menu.MenuGuiManager;
 import kr.zenon.moncore.menu.MenuIcons;
 import kr.zenon.moncore.menu.ServerMenuHandler;
+import net.minecraft.entity.player.PlayerInventory;
 import net.minecraft.inventory.Inventory;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -83,8 +84,13 @@ public final class BuyShopMenu {
             player.sendMessage(Text.literal("§c[상점] 알 수 없는 품목: " + itemId), true);
             return;
         }
+        qty = Math.min(qty, fitCount(player.getInventory(), item, qty));
+        if (qty <= 0) {
+            player.sendMessage(Text.literal("§e[상점] 인벤토리 공간이 부족합니다."), true);
+            return;
+        }
         long total = unitPrice * qty;
-        if (!EconomyBridge.withdraw(player, total, "buy:" + itemId)) {
+        if (!EconomyBridge.withdraw(player, total, "buy:" + itemId, itemId, qty)) {
             player.sendMessage(Text.literal("§c[상점] 골드가 부족합니다 (필요 " + total + ")."), true);
             return;
         }
@@ -107,5 +113,18 @@ public final class BuyShopMenu {
         Identifier id = Identifier.tryParse(itemId);
         if (id == null || !Registries.ITEM.containsId(id)) return null;
         return Registries.ITEM.get(id);
+    }
+
+    private static int fitCount(PlayerInventory inv, Item item, int requested) {
+        int fit = 0;
+        for (int i = 0; i < inv.size() && fit < requested; i++) {
+            ItemStack s = inv.getStack(i);
+            if (s.isEmpty()) {
+                fit += item.getMaxCount();
+            } else if (s.isOf(item)) {
+                fit += Math.max(0, Math.min(s.getMaxCount(), item.getMaxCount()) - s.getCount());
+            }
+        }
+        return Math.min(fit, requested);
     }
 }
