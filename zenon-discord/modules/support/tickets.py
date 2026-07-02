@@ -133,10 +133,19 @@ class TicketCog(commands.Cog):
     ) -> discord.CategoryChannel | None:
         """티켓을 묶을 카테고리를 찾거나 만든다(모든 티켓 = 단일 카테고리).
 
-        우선순위: ① env `CATEGORY_티켓_ID` → ② 이름이 "문의"인 카테고리 →
-        ③ 없으면 자동 생성(@everyone 숨김 + 운영/봇 가시). 실패 시 None(폴백=카테고리 없음).
+        우선순위: ① 활성 시즌 템플릿의 문의 카테고리(server_categories group_key="tickets",
+        `/서버신설` 자동전개) → ② env `CATEGORY_티켓_ID` → ③ 이름이 "문의"인 카테고리 →
+        ④ 없으면 자동 생성(@everyone 숨김 + 운영/봇 가시). 실패 시 None(폴백=카테고리 없음).
         열린 티켓·종료([종료] 프리픽스) 모두 이 카테고리에 함께 모인다.
         """
+        active = await servers.get_any_active(self.db)
+        if active is not None:
+            for row in await servers.get_categories(self.db, active["id"]):
+                if row["group_key"] == "tickets":
+                    cat = guild.get_channel(row["category_id"])
+                    if isinstance(cat, discord.CategoryChannel):
+                        return cat
+                    break
         if config.CATEGORY_티켓_ID:
             cat = guild.get_channel(config.CATEGORY_티켓_ID)
             if isinstance(cat, discord.CategoryChannel):

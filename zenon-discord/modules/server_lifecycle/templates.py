@@ -49,7 +49,8 @@ _ROLE_SPEC: list[tuple[str, str]] = [
 #   audience  = active 시 가시성 대상.
 #               "player"=플레이어 공개(read_only=True 면 읽기 전용) / "onboarding"=
 #               채널별(_ONBOARDING_AUDIENCE) / "logs"=제재내역은 플레이어 읽기전용,
-#               경고는 운영자 전용
+#               경고는 운영자 전용 / "staff"=운영자 전용 카테고리(문의 티켓 컨테이너 —
+#               개별 채널은 tickets.py 가 개설자에게만 공개)
 #   read_only = (선택) audience="player" 인데 플레이어가 읽기만 가능(정보 카테고리).
 #   channels  = [(이름, "text"|"voice")] — 생성 순서 = 배치 순서
 _TEMPLATE_GROUPS: list[dict] = [
@@ -72,6 +73,12 @@ _TEMPLATE_GROUPS: list[dict] = [
         "key": "support", "suffix": "지원·음성", "audience": "player",
         # 건의·일반문의·버그제보 통합(T16) / 임시음성 허브(T13, 카테고리별 다중)
         "channels": [("건의-문의-버그제보", "text"), ("➕ 음성방 만들기", "voice")],
+    },
+    {
+        # 문의 = 1:1 티켓 컨테이너. 채널은 tickets.py 가 /문의 시 동적 생성(열림+종료 함께).
+        # 운영자 전용 가시(개별 티켓은 개설자 overwrite 로 공개). 사전 채널 없음.
+        "key": "tickets", "suffix": "문의", "audience": "staff",
+        "channels": [],
     },
     {
         "key": "logs", "suffix": "로그", "audience": "logs",
@@ -190,6 +197,64 @@ async def cleanup(
                 log.warning("역할 롤백 실패: %s", r.id, exc_info=True)
 
 
+async def provision_missing(
+    guild: discord.Guild,
+    *,
+    display_name: str,
+    existing_group_keys: set[str],
+    role_ids: dict[str, int],
+) -> dict[str, discord.CategoryChannel]:
+    """템플릿 그룹 중 아직 없는 카테고리만 prep(비공개)로 소급 생성. {group_key: cat} 반환.
+
+    템플릿이 새 카테고리(예: 문의)를 추가했을 때 이미 준비/활성 중인 시즌에 반영하기
+    위한 것. 기존 3역할(role_ids)·운영자·봇만 가시인 prep 권한으로 만든다. 가시성 공개는
+    호출부가 이어서 `apply_visibility(visible=True)` 로 처리. 실패 시 생성분 롤백 후 재전파.
+    """
+    missing = [g for g in _TEMPLATE_GROUPS if g["key"] not in existing_group_keys]
+    if not missing:
+        return {}
+
+    base_overwrites: dict = {guild.default_role: discord.PermissionOverwrite(view_channel=False)}
+    for key in ("access", "pending", "player"):
+        r = guild.get_role(role_ids.get(key, 0))
+        if r is not None:
+            base_overwrites[r] = discord.PermissionOverwrite(view_channel=False)
+    if guild.me is not None:
+        base_overwrites[guild.me] = discord.PermissionOverwrite(
+            view_channel=True, send_messages=True, connect=True,
+            speak=True, move_members=True, manage_channels=True,
+        )
+    for r in _operator_roles(guild):
+        base_overwrites[r] = discord.PermissionOverwrite(
+            view_channel=True, send_messages=True, connect=True,
+        )
+
+    created: dict[str, discord.CategoryChannel] = {}
+    created_channels: list[discord.abc.GuildChannel] = []
+    try:
+        for g in missing:
+            cat = await guild.create_category(
+                f"{display_name} · {g['suffix']}", overwrites=dict(base_overwrites), reason=_REASON
+            )
+            created[g["key"]] = cat
+            created_channels.append(cat)
+            for name, kind in g["channels"]:
+                if kind == "voice":
+                    ch = await guild.create_voice_channel(
+                        name,
+                        category=cat,
+                        user_limit=1 if name == "➕ 음성방 만들기" else 0,
+                        reason=_REASON,
+                    )
+                else:
+                    ch = await guild.create_text_channel(name, category=cat, reason=_REASON)
+                created_channels.append(ch)
+    except discord.HTTPException:
+        await _delete_all(created_channels)
+        raise
+    return created
+
+
 # ─── 가시성 전이 (시작/종료) ──────────────────────────────────────────
 
 async def apply_visibility(
@@ -300,6 +365,17 @@ async def apply_visibility(
                         restricted = guild.get_role(role_ids.get(role_key, 0))
                         if restricted is not None:
                             await ch.set_permissions(restricted, overwrite=deny_view, reason=_REASON)
+            elif g["audience"] == "staff":
+                # 운영자 전용 카테고리(문의 티켓 컨테이너). _set_staff(cat) 로 운영/봇은
+                # 이미 가시. 플레이어·온보딩 역할만 카테고리 미가시로 막는다. 개별 티켓
+                # 채널은 tickets.py 가 개설자 overwrite 를 얹어 공개한다.
+                for role_key in ("access", "pending", "player"):
+                    restricted = guild.get_role(role_ids.get(role_key, 0))
+                    if restricted is not None:
+                        await cat.set_permissions(restricted, overwrite=deny_view, reason=_REASON)
+                for ch in cat.channels:
+                    await _set_staff(ch)
+                touched += 1
             else:  # "player" (read_only=True 면 플레이어는 읽기 전용)
                 read_only = g.get("read_only", False)
                 role = guild.get_role(role_ids.get("player", 0))

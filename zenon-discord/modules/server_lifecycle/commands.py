@@ -7,7 +7,7 @@
 구현(§1 상태머신 prep→active→ended):
   - 🟢 /서버목록 · /서버정보            (조회)
   - 🟢 /서버신설                        (prep 행 생성 + T17 템플릿 자동 전개:
-                                          온보딩 3역할 + 프리픽스 카테고리 4그룹 + 채널 세트,
+                                          온보딩 3역할 + 프리픽스 카테고리 그룹 + 채널 세트,
                                           전부 prep=비공개. 수동 category 지정 시 자동전개 생략)
   - 🟢 /서버시작(prep→active) · /서버종료(active→ended)  (상태 전이 + 카테고리 가시성)
 
@@ -187,7 +187,7 @@ class ServerLifecycleCog(commands.Cog):
 
     # ─── 신설 (레지스트리 행 생성 — 카테고리/역할 자동생성은 T17) ─────
 
-    @app_commands.command(name="서버신설", description="새 서버(시즌)를 prep 등록 + 카테고리 4그룹·채널·온보딩 3역할 자동 생성(T17).")
+    @app_commands.command(name="서버신설", description="새 서버(시즌)를 prep 등록 + 카테고리·채널·온보딩 3역할 자동 생성(T17).")
     @app_commands.describe(
         domain="게임 도메인 (예: rpg, poromon)",
         season_no="시즌 번호",
@@ -276,7 +276,7 @@ class ServerLifecycleCog(commands.Cog):
         )
         if auto:
             extra = (
-                f"\n📁 카테고리 {templates.group_count()}개(온보딩·정보·커뮤니티·지원·음성·로그) + "
+                f"\n📁 카테고리 {templates.group_count()}개(온보딩·정보·커뮤니티·지원·음성·문의·로그) + "
                 f"채널 {templates.channel_count()}개 + 온보딩 3역할(접근·인증전·플레이어) 자동 생성(비공개).\n"
                 "`/서버시작` 시 약관→접근 / 인증→인증전 / 정보·커뮤니티·지원→플레이어 / "
                 "로그는 제재내역 읽기전용·경고 운영자전용으로 공개됩니다."
@@ -506,21 +506,51 @@ class ServerLifecycleCog(commands.Cog):
 
         # 카테고리·채널 overwrite 재설정은 시간이 걸릴 수 있어 defer.
         await interaction.response.defer(ephemeral=True)
+
+        # 템플릿이 새 카테고리(예: 문의)를 추가했으면 이 자동전개 시즌에 소급 생성·등록.
+        provisioned: list[str] = []
+        existing = await servers.get_categories(self.db, row["id"])
+        existing_keys = {r["group_key"] for r in existing}
+        if existing_keys:  # 자동전개 시즌만(수동연결/미연결은 건너뜀)
+            try:
+                newcats = await templates.provision_missing(
+                    interaction.guild,
+                    display_name=row["display_name"],
+                    existing_group_keys=existing_keys,
+                    role_ids={
+                        "access": row["access_role_id"] or 0,
+                        "pending": row["pending_role_id"] or 0,
+                        "player": row["player_role_id"] or 0,
+                    },
+                )
+            except discord.HTTPException:
+                newcats = {}
+                log.exception("누락 카테고리 소급 생성 실패: #%d", row["id"])
+            for group_key, cat in newcats.items():
+                await servers.add_category(self.db, row["id"], group_key, cat.id)
+                provisioned.append(group_key)
+
         note = await self._set_category_visibility(interaction.guild, row, visible=True)
         # 통합 카테고리도 플레이어에 공개 상태로 재확인(/서버시작 과 동일한 가시성 기준).
         await self._integrated_set(interaction.guild, row["player_role_id"] or 0, visible=True)
 
-        log.info("서버 권한 재적용: #%d (%s) by %s", row["id"], row["domain"], interaction.user.id)
+        log.info(
+            "서버 권한 재적용: #%d (%s) provisioned=%s by %s",
+            row["id"], row["domain"], provisioned, interaction.user.id,
+        )
         await mod_log.record(
             self.bot,
             action="server_reapply_visibility",
             operator_id=interaction.user.id,
             detail={"server_id": row["id"], "domain": row["domain"],
-                    "display_name": row["display_name"]},
+                    "display_name": row["display_name"], "provisioned": provisioned},
+        )
+        prov_note = (
+            f"\n📁 누락 카테고리 소급 생성: {', '.join(provisioned)}" if provisioned else ""
         )
         await interaction.followup.send(
-            f"🔄 서버 `#{row['id']}` **{row['display_name']}** 카테고리 권한 재적용 완료. ({note})\n"
-            "상태·역할은 변경하지 않았습니다.",
+            f"🔄 서버 `#{row['id']}` **{row['display_name']}** 카테고리 권한 재적용 완료. ({note})"
+            f"{prov_note}\n상태·역할은 변경하지 않았습니다.",
             ephemeral=True,
         )
 
