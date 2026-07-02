@@ -75,9 +75,15 @@ _TEMPLATE_GROUPS: list[dict] = [
         "channels": [("건의-문의-버그제보", "text"), ("➕ 음성방 만들기", "voice")],
     },
     {
-        # 문의 = 1:1 티켓 컨테이너. 채널은 tickets.py 가 /문의 시 동적 생성(열림+종료 함께).
+        # 문의 = 열린 1:1 티켓 컨테이너. 채널은 tickets.py 가 /문의 시 동적 생성.
         # 운영자 전용 가시(개별 티켓은 개설자 overwrite 로 공개). 사전 채널 없음.
         "key": "tickets", "suffix": "문의", "audience": "staff",
+        "channels": [],
+    },
+    {
+        # 문의 보관 = 종료된 티켓 아카이브. 종료 시 tickets.py 가 채널을 여기로 이동
+        # (개설자 읽기전용 유지). 운영자 전용 가시. 사전 채널 없음.
+        "key": "tickets_closed", "suffix": "문의 보관", "audience": "staff",
         "channels": [],
     },
     {

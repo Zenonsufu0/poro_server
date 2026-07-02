@@ -2,10 +2,12 @@
 티켓 (1:1 문의) — T16 support.md §2.
 
 `/문의` → 비공개 채널 생성(개설자 + Support·admin 가시) → tickets INSERT(open).
-채널 내 운영진과 대화 → `/티켓종료` 또는 [티켓 종료] 버튼 → 잠금·아카이브(채널 보존).
+채널은 "문의" 카테고리에 생성. 채널 내 운영진과 대화(개설자는 열린 동안 채팅 가능) →
+`/티켓종료` 또는 [티켓 종료] 버튼 → 잠금·아카이브.
 
 권한: 개설 = 공통(유저, 동시 1개 제한). 종료 = 개설자 또는 admin·support.
-모든 개설/종료 = mod_log 기록. 채널은 삭제 대신 잠금([종료] 프리픽스 + 개설자 접근 해제, 기록 보존).
+모든 개설/종료 = mod_log 기록. 종료 = 삭제 대신 [종료] 프리픽스 + **개설자 읽기전용 전환**
+(view+history, send 차단) + **"문의 보관" 카테고리로 이동**(운영자 전체 열람, 기록 보존).
 """
 from __future__ import annotations
 
@@ -22,6 +24,8 @@ log = logging.getLogger(__name__)
 
 # 티켓을 묶을 카테고리 이름(자동 탐색/생성용). env CATEGORY_티켓_ID 가 있으면 그게 우선.
 _TICKET_CATEGORY_NAME = "문의"
+# 종료된 티켓을 보관할 아카이브 카테고리 이름.
+_ARCHIVE_CATEGORY_NAME = "문의 보관"
 
 
 class TicketCloseView(discord.ui.View):
@@ -128,32 +132,11 @@ class TicketCog(commands.Cog):
                 ow[role] = allow
         return ow
 
-    async def _ticket_category(
-        self, guild: discord.Guild
-    ) -> discord.CategoryChannel | None:
-        """티켓을 묶을 카테고리를 찾거나 만든다(모든 티켓 = 단일 카테고리).
+    def _staff_category_overwrites(self, guild: discord.Guild) -> dict:
+        """티켓 카테고리(문의/문의 보관) 자동 생성 권한: @everyone 숨김 + 운영/봇 가시.
 
-        우선순위: ① 활성 시즌 템플릿의 문의 카테고리(server_categories group_key="tickets",
-        `/서버신설` 자동전개) → ② env `CATEGORY_티켓_ID` → ③ 이름이 "문의"인 카테고리 →
-        ④ 없으면 자동 생성(@everyone 숨김 + 운영/봇 가시). 실패 시 None(폴백=카테고리 없음).
-        열린 티켓·종료([종료] 프리픽스) 모두 이 카테고리에 함께 모인다.
+        개별 티켓 채널이 개설자에게만 공개되므로 카테고리 자체는 @everyone 숨김.
         """
-        active = await servers.get_any_active(self.db)
-        if active is not None:
-            for row in await servers.get_categories(self.db, active["id"]):
-                if row["group_key"] == "tickets":
-                    cat = guild.get_channel(row["category_id"])
-                    if isinstance(cat, discord.CategoryChannel):
-                        return cat
-                    break
-        if config.CATEGORY_티켓_ID:
-            cat = guild.get_channel(config.CATEGORY_티켓_ID)
-            if isinstance(cat, discord.CategoryChannel):
-                return cat
-        for cat in guild.categories:
-            if cat.name == _TICKET_CATEGORY_NAME:
-                return cat
-        # 자동 생성: 카테고리 자체는 @everyone 에게 숨김(개별 티켓 채널이 개설자에게만 공개).
         overwrites: dict = {
             guild.default_role: discord.PermissionOverwrite(view_channel=False)
         }
@@ -167,13 +150,57 @@ class TicketCog(commands.Cog):
                 overwrites[role] = discord.PermissionOverwrite(
                     view_channel=True, send_messages=True
                 )
+        return overwrites
+
+    async def _resolve_ticket_category(
+        self, guild: discord.Guild, *, group_key: str, name: str, env_id: int = 0
+    ) -> discord.CategoryChannel | None:
+        """티켓 카테고리를 찾거나 만든다.
+
+        우선순위: ① 활성 시즌 템플릿 카테고리(server_categories group_key, `/서버신설`
+        자동전개) → ② env_id(있으면) → ③ 이름 일치 카테고리 → ④ 없으면 자동 생성
+        (운영자 전용 가시). 실패 시 None(폴백=카테고리 없음).
+        """
+        active = await servers.get_any_active(self.db)
+        if active is not None:
+            for row in await servers.get_categories(self.db, active["id"]):
+                if row["group_key"] == group_key:
+                    cat = guild.get_channel(row["category_id"])
+                    if isinstance(cat, discord.CategoryChannel):
+                        return cat
+                    break
+        if env_id:
+            cat = guild.get_channel(env_id)
+            if isinstance(cat, discord.CategoryChannel):
+                return cat
+        for cat in guild.categories:
+            if cat.name == name:
+                return cat
         try:
             return await guild.create_category(
-                _TICKET_CATEGORY_NAME, overwrites=overwrites, reason="문의 카테고리 자동 생성"
+                name, overwrites=self._staff_category_overwrites(guild),
+                reason=f"{name} 카테고리 자동 생성",
             )
         except discord.Forbidden:
-            log.warning("문의 카테고리 자동 생성 권한 부족(Manage Channels)")
+            log.warning("%s 카테고리 자동 생성 권한 부족(Manage Channels)", name)
             return None
+
+    async def _ticket_category(
+        self, guild: discord.Guild
+    ) -> discord.CategoryChannel | None:
+        """열린 티켓을 묶을 카테고리(문의)."""
+        return await self._resolve_ticket_category(
+            guild, group_key="tickets", name=_TICKET_CATEGORY_NAME,
+            env_id=config.CATEGORY_티켓_ID,
+        )
+
+    async def _ticket_archive_category(
+        self, guild: discord.Guild
+    ) -> discord.CategoryChannel | None:
+        """종료된 티켓을 보관할 카테고리(문의 보관)."""
+        return await self._resolve_ticket_category(
+            guild, group_key="tickets_closed", name=_ARCHIVE_CATEGORY_NAME,
+        )
 
     async def _active_support_channel(
         self, guild: discord.Guild
@@ -329,13 +356,25 @@ class TicketCog(commands.Cog):
             self.bot, action="ticket_close", operator_id=member.id, target_id=row["opener_id"],
             detail={"ticket_id": row["id"], "channel_id": channel.id},
         )
-        # 잠금·아카이브: 개설자 접근 해제 + [종료] 프리픽스(채널 보존).
+        # 잠금·아카이브: 개설자 읽기전용 전환 + [종료] 프리픽스 + 보관 카테고리로 이동.
         try:
             opener = guild.get_member(row["opener_id"])
             if opener is not None:
-                await channel.set_permissions(opener, overwrite=None, reason="티켓 종료")
-            if not channel.name.startswith("[종료]"):
-                await channel.edit(name=f"[종료]-{channel.name}"[:100], reason="티켓 종료 아카이브")
+                # 개설자는 종료 후에도 자기 문의 내역을 읽을 수 있으나 글은 못 씀.
+                await channel.set_permissions(
+                    opener,
+                    overwrite=discord.PermissionOverwrite(
+                        view_channel=True, read_message_history=True, send_messages=False
+                    ),
+                    reason="티켓 종료(개설자 읽기전용)",
+                )
+            archive = await self._ticket_archive_category(guild)
+            new_name = channel.name if channel.name.startswith("[종료]") else f"[종료]-{channel.name}"[:100]
+            edit_kwargs: dict = {"name": new_name, "reason": "티켓 종료 아카이브"}
+            if archive is not None and channel.category_id != archive.id:
+                edit_kwargs["category"] = archive
+                edit_kwargs["sync_permissions"] = False  # 채널 자체 overwrite 보존
+            await channel.edit(**edit_kwargs)
         except discord.HTTPException:
             log.warning("티켓 종료 채널 정리 실패: #%s", row["id"], exc_info=True)
         await interaction.response.send_message(
