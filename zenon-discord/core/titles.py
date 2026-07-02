@@ -1,16 +1,35 @@
 """
 칭호 데이터 접근 (T13) — community_level.md §3.2, data_model.md §2.3·2.3b.
 
-칭호 = 디스코드 역할이 **아님**(순수 표시 데이터/코스메틱). 레벨 임계(`required_level`)
-도달 시 보유 추가(누적, 회수 안 함), 유저당 장착 1개(`/칭호`로 교체).
+칭호 = 디스코드 역할이 **아님**(순수 표시 데이터/코스메틱).
+운영자가 카탈로그 칭호를 생성하고 유저에게 직접 부여/회수한다.
+유저는 보유 칭호 중 1개를 장착한다(`/칭호`).
 """
 from __future__ import annotations
+
+import uuid
 
 from core.db import Database
 
 
 async def list_catalog(db: Database) -> list:
-    return await db.fetchall("SELECT * FROM titles ORDER BY required_level, id")
+    return await db.fetchall(
+        "SELECT * FROM titles WHERE required_level IS NULL ORDER BY id"
+    )
+
+
+async def get_title(db: Database, title_id: int):
+    return await db.fetchone(
+        "SELECT * FROM titles WHERE id = ? AND required_level IS NULL", (title_id,)
+    )
+
+
+async def create_title(db: Database, display_name: str) -> int:
+    key = f"manual_{uuid.uuid4().hex[:12]}"
+    return await db.execute(
+        "INSERT INTO titles(key, display_name, required_level) VALUES(?, ?, NULL)",
+        (key, display_name),
+    )
 
 
 async def owned_titles(db: Database, user_id: int) -> list:
@@ -42,14 +61,19 @@ async def grant_title(db: Database, user_id: int, title_id: int) -> None:
     )
 
 
-async def newly_eligible(db: Database, user_id: int, level: int) -> list:
-    """레벨 도달로 새로 받을 수 있는(아직 미보유) 칭호들."""
-    return await db.fetchall(
-        "SELECT * FROM titles WHERE required_level IS NOT NULL AND required_level <= ? "
-        "AND id NOT IN (SELECT title_id FROM user_titles WHERE discord_user_id = ?) "
-        "ORDER BY required_level",
-        (level, user_id),
+async def revoke_title(db: Database, user_id: int, title_id: int) -> bool:
+    """보유 칭호 회수. 회수된 행이 있으면 True."""
+    before = await db.fetchone(
+        "SELECT 1 FROM user_titles WHERE discord_user_id = ? AND title_id = ?",
+        (user_id, title_id),
     )
+    if before is None:
+        return False
+    await db.execute(
+        "DELETE FROM user_titles WHERE discord_user_id = ? AND title_id = ?",
+        (user_id, title_id),
+    )
+    return True
 
 
 async def equip(db: Database, user_id: int, title_id: int) -> bool:

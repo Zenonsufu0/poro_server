@@ -1,33 +1,32 @@
-"""
-커뮤니티 레벨 (T13) — community_level.md §1~4.
+"""수동 칭호 시스템.
 
-채팅·음성 활동 XP → 레벨. 길드 전역(도메인 무관). **메시지 내용 미열람**(작성 이벤트만).
-저장 = core.community(community_xp). 칭호(/칭호)·XP 보정(/xp지급)은 다음 슬라이스.
-
-어뷰징 방지: 채팅 쿨다운(메모리 1차 판정 후 DB write — 핫패스 방어) · 음성 제외
-(self-mute/deaf·AFK·혼자) · 봇·제외 채널 제외.
+레벨/XP 자동 성장과 레벨 임계 칭호 지급은 비활성화했다.
+칭호는 운영자가 생성·부여·회수하고, 유저는 보유 칭호 중 1개를 장착한다.
 """
 from __future__ import annotations
 
 import logging
-import time
+import re
 
 import discord
 from discord import app_commands
-from discord.ext import commands, tasks
+from discord.ext import commands
 
-from core import community, config, mod_log, titles
-from core.config import VOICE_TICK_SEC
+from core import mod_log, titles
 from core.permissions import requires_permission
 
 log = logging.getLogger(__name__)
+
+_TITLE_PREFIX_RE = re.compile(r"^「[^」]{1,24}」\s*")
+_NICK_LIMIT = 32
+_NICK_TITLE_LIMIT = 12
 
 
 class _TitleSelect(discord.ui.Select):
     """보유 칭호 중 1개 장착(ephemeral — 호출자만 조작)."""
 
-    def __init__(self, db, owned: list) -> None:
-        self._db = db
+    def __init__(self, cog: "CommunityLevelCog", owned: list) -> None:
+        self.cog = cog
         options = [
             discord.SelectOption(
                 label=t["display_name"][:100], value=str(t["id"]), default=bool(t["equipped"])
@@ -37,217 +36,189 @@ class _TitleSelect(discord.ui.Select):
         super().__init__(placeholder="장착할 칭호를 선택하세요", min_values=1, max_values=1, options=options)
 
     async def callback(self, interaction: discord.Interaction) -> None:
-        ok = await titles.equip(self._db, interaction.user.id, int(self.values[0]))
+        ok = await titles.equip(self.cog.db, interaction.user.id, int(self.values[0]))
+        nick_msg = ""
+        if ok and isinstance(interaction.user, discord.Member):
+            nick_msg = await self.cog.sync_title_nickname(interaction.user)
         await interaction.response.edit_message(
-            content="✅ 칭호를 장착했습니다." if ok else "보유하지 않은 칭호입니다.", view=None
+            content=(
+                f"✅ 칭호를 장착했습니다.{nick_msg}"
+                if ok else "보유하지 않은 칭호입니다."
+            ),
+            view=None,
         )
 
 
 class CommunityLevelCog(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        self._chat_cooldown: dict[int, int] = {}  # user_id → last XP 지급 epoch(메모리)
 
     @property
     def db(self):
         return self.bot.db  # type: ignore[attr-defined]
 
-    async def cog_load(self) -> None:
-        self.voice_tick.start()
+    async def sync_title_nickname(self, member: discord.Member) -> str:
+        """장착 칭호를 서버 닉네임 prefix로 반영한다."""
+        if member.guild.owner_id == member.id:
+            return " 다만 서버 소유자는 Discord 제한으로 봇이 닉네임을 바꿀 수 없습니다."
+        if member.guild.me is not None and member.top_role >= member.guild.me.top_role:
+            return " 다만 대상 역할이 봇보다 높거나 같아서 닉네임 반영은 실패했습니다."
 
-    async def cog_unload(self) -> None:
-        self.voice_tick.cancel()
+        equipped = await titles.equipped_title(self.db, member.id)
+        base = _TITLE_PREFIX_RE.sub("", member.nick or member.display_name).strip()
+        if not base:
+            base = member.name
 
-    # ─── 채팅 XP ──────────────────────────────────────────────────
-    @commands.Cog.listener()
-    async def on_message(self, message: discord.Message) -> None:
-        if message.author.bot or message.guild is None:
-            return
-        if message.guild.id != config.GUILD_ID:
-            return
-        if message.channel.id in config.XP_EXCLUDE_CHANNEL_IDS:
-            return
-        uid = message.author.id
-        now = int(time.time())
-        # 쿨다운 메모리 1차 판정 → 통과 시에만 DB write(핫패스 방어, §12.2).
-        if now - self._chat_cooldown.get(uid, 0) < config.CHAT_XP_COOLDOWN_SEC:
-            return
-        self._chat_cooldown[uid] = now
-        _, new_level, leveled_up = await community.add_xp(
-            self.db, uid, config.CHAT_XP_PER_MSG, set_last_message_ts=now
-        )
-        if leveled_up:
-            await self._handle_levelup(message.guild, message.author, new_level)
+        if equipped:
+            title = " ".join(str(equipped).split())[:_NICK_TITLE_LIMIT]
+            prefix = f"「{title}」 "
+            target = f"{prefix}{base[:max(1, _NICK_LIMIT - len(prefix))]}"
+        else:
+            target = base[:_NICK_LIMIT]
 
-    # ─── 음성 XP (주기 tick) ──────────────────────────────────────
-    @tasks.loop(seconds=VOICE_TICK_SEC)
-    async def voice_tick(self) -> None:
-        guild = self.bot.get_guild(config.GUILD_ID)
-        if guild is None:
-            return
-        for vc in guild.voice_channels:
-            if config.AFK_CHANNEL_ID and vc.id == config.AFK_CHANNEL_ID:
-                continue
-            humans = [m for m in vc.members if not m.bot]
-            if len(humans) < 2:  # 혼자(또는 빈 방) 제외
-                continue
-            for m in humans:
-                vs = m.voice
-                if vs is None or vs.self_mute or vs.self_deaf:
-                    continue
-                _, new_level, leveled_up = await community.add_xp(
-                    self.db, m.id, config.VOICE_XP_PER_TICK,
-                    add_voice_seconds=config.VOICE_TICK_SEC,
-                )
-                if leveled_up:
-                    await self._handle_levelup(guild, m, new_level)
+        target_nick = None if not equipped and target == member.name else target
+        if member.nick == target_nick:
+            return ""
 
-    @voice_tick.before_loop
-    async def _before(self) -> None:
-        await self.bot.wait_until_ready()
-
-    # ─── 레벨업 알림 ──────────────────────────────────────────────
-    async def _announce_levelup(
-        self, guild: discord.Guild, user: discord.abc.User, level: int
-    ) -> None:
-        if not config.CHANNEL_LEVELUP_ID:
-            return
-        channel = guild.get_channel(config.CHANNEL_LEVELUP_ID)
-        if not isinstance(channel, (discord.TextChannel, discord.Thread)):
-            return
         try:
-            await channel.send(
-                f"🎉 {user.mention} 님이 **레벨 {level}** 을 달성했습니다!",
-                allowed_mentions=discord.AllowedMentions(users=True),
-            )
+            await member.edit(nick=target_nick, reason="칭호 닉네임 동기화")
+        except discord.Forbidden:
+            log.warning("칭호 닉네임 반영 권한 부족: user=%s", member.id)
+            return " 다만 봇 권한/역할 위계 때문에 닉네임 반영은 실패했습니다."
         except discord.HTTPException:
-            pass
-
-    async def _handle_levelup(
-        self, guild: discord.Guild, user: discord.abc.User, level: int
-    ) -> None:
-        """레벨업 처리: 레벨 알림 + 레벨 임계 칭호 자동 획득(보유 추가) 알림."""
-        await self._announce_levelup(guild, user, level)
-        newly = await titles.newly_eligible(self.db, user.id, level)
-        for t in newly:
-            await titles.grant_title(self.db, user.id, t["id"])
-        if newly and config.CHANNEL_LEVELUP_ID:
-            channel = guild.get_channel(config.CHANNEL_LEVELUP_ID)
-            if isinstance(channel, (discord.TextChannel, discord.Thread)):
-                names = ", ".join(t["display_name"] for t in newly)
-                try:
-                    await channel.send(
-                        f"🏷️ {user.mention} 님이 칭호 획득: **{names}** (`/칭호` 로 장착)",
-                        allowed_mentions=discord.AllowedMentions(users=True),
-                    )
-                except discord.HTTPException:
-                    pass
+            log.warning("칭호 닉네임 반영 실패: user=%s", member.id, exc_info=True)
+            return " 다만 디스코드 오류로 닉네임 반영은 실패했습니다."
+        return " 닉네임에도 반영했습니다."
 
     # ─── 명령어 ───────────────────────────────────────────────────
-    @app_commands.command(name="레벨", description="커뮤니티 레벨·XP를 확인합니다.")
-    @app_commands.describe(유저="조회할 유저(생략 시 본인)")
-    async def level_cmd(
-        self, interaction: discord.Interaction, 유저: discord.Member | None = None
-    ) -> None:
-        target = 유저 or interaction.user
-        row = await community.get_xp(self.db, target.id)
-        xp = int(row["xp"]) if row else 0
-        level = int(row["level"]) if row else 0
-        cur = community.total_xp_for_level(level)
-        nxt = community.total_xp_for_level(level + 1)
-        rank = await community.rank_of(self.db, target.id)
-        title = await titles.equipped_title(self.db, target.id)
-
-        embed = discord.Embed(
-            title=f"{target.display_name} 의 커뮤니티 레벨",
-            description=f"칭호: **{title}**" if title else None,
-            color=discord.Color.blurple(),
-        )
-        embed.add_field(name="레벨", value=f"**{level}**", inline=True)
-        embed.add_field(name="순위", value=f"{rank}위" if rank else "—", inline=True)
-        embed.add_field(name="누적 XP", value=f"{xp:,}", inline=True)
-        embed.add_field(
-            name="다음 레벨까지",
-            value=f"{xp - cur:,} / {nxt - cur:,} XP",
-            inline=False,
-        )
-        if isinstance(target, discord.Member):
-            embed.set_thumbnail(url=target.display_avatar.url)
-        await interaction.response.send_message(embed=embed)
-
-    @app_commands.command(name="리더보드", description="커뮤니티 레벨 상위 랭킹을 확인합니다.")
-    async def leaderboard_cmd(self, interaction: discord.Interaction) -> None:
-        rows = await community.top(self.db, 10)
-        if not rows:
-            await interaction.response.send_message("아직 XP 기록이 없습니다.", ephemeral=True)
-            return
-        medals = {1: "🥇", 2: "🥈", 3: "🥉"}
-        lines = [
-            f"{medals.get(i, f'`{i}.`')} <@{r['discord_user_id']}> — Lv.{r['level']} ({int(r['xp']):,} XP)"
-            for i, r in enumerate(rows, 1)
-        ]
-        embed = discord.Embed(
-            title="🏆 커뮤니티 리더보드 (상위 10)",
-            description="\n".join(lines),
-            color=discord.Color.gold(),
-        )
-        my_rank = await community.rank_of(self.db, interaction.user.id)
-        if my_rank:
-            embed.set_footer(text=f"내 순위: {my_rank}위")
-        await interaction.response.send_message(
-            embed=embed, allowed_mentions=discord.AllowedMentions.none()
-        )
-
     @app_commands.command(name="칭호", description="보유 칭호를 확인하고 1개를 장착합니다.")
     async def title_cmd(self, interaction: discord.Interaction) -> None:
         owned = await titles.owned_titles(self.db, interaction.user.id)
         if not owned:
             await interaction.response.send_message(
-                "보유한 칭호가 없습니다. 레벨업으로 획득하세요(`/레벨` 확인).", ephemeral=True
+                "보유한 칭호가 없습니다. 칭호는 운영진이 이벤트/보상으로 부여합니다.",
+                ephemeral=True,
             )
             return
         view = discord.ui.View(timeout=60)
-        view.add_item(_TitleSelect(self.db, owned[:25]))
+        view.add_item(_TitleSelect(self, owned[:25]))
         await interaction.response.send_message(
             "장착할 칭호를 선택하세요:", view=view, ephemeral=True
         )
 
-    # ─── 운영 XP 보정 ─────────────────────────────────────────────
-    @app_commands.command(name="xp지급", description="유저에게 커뮤니티 XP를 지급합니다(운영).")
-    @app_commands.describe(유저="대상", 양="지급할 XP")
+    @app_commands.command(name="칭호목록", description="부여 가능한 칭호 목록을 확인합니다(운영).")
     @requires_permission("admin")
-    async def xp_grant(
-        self, interaction: discord.Interaction, 유저: discord.Member,
-        양: app_commands.Range[int, 1, 1_000_000],
-    ) -> None:
-        _, new_level, leveled_up = await community.add_xp(self.db, 유저.id, 양)
+    async def title_list(self, interaction: discord.Interaction) -> None:
+        rows = await titles.list_catalog(self.db)
+        if not rows:
+            await interaction.response.send_message("등록된 칭호가 없습니다.", ephemeral=True)
+            return
+        lines = [
+            f"`#{row['id']}` {row['display_name']}"
+            for row in rows[:50]
+        ]
+        if len(rows) > 50:
+            lines.append(f"... 외 {len(rows) - 50}개")
+        await interaction.response.send_message("\n".join(lines), ephemeral=True)
+
+    @app_commands.command(name="칭호생성", description="운영자 부여용 칭호를 생성합니다(운영).")
+    @app_commands.describe(이름="칭호 표시명")
+    @requires_permission("admin")
+    async def title_create(self, interaction: discord.Interaction, 이름: str) -> None:
+        display_name = 이름.strip()
+        if not display_name or len(display_name) > 80:
+            await interaction.response.send_message(
+                "칭호 이름은 1~80자여야 합니다.", ephemeral=True
+            )
+            return
+        title_id = await titles.create_title(self.db, display_name)
         await mod_log.record(
-            self.bot, action="xp_grant", operator_id=interaction.user.id, target_id=유저.id,
-            detail={"amount": 양, "new_level": new_level},
+            self.bot,
+            action="title_create",
+            operator_id=interaction.user.id,
+            detail={"title_id": title_id, "display_name": display_name},
         )
-        if leveled_up and interaction.guild:
-            await self._handle_levelup(interaction.guild, 유저, new_level)
         await interaction.response.send_message(
-            f"✅ {유저.mention} 에게 **{양:,} XP** 지급 (레벨 {new_level}).",
+            f"✅ 칭호 생성: `#{title_id}` **{display_name}**", ephemeral=True
+        )
+
+    @app_commands.command(name="칭호부여", description="유저에게 칭호를 부여합니다(운영).")
+    @app_commands.describe(유저="대상", 칭호="칭호 번호")
+    @requires_permission("admin")
+    async def title_grant(
+        self, interaction: discord.Interaction, 유저: discord.Member, 칭호: int
+    ) -> None:
+        row = await titles.get_title(self.db, 칭호)
+        if row is None:
+            await interaction.response.send_message(
+                f"칭호 `#{칭호}` 를 찾을 수 없습니다.", ephemeral=True
+            )
+            return
+        await titles.grant_title(self.db, 유저.id, 칭호)
+        await titles.equip(self.db, 유저.id, 칭호)
+        nick_msg = await self.sync_title_nickname(유저)
+        await mod_log.record(
+            self.bot,
+            action="title_grant",
+            operator_id=interaction.user.id,
+            target_id=유저.id,
+            detail={"title_id": 칭호, "display_name": row["display_name"]},
+        )
+        await interaction.response.send_message(
+            f"✅ {유저.mention} 에게 칭호 **{row['display_name']}** 부여.{nick_msg}",
             ephemeral=True, allowed_mentions=discord.AllowedMentions.none(),
         )
 
-    @app_commands.command(name="xp회수", description="유저의 커뮤니티 XP를 회수합니다(운영).")
-    @app_commands.describe(유저="대상", 양="회수할 XP")
+    @app_commands.command(name="칭호회수", description="유저에게서 칭호를 회수합니다(운영).")
+    @app_commands.describe(유저="대상", 칭호="칭호 번호")
     @requires_permission("admin")
-    async def xp_revoke(
-        self, interaction: discord.Interaction, 유저: discord.Member,
-        양: app_commands.Range[int, 1, 1_000_000],
+    async def title_revoke(
+        self, interaction: discord.Interaction, 유저: discord.Member, 칭호: int
     ) -> None:
-        new_xp, new_level, _ = await community.add_xp(self.db, 유저.id, -양)
+        row = await titles.get_title(self.db, 칭호)
+        if row is None:
+            await interaction.response.send_message(
+                f"칭호 `#{칭호}` 를 찾을 수 없습니다.", ephemeral=True
+            )
+            return
+        equipped_before = await titles.equipped_title(self.db, 유저.id)
+        ok = await titles.revoke_title(self.db, 유저.id, 칭호)
+        if not ok:
+            await interaction.response.send_message(
+                f"{유저.mention} 님은 칭호 **{row['display_name']}** 을 보유하고 있지 않습니다.",
+                ephemeral=True, allowed_mentions=discord.AllowedMentions.none(),
+            )
+            return
+        nick_msg = ""
+        if equipped_before == row["display_name"]:
+            nick_msg = await self.sync_title_nickname(유저)
         await mod_log.record(
-            self.bot, action="xp_revoke", operator_id=interaction.user.id, target_id=유저.id,
-            detail={"amount": 양, "new_xp": new_xp, "new_level": new_level},
+            self.bot,
+            action="title_revoke",
+            operator_id=interaction.user.id,
+            target_id=유저.id,
+            detail={"title_id": 칭호, "display_name": row["display_name"]},
         )
         await interaction.response.send_message(
-            f"↩ {유저.mention} 의 XP **{양:,}** 회수 (잔여 {new_xp:,} XP, 레벨 {new_level}).",
+            f"↩ {유저.mention} 의 칭호 **{row['display_name']}** 회수.{nick_msg}",
             ephemeral=True, allowed_mentions=discord.AllowedMentions.none(),
         )
+
+    @title_grant.autocomplete("칭호")
+    @title_revoke.autocomplete("칭호")
+    async def _title_autocomplete(
+        self, interaction: discord.Interaction, current: str
+    ) -> list[app_commands.Choice[int]]:
+        rows = await titles.list_catalog(self.db)
+        choices: list[app_commands.Choice[int]] = []
+        for row in rows:
+            name = f"#{row['id']} {row['display_name']}"[:100]
+            if current and current not in name and current != str(row["id"]):
+                continue
+            choices.append(app_commands.Choice(name=name, value=row["id"]))
+            if len(choices) >= 25:
+                break
+        return choices
 
 
 async def setup(bot: commands.Bot) -> None:
