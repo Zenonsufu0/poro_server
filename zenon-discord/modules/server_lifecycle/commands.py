@@ -465,6 +465,65 @@ class ServerLifecycleCog(commands.Cog):
             ephemeral=True,
         )
 
+    @app_commands.command(
+        name="서버권한재적용",
+        description="활성 서버의 카테고리 권한/가시성을 현재 템플릿으로 다시 적용합니다(상태·역할 변경 없음).",
+    )
+    @app_commands.describe(server_id="서버 ID(생략 시 현재 활성 서버). 상태 전이·역할 대량변경 없이 카테고리 권한만 갱신.")
+    @requires_permission("admin")
+    async def server_reapply(
+        self, interaction: discord.Interaction, server_id: int | None = None
+    ) -> None:
+        """템플릿(권한 정책) 변경분을 이미 활성인 시즌에 소급 적용.
+
+        `/서버시작`은 이미 active면 noop이라 재적용 경로가 없다. 이 명령은 상태
+        전이·역할 대량 부여 없이 `apply_visibility(visible=True)` 만 다시 호출한다
+        (idempotent). 예: 정보/로그 카테고리 읽기전용 정책이 바뀐 뒤 활성 시즌 반영.
+        """
+        if server_id is None:
+            row = await servers.get_any_active(self.db)
+            if row is None:
+                await interaction.response.send_message(
+                    "현재 활성 서버가 없습니다. `server_id` 를 지정하세요.", ephemeral=True
+                )
+                return
+        else:
+            row = await servers.get_server(self.db, server_id)
+            if row is None:
+                await interaction.response.send_message(
+                    f"서버 `#{server_id}` 없음.", ephemeral=True
+                )
+                return
+            if row["state"] != "active":
+                await interaction.response.send_message(
+                    "활성(active) 서버에만 재적용할 수 있습니다.", ephemeral=True
+                )
+                return
+
+        if interaction.guild is None:
+            await interaction.response.send_message("길드 컨텍스트가 필요합니다.", ephemeral=True)
+            return
+
+        # 카테고리·채널 overwrite 재설정은 시간이 걸릴 수 있어 defer.
+        await interaction.response.defer(ephemeral=True)
+        note = await self._set_category_visibility(interaction.guild, row, visible=True)
+        # 통합 카테고리도 플레이어에 공개 상태로 재확인(/서버시작 과 동일한 가시성 기준).
+        await self._integrated_set(interaction.guild, row["player_role_id"] or 0, visible=True)
+
+        log.info("서버 권한 재적용: #%d (%s) by %s", row["id"], row["domain"], interaction.user.id)
+        await mod_log.record(
+            self.bot,
+            action="server_reapply_visibility",
+            operator_id=interaction.user.id,
+            detail={"server_id": row["id"], "domain": row["domain"],
+                    "display_name": row["display_name"]},
+        )
+        await interaction.followup.send(
+            f"🔄 서버 `#{row['id']}` **{row['display_name']}** 카테고리 권한 재적용 완료. ({note})\n"
+            "상태·역할은 변경하지 않았습니다.",
+            ephemeral=True,
+        )
+
 
 async def setup(bot: commands.Bot) -> None:
     await bot.add_cog(ServerLifecycleCog(bot))

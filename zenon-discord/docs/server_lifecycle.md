@@ -29,6 +29,7 @@
 | `/서버신설` | `domain, season_no, display_name` | `servers` prep 행 생성 + 카테고리 템플릿 생성(T17) + 접근역할 생성·지정 | `UNIQUE(domain,season_no)` 중복 거부 |
 | `/서버시작` | `server_id`(또는 domain+season) | prep→active. 카테고리 가시성 ON, 신규 유저 active 서버 자동 배정, 명령 게이팅 통과 허용 | 이미 active면 noop+안내 |
 | `/서버종료` | `server_id, 사유` | active→ended. 카테고리 아카이브(숨김), 패널에서 제거, 명령·토글 차단. 카테고리·역할 보존 | 이미 ended면 noop+안내 |
+| `/서버권한재적용` | `server_id`(생략=활성) | active 서버 카테고리 권한/가시성을 **현재 템플릿으로 재적용**(`apply_visibility(visible=True)`). **상태 전이·역할 대량변경 없음**(idempotent). 템플릿 권한 정책 변경(예: 정보/로그 읽기전용)을 이미 활성인 시즌에 소급할 때 사용 — `/서버시작`은 active면 noop이라 재적용 불가 | active 아니면 거부 |
 | `/서버목록` | — | 전체 서버 상태(prep/active/ended) 임베드 | 조회 |
 | `/서버정보` | `server_id` | 단일 서버 상세(카테고리·역할·시즌·시각) | 조회 |
 
