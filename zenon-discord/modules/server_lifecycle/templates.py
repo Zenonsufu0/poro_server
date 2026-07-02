@@ -11,7 +11,7 @@
 역할(온보딩 3역할 상태머신 — task.md §5):
   접근(access)  → 약관 채널만   → 약관 동의 시
   인증전(pending) → 인증 채널만   → 인증 완료 시
-  플레이어(player) → 정보·커뮤니티·지원·음성 전체(약관·인증은 이제 안 보임)
+  플레이어(player) → 정보·커뮤니티·지원·음성·로그 일부 전체(약관·인증은 이제 안 보임)
 
 전개 모델(§1·§3):
   - 신설(prep) = 카테고리·채널·역할 생성하되 **전부 비공개**(@everyone·3역할 모두 view=False).
@@ -30,6 +30,8 @@ import logging
 
 import discord
 
+from core import config
+
 log = logging.getLogger(__name__)
 
 _REASON = "T17 서버 템플릿 신설"
@@ -44,7 +46,9 @@ _ROLE_SPEC: list[tuple[str, str]] = [
 # 카테고리 그룹: 각 원소 = 카테고리 1개.
 #   key       = server_categories.group_key (레지스트리 키)
 #   suffix    = 카테고리명 접미("<표시명> · <suffix>")
-#   audience  = active 시 가시성 대상. "player"=플레이어 전체공개 / "onboarding"=채널별(_ONBOARDING_AUDIENCE)
+#   audience  = active 시 가시성 대상.
+#               "player"=플레이어 전체공개 / "onboarding"=채널별(_ONBOARDING_AUDIENCE)
+#               "logs"=제재내역은 플레이어 읽기전용, 경고는 운영자 전용
 #   channels  = [(이름, "text"|"voice")] — 생성 순서 = 배치 순서
 _TEMPLATE_GROUPS: list[dict] = [
     {
@@ -66,10 +70,25 @@ _TEMPLATE_GROUPS: list[dict] = [
         # 건의·일반문의·버그제보 통합(T16) / 임시음성 허브(T13, 카테고리별 다중)
         "channels": [("건의-문의-버그제보", "text"), ("➕ 음성방 만들기", "voice")],
     },
+    {
+        "key": "logs", "suffix": "로그", "audience": "logs",
+        # 제재내역 = 플레이어 읽기전용 / 경고 = 운영자 전용 이상징후 알림 채널
+        "channels": [("제재내역", "text"), ("경고", "text")],
+    },
 ]
 
 # 온보딩 카테고리의 채널별 가시성 대상(role key). 채널 이름으로 매칭.
 _ONBOARDING_AUDIENCE: dict[str, str] = {"약관": "access", "인증": "pending"}
+
+
+def _operator_roles(guild: discord.Guild) -> list[discord.Role]:
+    """운영 권한 역할은 준비/비공개 상태에서도 카테고리를 볼 수 있어야 한다."""
+    roles: list[discord.Role] = []
+    for role_id in config.PERMISSION_ROLE_IDS.values():
+        role = guild.get_role(role_id or 0)
+        if role is not None and role not in roles:
+            roles.append(role)
+    return roles
 
 
 def channel_count() -> int:
@@ -103,6 +122,21 @@ async def provision(
         base_overwrites: dict = {guild.default_role: discord.PermissionOverwrite(view_channel=False)}
         for r in created_roles:
             base_overwrites[r] = discord.PermissionOverwrite(view_channel=False)
+        if guild.me is not None:
+            base_overwrites[guild.me] = discord.PermissionOverwrite(
+                view_channel=True,
+                send_messages=True,
+                connect=True,
+                speak=True,
+                move_members=True,
+                manage_channels=True,
+            )
+        for r in _operator_roles(guild):
+            base_overwrites[r] = discord.PermissionOverwrite(
+                view_channel=True,
+                send_messages=True,
+                connect=True,
+            )
 
         categories: dict[str, discord.CategoryChannel] = {}
         for g in _TEMPLATE_GROUPS:
@@ -113,7 +147,12 @@ async def provision(
             created_channels.append(cat)
             for name, kind in g["channels"]:
                 if kind == "voice":
-                    ch = await guild.create_voice_channel(name, category=cat, reason=_REASON)
+                    ch = await guild.create_voice_channel(
+                        name,
+                        category=cat,
+                        user_limit=1 if name == "➕ 음성방 만들기" else 0,
+                        reason=_REASON,
+                    )
                 else:
                     ch = await guild.create_text_channel(name, category=cat, reason=_REASON)
                 created_channels.append(ch)
@@ -166,24 +205,109 @@ async def apply_visibility(
     """
     touched = 0
     forbidden = False
+    operator_roles = _operator_roles(guild)
+    bot_overwrite = discord.PermissionOverwrite(
+        view_channel=True,
+        send_messages=True,
+        connect=True,
+        speak=True,
+        move_members=True,
+        manage_channels=True,
+    )
+    operator_overwrite = discord.PermissionOverwrite(
+        view_channel=True,
+        send_messages=True,
+        connect=True,
+        speak=True,
+        move_members=True,
+        manage_channels=True,
+    )
+    text_overwrite = discord.PermissionOverwrite(
+        view_channel=visible,
+        send_messages=visible,
+        read_message_history=visible,
+    )
+    voice_overwrite = discord.PermissionOverwrite(
+        view_channel=visible,
+        connect=visible,
+        speak=visible,
+    )
+    read_overwrite = discord.PermissionOverwrite(
+        view_channel=visible,
+        read_message_history=visible,
+    )
+    deny_view = discord.PermissionOverwrite(view_channel=False)
+
+    def _allow_for_channel(ch: discord.abc.GuildChannel) -> discord.PermissionOverwrite:
+        if isinstance(ch, discord.VoiceChannel):
+            return voice_overwrite
+        return text_overwrite
+
+    async def _set_staff(ch: discord.abc.GuildChannel) -> None:
+        if guild.me is not None:
+            await ch.set_permissions(guild.me, overwrite=bot_overwrite, reason=_REASON)
+        for operator_role in operator_roles:
+            await ch.set_permissions(operator_role, overwrite=operator_overwrite, reason=_REASON)
+
     for g in _TEMPLATE_GROUPS:
         cid = category_ids.get(g["key"])
         cat = guild.get_channel(cid) if cid else None
         if not isinstance(cat, discord.CategoryChannel):
             continue
         try:
+            await _set_staff(cat)
             if g["audience"] == "onboarding":
-                for ch in cat.channels:
-                    aud = _ONBOARDING_AUDIENCE.get(ch.name)
-                    role = guild.get_role(role_ids.get(aud, 0)) if aud else None
+                for role_key in ("player",):
+                    role = guild.get_role(role_ids.get(role_key, 0))
                     if role is not None:
-                        await ch.set_permissions(role, view_channel=visible, reason=_REASON)
+                        await cat.set_permissions(role, overwrite=deny_view, reason=_REASON)
+                for ch in cat.channels:
+                    await _set_staff(ch)
+                    aud = _ONBOARDING_AUDIENCE.get(ch.name)
+                    for role_key in ("access", "pending", "player"):
+                        role = guild.get_role(role_ids.get(role_key, 0))
+                        if role is None:
+                            continue
+                        overwrite = read_overwrite if role_key == aud else deny_view
+                        await ch.set_permissions(role, overwrite=overwrite, reason=_REASON)
                         touched += 1
+            elif g["audience"] == "logs":
+                role = guild.get_role(role_ids.get("player", 0))
+                if role is not None:
+                    await cat.set_permissions(role, overwrite=read_overwrite, reason=_REASON)
+                    touched += 1
+                for role_key in ("access", "pending"):
+                    restricted = guild.get_role(role_ids.get(role_key, 0))
+                    if restricted is not None:
+                        await cat.set_permissions(restricted, overwrite=deny_view, reason=_REASON)
+                for ch in cat.channels:
+                    await _set_staff(ch)
+                    if role is not None:
+                        overwrite = read_overwrite if ch.name == "제재내역" else deny_view
+                        await ch.set_permissions(role, overwrite=overwrite, reason=_REASON)
+                        touched += 1
+                    for role_key in ("access", "pending"):
+                        restricted = guild.get_role(role_ids.get(role_key, 0))
+                        if restricted is not None:
+                            await ch.set_permissions(restricted, overwrite=deny_view, reason=_REASON)
             else:  # "player"
                 role = guild.get_role(role_ids.get("player", 0))
                 if role is not None:
-                    await cat.set_permissions(role, view_channel=visible, reason=_REASON)
+                    await cat.set_permissions(role, overwrite=_allow_for_channel(cat), reason=_REASON)
                     touched += 1
+                for role_key in ("access", "pending"):
+                    restricted = guild.get_role(role_ids.get(role_key, 0))
+                    if restricted is not None:
+                        await cat.set_permissions(restricted, overwrite=deny_view, reason=_REASON)
+                for ch in cat.channels:
+                    await _set_staff(ch)
+                    if role is not None:
+                        await ch.set_permissions(role, overwrite=_allow_for_channel(ch), reason=_REASON)
+                        touched += 1
+                    for role_key in ("access", "pending"):
+                        restricted = guild.get_role(role_ids.get(role_key, 0))
+                        if restricted is not None:
+                            await ch.set_permissions(restricted, overwrite=deny_view, reason=_REASON)
             if archive and not visible and not cat.name.startswith("[종료]"):
                 await cat.edit(name=f"[종료] {cat.name}", reason="서버 종료 아카이브")
         except discord.Forbidden:

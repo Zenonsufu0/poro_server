@@ -15,7 +15,7 @@ import discord
 from discord import app_commands
 from discord.ext import commands
 
-from core import config, mod_log, permissions, tickets
+from core import config, mod_log, permissions, servers, tickets
 from core.permissions import requires_permission
 
 log = logging.getLogger(__name__)
@@ -37,6 +37,66 @@ class TicketCloseView(discord.ui.View):
         await self.cog.close_here(interaction)
 
 
+class SupportPanelView(discord.ui.View):
+    """지원 채널 고정 패널(문의·FAQ·버그제보 안내)."""
+
+    def __init__(self, cog: "TicketCog") -> None:
+        super().__init__(timeout=None)
+        self.cog = cog
+
+        ticket = discord.ui.Button(
+            label="문의하기",
+            style=discord.ButtonStyle.blurple,
+            emoji="📨",
+            custom_id="support_panel_ticket",
+        )
+        ticket.callback = self._on_ticket
+        self.add_item(ticket)
+
+        faq = discord.ui.Button(
+            label="FAQ 보기",
+            style=discord.ButtonStyle.secondary,
+            emoji="❓",
+            custom_id="support_panel_faq",
+        )
+        faq.callback = self._on_faq
+        self.add_item(faq)
+
+        bug = discord.ui.Button(
+            label="버그제보 안내",
+            style=discord.ButtonStyle.secondary,
+            emoji="🐞",
+            custom_id="support_panel_bug",
+        )
+        bug.callback = self._on_bug
+        self.add_item(bug)
+
+    async def _on_ticket(self, interaction: discord.Interaction) -> None:
+        await self.cog.open_ticket_for(interaction)
+
+    async def _on_faq(self, interaction: discord.Interaction) -> None:
+        faq_cog = self.cog.bot.get_cog("FaqCog")
+        if faq_cog is None:
+            await interaction.response.send_message(
+                "FAQ 기능을 사용할 수 없습니다. `/문의`를 이용해주세요.",
+                ephemeral=True,
+            )
+            return
+        await faq_cog.send_faq_panel(interaction)  # type: ignore[attr-defined]
+
+    async def _on_bug(self, interaction: discord.Interaction) -> None:
+        if not config.CHANNEL_BUGREPORT_ID:
+            await interaction.response.send_message(
+                "버그제보 채널이 아직 설정되지 않았습니다. 지금은 `/문의`로 접수해주세요.",
+                ephemeral=True,
+            )
+            return
+        await interaction.response.send_message(
+            "버그는 `/버그제보 대상 심각도` 명령으로 접수해주세요.",
+            ephemeral=True,
+        )
+
+
 class TicketCog(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
@@ -48,6 +108,7 @@ class TicketCog(commands.Cog):
     @commands.Cog.listener()
     async def on_ready(self) -> None:
         self.bot.add_view(TicketCloseView(self))  # 재시작 후 종료 버튼 동작
+        self.bot.add_view(SupportPanelView(self))  # 재시작 후 지원 패널 버튼 동작
 
     def _staff_overwrites(self, guild: discord.Guild, opener: discord.Member) -> dict:
         """티켓 채널 권한: @everyone 숨김 + 개설자·운영(admin/support)·봇 가시."""
@@ -63,6 +124,75 @@ class TicketCog(commands.Cog):
             if role is not None:
                 ow[role] = allow
         return ow
+
+    async def _active_support_channel(
+        self, guild: discord.Guild
+    ) -> discord.TextChannel | None:
+        active = await servers.get_any_active(self.db)
+        if active is None:
+            return None
+
+        category_id = None
+        for row in await servers.get_categories(self.db, active["id"]):
+            if row["group_key"] == "support":
+                category_id = row["category_id"]
+                break
+        if not category_id:
+            return None
+
+        category = guild.get_channel(category_id)
+        if not isinstance(category, discord.CategoryChannel):
+            return None
+
+        for channel in category.text_channels:
+            if channel.name == "건의-문의-버그제보":
+                return channel
+        return None
+
+    @app_commands.command(name="지원패널", description="지원 채널에 문의/FAQ/버그제보 안내 패널을 게시합니다.")
+    @requires_permission("admin", "support")
+    async def support_panel(self, interaction: discord.Interaction) -> None:
+        guild = interaction.guild
+        if guild is None:
+            await interaction.response.send_message("길드에서만 사용할 수 있습니다.", ephemeral=True)
+            return
+
+        channel = await self._active_support_channel(guild)
+        if channel is None:
+            await interaction.response.send_message(
+                "활성 서버의 지원 채널(건의-문의-버그제보)을 찾지 못했습니다.",
+                ephemeral=True,
+            )
+            return
+
+        embed = discord.Embed(
+            title="지원 센터",
+            description=(
+                "문의는 비공개 티켓으로 열리고, FAQ는 본인에게만 표시됩니다.\n"
+                "버그제보는 대상과 심각도를 선택해 별도 양식으로 접수합니다."
+            ),
+            color=discord.Color.blurple(),
+        )
+        embed.add_field(name="문의", value="운영진과 1:1 비공개 채널을 엽니다.", inline=False)
+        embed.add_field(name="FAQ", value="등록된 자주 묻는 질문을 확인합니다.", inline=False)
+        embed.add_field(
+            name="버그제보",
+            value="`/버그제보 대상 심각도` 명령으로 접수합니다.",
+            inline=False,
+        )
+
+        try:
+            await channel.send(embed=embed, view=SupportPanelView(self))
+        except discord.Forbidden:
+            await interaction.response.send_message(
+                "봇 권한 부족으로 지원 채널에 패널을 게시할 수 없습니다.",
+                ephemeral=True,
+            )
+            return
+
+        await interaction.response.send_message(
+            f"지원 패널을 게시했습니다: {channel.mention}", ephemeral=True
+        )
 
     @app_commands.command(name="문의", description="운영진과 1:1 비공개 문의 채널을 엽니다.")
     async def open_ticket(self, interaction: discord.Interaction) -> None:

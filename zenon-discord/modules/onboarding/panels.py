@@ -34,6 +34,10 @@ from integrations.rpg_api import ZenonRpgApiClient
 
 log = logging.getLogger(__name__)
 
+_TERMS_MODAL_MAX_CHARS = 4000
+_TERMS_FILE_MAX_BYTES = 200_000
+_TERMS_EMBED_CHARS = 3900
+
 # 사용자 안내 문구
 _MSG_TERMS_OK = "✅ 약관에 동의했습니다. 이제 **인증 채널**에서 인증코드를 입력해주세요."
 _MSG_SUCCESS = "✅ 인증이 완료되었습니다! 이제 서버에서 정상적으로 활동할 수 있습니다."
@@ -101,7 +105,7 @@ class TermsEditModal(discord.ui.Modal, title="약관 설정"):
             label=f"{domain} 약관 내용"[:45],
             style=discord.TextStyle.paragraph,
             default=existing or "",
-            max_length=4000,
+            max_length=_TERMS_MODAL_MAX_CHARS,
             required=True,
         )
         self.add_item(self.content)
@@ -156,12 +160,19 @@ class OnboardingCog(commands.Cog):
         # 도메인 → verify(code, discord_id) -> {"ok","uuid","name"} / 예외 VerifyError
         self._verifiers = {
             "poromon": self._zenon_mon_api.verify_code,
+            "zenonmon": self._zenon_mon_api.verify_code,
             "rpg": self._rpg_api.verify_code,
         }
 
     @property
     def db(self):
         return self.bot.db  # type: ignore[attr-defined]
+
+    @staticmethod
+    def _terms_chunks(content: str) -> list[str]:
+        """Discord embed description 한도에 맞춰 약관 본문을 분할한다."""
+        text = content.strip()
+        return [text[i:i + _TERMS_EMBED_CHARS] for i in range(0, len(text), _TERMS_EMBED_CHARS)] or [""]
 
     async def cog_unload(self) -> None:
         await self._zenon_mon_api.close()
@@ -282,13 +293,57 @@ class OnboardingCog(commands.Cog):
         if not content:
             await interaction.response.send_message("약관 내용이 비어 있습니다.", ephemeral=True)
             return
-        await terms.set_terms(self.db, domain, content, interaction.user.id)
-        await mod_log.record(
-            self.bot, action="terms_update", operator_id=interaction.user.id,
-            detail={"domain": domain, "length": len(content)},
-        )
+        await self._store_terms(domain, content, interaction.user.id)
         await interaction.response.send_message(
             f"✅ `{domain}` 약관 저장({len(content)}자). `/온보딩패널` 로 게시·갱신하세요.",
+            ephemeral=True,
+        )
+
+    async def _store_terms(self, domain: str, content: str, operator_id: int) -> None:
+        await terms.set_terms(self.db, domain, content, operator_id)
+        await mod_log.record(
+            self.bot, action="terms_update", operator_id=operator_id,
+            detail={"domain": domain, "length": len(content)},
+        )
+
+    @app_commands.command(name="약관파일설정", description="긴 서버 약관을 텍스트 파일로 업로드해 저장합니다.")
+    @app_commands.describe(
+        server="서버 도메인 (예: rpg, poromon)",
+        file="UTF-8 텍스트 파일(.txt 권장, 최대 200KB)",
+    )
+    @requires_permission("admin")
+    async def set_terms_file_cmd(
+        self, interaction: discord.Interaction, server: str, file: discord.Attachment
+    ) -> None:
+        if file.size and file.size > _TERMS_FILE_MAX_BYTES:
+            await interaction.response.send_message(
+                f"파일이 너무 큽니다. 최대 {_TERMS_FILE_MAX_BYTES // 1000}KB 까지만 저장합니다.",
+                ephemeral=True,
+            )
+            return
+        await interaction.response.defer(ephemeral=True)
+        try:
+            raw = await file.read(use_cached=False)
+        except discord.HTTPException:
+            await interaction.followup.send("파일을 읽지 못했습니다. 다시 업로드해주세요.", ephemeral=True)
+            return
+        try:
+            content = raw.decode("utf-8-sig").strip()
+        except UnicodeDecodeError:
+            try:
+                content = raw.decode("cp949").strip()
+            except UnicodeDecodeError:
+                await interaction.followup.send(
+                    "텍스트 인코딩을 읽지 못했습니다. UTF-8 `.txt` 파일로 다시 업로드해주세요.",
+                    ephemeral=True,
+                )
+                return
+        if not content:
+            await interaction.followup.send("약관 파일 내용이 비어 있습니다.", ephemeral=True)
+            return
+        await self._store_terms(server, content, interaction.user.id)
+        await interaction.followup.send(
+            f"✅ `{server}` 약관 파일 저장({len(content)}자). `/온보딩패널` 로 게시·갱신하세요.",
             ephemeral=True,
         )
 
@@ -303,10 +358,15 @@ class OnboardingCog(commands.Cog):
                 ephemeral=True,
             )
             return
-        embed = discord.Embed(
-            title=f"{server} 약관 (저장본)", description=content[:4096], color=discord.Color.teal()
-        )
-        await interaction.response.send_message(embed=embed, ephemeral=True)
+        chunks = self._terms_chunks(content)
+        await interaction.response.defer(ephemeral=True)
+        for i, chunk in enumerate(chunks, start=1):
+            embed = discord.Embed(
+                title=f"{server} 약관 (저장본 {i}/{len(chunks)})",
+                description=chunk,
+                color=discord.Color.teal(),
+            )
+            await interaction.followup.send(embed=embed, ephemeral=True)
 
     # ─── 운영자: 패널 게시 (active 서버의 온보딩 채널) ────────────
 
@@ -326,14 +386,25 @@ class OnboardingCog(commands.Cog):
                 "\n\n— 아래 **약관 동의** 버튼을 누르면 인증 단계로 넘어갑니다. "
                 "동의 후 인증 채널에서 인게임 `/인증` 코드를 입력해주세요."
             )
-            description = (
-                (stored[: 4096 - len(guide)] + guide) if stored
-                else f"⚠ 약관이 아직 설정되지 않았습니다(`/약관설정 {domain}`).{guide}"
-            )
-            embed = discord.Embed(
-                title=f"{name} 서버 약관 동의", description=description, color=discord.Color.green()
-            )
-            await terms_ch.send(embed=embed, view=TermsAgreeView(self))
+            if stored:
+                chunks = self._terms_chunks(stored)
+                for i, chunk in enumerate(chunks, start=1):
+                    embed = discord.Embed(
+                        title=f"{name} 서버 약관 ({i}/{len(chunks)})",
+                        description=chunk + (guide if i == len(chunks) else ""),
+                        color=discord.Color.green(),
+                    )
+                    await terms_ch.send(
+                        embed=embed,
+                        view=TermsAgreeView(self) if i == len(chunks) else None,
+                    )
+            else:
+                embed = discord.Embed(
+                    title=f"{name} 서버 약관 동의",
+                    description=f"⚠ 약관이 아직 설정되지 않았습니다(`/약관설정 {domain}`).{guide}",
+                    color=discord.Color.green(),
+                )
+                await terms_ch.send(embed=embed, view=TermsAgreeView(self))
             posted.append(f"약관(<#{terms_ch.id}>)")
 
         auth_ch = await self._onboarding_channel(guild, row, "인증")

@@ -74,10 +74,25 @@ class TempVoiceCog(commands.Cog):
 
     async def _create_room(self, member: discord.Member, hub: discord.VoiceChannel) -> None:
         category = hub.category
+        overwrites = dict(hub.overwrites)
+        bot_member = member.guild.me
+        if bot_member is not None:
+            overwrites[bot_member] = discord.PermissionOverwrite(
+                view_channel=True,
+                connect=True,
+                move_members=True,
+                manage_channels=True,
+            )
+        overwrites[member] = discord.PermissionOverwrite(
+            view_channel=True,
+            connect=True,
+            manage_channels=True,
+        )
         try:
             room = await member.guild.create_voice_channel(
                 f"{TEMP_PREFIX}{member.display_name}",
                 category=category,
+                overwrites=overwrites,
                 reason=f"{_REASON} 생성 — {member}",
             )
         except discord.Forbidden:
@@ -89,6 +104,9 @@ class TempVoiceCog(commands.Cog):
         self._temp_ids.add(room.id)
         try:
             await member.move_to(room, reason=_REASON)
+        except discord.Forbidden:
+            log.warning("임시 음성방 이동 권한 부족(Move Members/Connect) — member=%s", member.id)
+            await self._cleanup_if_empty(room)
         except discord.HTTPException:
             # 이동 실패(이미 나감 등) → 방이 비면 다음 청소에서 제거.
             await self._cleanup_if_empty(room)

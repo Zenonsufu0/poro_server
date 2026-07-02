@@ -276,9 +276,10 @@ class ServerLifecycleCog(commands.Cog):
         )
         if auto:
             extra = (
-                f"\n📁 카테고리 {templates.group_count()}개(온보딩·정보·커뮤니티·지원·음성) + "
+                f"\n📁 카테고리 {templates.group_count()}개(온보딩·정보·커뮤니티·지원·음성·로그) + "
                 f"채널 {templates.channel_count()}개 + 온보딩 3역할(접근·인증전·플레이어) 자동 생성(비공개).\n"
-                "`/서버시작` 시 약관→접근 / 인증→인증전 / 그 외→플레이어 에게 공개됩니다."
+                "`/서버시작` 시 약관→접근 / 인증→인증전 / 정보·커뮤니티·지원→플레이어 / "
+                "로그는 제재내역 읽기전용·경고 운영자전용으로 공개됩니다."
             )
         else:
             extra = "\n(레지스트리만 등록 — 카테고리/역할 미연결)" if not category else ""

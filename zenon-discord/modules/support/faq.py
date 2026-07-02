@@ -147,6 +147,10 @@ class FaqCog(commands.Cog):
 
     @app_commands.command(name="faq", description="자주 묻는 질문에서 골라 답변을 확인합니다.")
     async def faq_panel(self, interaction: discord.Interaction) -> None:
+        await self.send_faq_panel(interaction)
+
+    async def send_faq_panel(self, interaction: discord.Interaction) -> None:
+        """FAQ 조회 응답 본체(`/faq`·지원 패널 버튼 공용)."""
         active = await servers.get_any_active(self.db)
         domain = active["domain"] if active else None
         faqs = await faq.list_for_domain(self.db, domain)
