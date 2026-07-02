@@ -92,6 +92,14 @@ gcloud compute ssh zenon-mon
 > 인스턴스명 `zenon-mon` = 포로몬(마크서버) + 봇 공용 호스트. clone 폴더 `~/zenon-server/`(repo명)와는 별개.
 > 봇 인바운드(8787)는 localhost 라 방화벽 오픈 불필요(같은 VM). 게임서버가 다른 호스트면 §1.1 하단 참고.
 
+**부팅 후(SSH 접속 뒤) — 생성은 하드웨어(머신·OS·디스크)까지, 나머지 설정은 전부 SSH 에서:**
+- **봇:** `gcloud compute ssh zenon-mon` → 상단 **§0 빠른 배포 ①~④**(또는 §1.1). Python 만 필요(이미지 기본), Java 불필요.
+- **Zenon Mon(마크서버):** Debian 이미지엔 JDK 가 없다 → 설치 후 기동. 모드팩 MC 버전에 맞는 Java 를 쓴다(예 1.20+ = 21):
+  ```bash
+  sudo apt install -y openjdk-21-jre-headless   # 모드팩 버전 따라 17/21 등
+  ```
+  모드팩·서버 구동물 배치·기동 절차는 zenon-mon 소관(zenon-work-mon).
+
 ### 1.1 GCE VM 배포 (git clone + systemd, 권장)
 
 상시 VM(GCE 등)에 올리는 표준 절차. 봇은 디스코드 게이트웨이에 상시 웹소켓을 물고 있어
