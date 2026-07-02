@@ -7,6 +7,9 @@ logs/
 *.db
 *.sqlite
 *.sqlite3
+*.db-*
+*.sqlite-*
+*.sqlite3-*
 
 world/
 world_nether/

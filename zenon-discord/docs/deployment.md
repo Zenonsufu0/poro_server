@@ -59,18 +59,18 @@ python main.py                            # 기동
 |---|---|
 | `DISCORD_TOKEN` | 봇 토큰 |
 | `GUILD_ID` | 운영 길드 ID |
-| `CHANNEL_FIELD_BOSS_ID` | 필드보스 알림 채널 |
-| `ZENON_RPG_API_KEY` | RPG 게임서버 API 키(X-Api-Key). 구 `PORONG_API_KEY` 폴백 |
 
 > ⚠ 브랜드 변경 이력: 구 `PORO_API_URL/KEY`(2026-06-10) → `PORONG_API_URL/KEY` →
 > **`ZENON_RPG_API_URL/KEY`**(현행). 전환기 한정으로 구 `PORONG_API_*` 도 폴백으로 인식하나,
 > 신규 `.env` 는 새 이름을 사용하고 구 이름은 차후 제거한다.
 
 ### 3.2 선택 (미설정 시 0/기본값 → 해당 기능 graceful 비활성)
-- **API:** `ZENON_RPG_API_URL`(기본 localhost:8765, 구 `PORONG_API_URL` 폴백), `ZENON_MON_AUTH_URL/KEY`
+- **API:** `ZENON_RPG_API_URL`(기본 localhost:8765, 구 `PORONG_API_URL` 폴백),
+  `ZENON_RPG_API_KEY`(구 `PORONG_API_KEY` 폴백), `ZENON_MON_AUTH_URL/KEY`, `ZENON_MON_API_URL/KEY`
 - **DB:** `BOT_DB_PATH`(기본 `yuki_bot.sqlite3`, 인스턴스 로컬·gitignored)
-- **채널:** `CHANNEL_MODLOG_ID`(운영로그)·`CHANNEL_NOTICE_ID`(공지)·`CHANNEL_ZENON_MON_NOTICE_ID`·
-  `CHANNEL_BUGREPORT_ID`·`CHANNEL_LEVELUP_ID`·`AFK_CHANNEL_ID`·`CATEGORY_티켓_ID`
+- **채널:** `CHANNEL_FIELD_BOSS_ID`·`CHANNEL_MODLOG_ID`(운영로그)·`CHANNEL_NOTICE_ID`(공지)·
+  `CHANNEL_ZENON_MON_NOTICE_ID`·`CHANNEL_BUGREPORT_ID`·`CHANNEL_LEVELUP_ID`·`AFK_CHANNEL_ID`·
+  `CATEGORY_티켓_ID`
 - **전역 단일 active:** `ROLE_서버준비_ID`·`CATEGORY_통합_ID`(생애주기 일괄 전이용)
 - **권한 역할:** `ROLE_OWNER_ID`·`ROLE_ADMIN_ID`·`ROLE_RPG_MANAGER_ID`·`ROLE_ZENON_MON_MANAGER_ID`·
   `ROLE_EVENT_MANAGER_ID`·`ROLE_SUPPORT_ID` — **운영 명령 권한 판정에 필수적**(미설정 시 owner만 통과)
@@ -106,7 +106,7 @@ python main.py                            # 기동
 - [ ] `/서버신설`→`/서버시작` 카테고리·역할 자동 생성 + 가시성
 - [ ] 온보딩: 약관 버튼→인증전 역할, 인증 모달→verify(RPG 게임서버 `/auth/verify` 준비 시)→플레이어
 - [ ] 생애주기 일괄 역할 전이(`/서버종료`·`/서버시작`) — 인원 많으면 수십초(레이트리밋)
-- [ ] 커뮤니티: 채팅/음성 XP·레벨업 알림·`/레벨`·`/리더보드`·`/칭호`·`/출석`(KST 경계)
+- [ ] 커뮤니티: 수동 칭호(`/칭호생성`·`/칭호부여`·`/칭호회수`·`/칭호`)·`/출석`(KST 경계, XP 보상 없음)
 - [ ] 임시역할: `/임시역할부여` → 만료 tick 회수 / 임시음성: 허브 입장→개인방→비면 삭제
 - [ ] 모더레이션: `/경고`·`/타임아웃`·`/추방`·`/차단` + `#운영로그` 적재
 - [ ] 지원: `/문의`(티켓)·`/티켓종료`·`/faq`(패널)·`/faq추가`·`/버그제보`(상태버튼·DM)
