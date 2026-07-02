@@ -23,6 +23,62 @@ python main.py                            # 기동
 프로세스 관리(상시): systemd 서비스/`Restart=on-failure` 또는 docker `restart: unless-stopped`.
 표준출력 로그 수집 + 재기동 정책 권장. (mcstatus 미설치 시 접속정보 기능만 graceful 비활성.)
 
+### 1.1 GCE VM 배포 (git clone + systemd, 권장)
+
+상시 VM(GCE 등)에 올리는 표준 절차. 봇은 디스코드 게이트웨이에 상시 웹소켓을 물고 있어
+**Cloud Run/서버리스 부적합**(scale-to-zero·요청 타임아웃에 죽음) — 상시 VM에 systemd 로 띄운다.
+모노레포라 **clone 하나로 봇+Zenon Mon 둘 다** 받고, 같은 VM이면 `git pull` 한 번에 양쪽 갱신.
+
+**인증 = GitHub Deploy Key**(읽기전용, 만료 없음, 세팅 후 `git pull`에 토큰 불필요) 권장.
+
+```bash
+# 0) 패키지 (Debian/Ubuntu). Python 3.10+ 면 됨(코드가 `X | None` 문법 사용).
+sudo apt update && sudo apt install -y git python3-venv
+
+# 1) deploy key → 공개키를 GitHub repo > Settings > Deploy keys 에 Read-only 로 추가
+ssh-keygen -t ed25519 -f ~/.ssh/zenon_deploy -N ""
+cat ~/.ssh/zenon_deploy.pub
+cat >> ~/.ssh/config <<'EOF'
+Host github.com
+  IdentityFile ~/.ssh/zenon_deploy
+  IdentitiesOnly yes
+EOF
+
+# 2) clone (봇+몬 한 방)
+git clone git@github.com:Zenonsufu0/zenon-server.git
+cd zenon-server/zenon-discord
+
+# 3) venv + 의존성
+python3 -m venv .venv
+.venv/bin/pip install -r requirements.txt
+
+# 4) 비밀값 — .env 는 gitignored 라 clone 에 없음. 직접 채운다(§3).
+cp .env.example .env && nano .env
+```
+
+**systemd 서비스**(템플릿 = [`../deploy/yuki-bot.service`](../deploy/yuki-bot.service)):
+
+```bash
+# <USER> 를 실제 유저로 치환해 설치
+sudo sed 's/<USER>/'"$USER"'/g' ~/zenon-server/zenon-discord/deploy/yuki-bot.service \
+  | sudo tee /etc/systemd/system/yuki-bot.service >/dev/null
+sudo systemctl daemon-reload
+sudo systemctl enable --now yuki-bot     # 부팅 자동시작 + 즉시 실행
+journalctl -u yuki-bot -f                # "YukiBot ready" 확인
+```
+
+**업데이트 워크플로:**
+```bash
+cd ~/zenon-server && git pull
+# 의존성 변동 시: ~/zenon-server/zenon-discord/.venv/bin/pip install -r zenon-discord/requirements.txt
+sudo systemctl restart yuki-bot
+```
+
+- 같은 VM이면 봇 `.env` 의 `ZENON_MON_AUTH_URL` = `http://127.0.0.1:<포트>`(외부 노출·지연 없이).
+- 봇 자원은 가벼움(~50–100MB RAM). VM 사이징은 Zenon Mon(Java) 기준으로 잡고 봇은 얹으면 됨.
+- Zenon Mon 의 **빌드 산출물(jar·모드팩)이 git 에 있는지**는 zenon-mon 소관 — 소스만 clone 되고
+  서버 구동물은 별도 빌드/전송이 필요할 수 있다(zenon-work-mon 에서 확인).
+
 ## 2. 디스코드 봇 설정 (Developer Portal)
 
 ### 2.1 특권 인텐트 (Privileged Gateway Intents)

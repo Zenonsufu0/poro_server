@@ -1,0 +1,29 @@
+# YUKI-01 Discord 봇(zenon-discord) systemd 유닛 템플릿.
+#
+# 설치:
+#   1) <USER> 를 실제 리눅스 유저명으로 바꾼다(아래 3줄). clone 경로가 다르면 경로도 수정.
+#      예) sudo sed 's/<USER>/zenonsufu1/g' deploy/yuki-bot.service > /etc/systemd/system/yuki-bot.service
+#   2) sudo systemctl daemon-reload
+#   3) sudo systemctl enable --now yuki-bot
+#   4) journalctl -u yuki-bot -f   # "YukiBot ready" 확인
+#
+# 전제: git clone 후 zenon-discord/ 에 .venv 생성 + requirements 설치 + .env 작성(§3).
+# WorkingDirectory 를 zenon-discord 로 두는 것이 중요 — .env 로드와 DB 파일
+# (yuki_bot.sqlite3)이 이 경로 기준이다.
+
+[Unit]
+Description=YUKI-01 Discord bot (zenon-discord)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=<USER>
+WorkingDirectory=/home/<USER>/zenon-server/zenon-discord
+ExecStart=/home/<USER>/zenon-server/zenon-discord/.venv/bin/python -u main.py
+Restart=on-failure
+RestartSec=5
+# 로그는 journald 가 수집: journalctl -u yuki-bot -f
+
+[Install]
+WantedBy=multi-user.target
