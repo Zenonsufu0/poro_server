@@ -112,6 +112,61 @@ def _zenon_mon_event(data: dict) -> discord.Embed:
     )
 
 
+def _anomaly(data: dict) -> discord.Embed:
+    severity = str(data.get("severity", "warning")).lower()
+    color = discord.Color.red() if severity in {"critical", "high"} else discord.Color.orange()
+    embed = discord.Embed(
+        title=f"⚠ {data.get('title', '이상 징후 감지')}",
+        description=data.get("summary") or data.get("info") or "경제/아이템 지표에서 이상 움직임이 감지되었습니다.",
+        color=color,
+    )
+    for key, label in (
+        ("severity", "심각도"),
+        ("category", "분류"),
+        ("metric", "지표"),
+        ("player", "대상"),
+        ("value", "현재값"),
+        ("baseline", "기준값"),
+        ("window", "기간"),
+    ):
+        if data.get(key) is not None:
+            embed.add_field(name=label, value=str(data[key])[:1024], inline=True)
+    return embed
+
+
+def _minecraft_sanction(data: dict) -> discord.Embed:
+    action = str(data.get("action", "sanction"))
+    labels = {
+        "warn": "마크 경고",
+        "kick": "마크 킥",
+        "ban": "마크 밴",
+        "unban": "마크 밴해제",
+    }
+    colors = {
+        "warn": discord.Color.yellow(),
+        "kick": discord.Color.orange(),
+        "ban": discord.Color.red(),
+        "unban": discord.Color.green(),
+    }
+    embed = discord.Embed(
+        title=f"MINECRAFT - {labels.get(action, action)}",
+        description=data.get("summary") or "마크 서버 제재 기록입니다.",
+        color=colors.get(action, discord.Color.orange()),
+    )
+    for key, label in (
+        ("target", "대상"),
+        ("player", "플레이어"),
+        ("uuid", "UUID"),
+        ("operator", "처리자"),
+        ("reason", "사유"),
+        ("source", "출처"),
+        ("sanction_id", "제재 ID"),
+    ):
+        if data.get(key) is not None:
+            embed.add_field(name=label, value=str(data[key])[:1024], inline=True)
+    return embed
+
+
 _BUILDERS = {
     ("rpg", "field_boss_pre"): _field_boss_pre,
     ("rpg", "field_boss_spawn"): _field_boss_spawn,
@@ -122,6 +177,8 @@ _BUILDERS = {
     ("common", "event_start"): _event_start,
     ("common", "event_end"): _event_end,
     ("poromon", "event"): _zenon_mon_event,
+    ("poromon", "anomaly"): _anomaly,
+    ("poromon", "minecraft_sanction"): _minecraft_sanction,
 }
 
 

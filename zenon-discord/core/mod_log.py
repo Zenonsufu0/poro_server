@@ -45,7 +45,21 @@ _ACTION_META: dict[str, tuple[str, discord.Color]] = {
     "temp_role_grant":  ("⏳ 임시역할부여", discord.Color.teal()),
     "temp_role_expire": ("⌛ 임시역할만료", discord.Color.light_grey()),
     "announce":         ("📢 알림발송",    discord.Color.blurple()),
+    "mc_warn":          ("MINECRAFT 경고", discord.Color.yellow()),
+    "mc_kick":          ("MINECRAFT 킥",   discord.Color.orange()),
+    "mc_ban":           ("MINECRAFT 밴",   discord.Color.red()),
+    "mc_unban":         ("MINECRAFT 밴해제", discord.Color.green()),
 }
+
+SANCTION_ACTIONS: tuple[str, ...] = (
+    "warn",
+    "warn_revoke",
+    "timeout",
+    "timeout_clear",
+    "kick",
+    "ban",
+    "unban",
+)
 
 
 async def record(
@@ -70,6 +84,22 @@ async def record(
     )
     await _post(bot, action, log_id, operator_id, target_id, reason, detail)
     return log_id
+
+
+async def list_for_target(
+    db: Database,
+    target_id: int,
+    *,
+    actions: tuple[str, ...] = SANCTION_ACTIONS,
+    limit: int = 10,
+) -> list:
+    """대상 유저의 운영 로그를 최신순으로 조회한다."""
+    placeholders = ",".join("?" for _ in actions)
+    return await db.fetchall(
+        f"SELECT * FROM mod_log WHERE target_id = ? AND action IN ({placeholders}) "
+        "ORDER BY created_at DESC, id DESC LIMIT ?",
+        (target_id, *actions, limit),
+    )
 
 
 async def _post(

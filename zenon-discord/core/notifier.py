@@ -15,7 +15,7 @@ from typing import Callable
 
 import discord
 
-from core import config
+from core import config, servers
 
 log = logging.getLogger(__name__)
 
@@ -30,6 +30,8 @@ _ROUTES: dict[tuple[str, str], tuple[str, str | None]] = {
     ("common", "event_start"):     ("CHANNEL_NOTICE_ID",      "이벤트알림"),
     ("common", "event_end"):       ("CHANNEL_NOTICE_ID",      "이벤트알림"),
     ("poromon", "event"):          ("CHANNEL_ZENON_MON_NOTICE_ID", "포로몬알림"),
+    ("poromon", "anomaly"):        ("__ACTIVE_LOG_WARNING_CHANNEL__", None),
+    ("poromon", "minecraft_sanction"): ("__ACTIVE_LOG_SANCTION_CHANNEL__", None),
 }
 
 # (domain, kind) → builder(data: dict) -> discord.Embed
@@ -56,6 +58,30 @@ def _fallback_embed(domain: str, kind: str, data: dict) -> discord.Embed:
     return embed
 
 
+async def _active_log_channel(bot, channel_name: str):
+    """active 서버의 로그 카테고리에서 이름이 일치하는 텍스트 채널을 찾는다."""
+    db = getattr(bot, "db", None)
+    if db is None:
+        return None
+    active = await servers.get_any_active(db)
+    if active is None:
+        return None
+    category_id = None
+    for row in await servers.get_categories(db, active["id"]):
+        if row["group_key"] == "logs":
+            category_id = row["category_id"]
+            break
+    if not category_id:
+        return None
+    category = bot.get_channel(category_id)
+    if not isinstance(category, discord.CategoryChannel):
+        return None
+    for channel in category.text_channels:
+        if channel.name == channel_name:
+            return channel
+    return None
+
+
 async def dispatch(bot, domain: str, kind: str, data: dict) -> bool:
     """알림 1건 라우팅·전송. 전송 성공 시 True, 미등록/채널없음/실패 시 False(graceful).
 
@@ -74,8 +100,15 @@ async def dispatch(bot, domain: str, kind: str, data: dict) -> bool:
         log.warning("embed 빌더 실패 (%s.%s)", domain, kind, exc_info=True)
         return False
 
-    channel_id = getattr(config, channel_attr, 0)
-    channel = bot.get_channel(channel_id) if channel_id else None
+    if channel_attr == "__ACTIVE_LOG_WARNING_CHANNEL__":
+        channel = await _active_log_channel(bot, "경고")
+        channel_id = getattr(channel, "id", 0)
+    elif channel_attr == "__ACTIVE_LOG_SANCTION_CHANNEL__":
+        channel = await _active_log_channel(bot, "제재내역")
+        channel_id = getattr(channel, "id", 0)
+    else:
+        channel_id = getattr(config, channel_attr, 0)
+        channel = bot.get_channel(channel_id) if channel_id else None
     if not isinstance(channel, (discord.TextChannel, discord.Thread)):
         log.warning("알림 채널 없음/부적합 (%s.%s, %s=%s)", domain, kind, channel_attr, channel_id)
         return False
