@@ -112,6 +112,12 @@ def requires_permission(*keys: str):
 
     설정된 권한 역할이 하나도 없으면(전부 0) 보수적으로 차단한다
     (운영 명령어가 권한 미설정 상태에서 무방비로 열리지 않도록).
+
+    부수적으로 요구 권한 키를 콜백 함수에 `_perm_keys` 로 기록한다. `/도움말`
+    이 `command.callback._perm_keys` 를 읽어 호출자 권한 기준으로 노출 명령을
+    필터링한다(별도 카탈로그 없이 데코레이터가 단일 소스). 이 데코레이터는
+    `@app_commands.command` 아래에 붙어 raw 콜백에 먼저 적용되므로, 이후
+    Command 로 감싸져도 `command.callback` 로 조회 가능하다.
     """
     async def predicate(interaction: discord.Interaction) -> bool:
         member = interaction.guild.get_member(interaction.user.id) if interaction.guild else None
@@ -119,4 +125,14 @@ def requires_permission(*keys: str):
             raise app_commands.CheckFailure("이 명령어를 실행할 권한이 없습니다.")
         return True
 
-    return app_commands.check(predicate)
+    check_decorator = app_commands.check(predicate)
+
+    def decorator(func):
+        decorated = check_decorator(func)
+        try:
+            decorated._perm_keys = keys  # type: ignore[attr-defined]
+        except (AttributeError, TypeError):
+            pass  # 콜백이 속성 설정을 허용하지 않으면 /도움말 에서 public 취급
+        return decorated
+
+    return decorator
