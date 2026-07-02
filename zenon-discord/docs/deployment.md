@@ -58,6 +58,33 @@ python main.py                            # 기동
 프로세스 관리(상시): systemd 서비스/`Restart=on-failure` 또는 docker `restart: unless-stopped`.
 표준출력 로그 수집 + 재기동 정책 권장. (mcstatus 미설치 시 접속정보 기능만 graceful 비활성.)
 
+### 1.0 GCE VM 생성 (Zenon Mon + 봇 공존)
+
+VM 사이징은 **Zenon Mon(모드 마크서버, Java) 기준** — 봇은 가벼워 얹기만 하면 된다. 모드 MC의
+렉(TPS)은 코어 **개수**가 아니라 **단일코어 클럭**이 좌우한다(메인 틱 ≈ 단일 스레드) → no-lag 목표면
+저클럭·공유코어(e2) 대신 **컴퓨트 최적화 고클럭(c2)** 을 쓴다.
+
+**권장(동접 ~30, no-lag):** `c2-standard-8`(8 vCPU / 32GB) · `80GB pd-ssd` · 서울(asia-northeast3) ·
+Debian 12 · 고정 IP · 방화벽 tcp 25565. JVM 힙은 ~16–20GB(나머지 OS/봇/오프힙). 예산형은
+`e2-standard-8`(32GB). 머신타입은 stop→변경→start 로 언제든 조정(락인 아님).
+
+```bash
+gcloud config set project <PROJECT_ID>
+gcloud config set compute/zone asia-northeast3-a
+gcloud compute addresses create zenon-ip --region=asia-northeast3
+gcloud compute instances create zenon-server \
+  --machine-type=c2-standard-8 \
+  --image-family=debian-12 --image-project=debian-cloud \
+  --boot-disk-size=80GB --boot-disk-type=pd-ssd \
+  --address=zenon-ip --tags=minecraft
+gcloud compute firewall-rules create allow-minecraft \
+  --allow=tcp:25565 --target-tags=minecraft --source-ranges=0.0.0.0/0
+gcloud compute ssh zenon-server
+```
+
+> c2 가 존에 없으면 `n2-standard-8` 폴백 또는 존을 `asia-northeast3-b/c` 로. 봇 인바운드(8787)는
+> localhost 라 방화벽 오픈 불필요(같은 VM). 게임서버가 다른 호스트면 §1.1 하단 참고.
+
 ### 1.1 GCE VM 배포 (git clone + systemd, 권장)
 
 상시 VM(GCE 등)에 올리는 표준 절차. 봇은 디스코드 게이트웨이에 상시 웹소켓을 물고 있어
